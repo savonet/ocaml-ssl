@@ -1,0 +1,64 @@
+# Copyright 2003 Samuel Mimram
+# libssl bindings for OCaml.
+#
+# by Samuel Mimram
+
+# $Id$
+
+
+export OCAMLMAKEFILE = OCamlMakefile
+
+export OCAMLFIND = @OCAMLFIND@
+export OCAMLFIND_LDCONF = @OCAMLFIND_LDCONF@
+export LATEX = @LATEX@
+export DVIPS = @DVIPS@
+export PS2PDF = @PS2PDF@
+export BEST = @BEST@
+export OCAMLLIBPATH = @CAMLLIBPATH@
+export LIBS = unix
+
+#SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
+export RES_CLIB_SUF = _stubs
+export RESULT = ssl
+export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *.a *.so)
+export OCAMLLDFLAGS =
+export OCAMLDOCFLAGS = -stars
+export CLIBS = crypto ssl
+export CC = @CC@
+export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
+export CPPFLAGS = @CPPFLAGS@
+
+define PROJ_ssl
+  SOURCES = ssl_stubs.c ssl.mli ssl.ml
+  RESULT = ssl
+  THREADS = no
+endef
+export PROJ_ssl
+
+define PROJ_sslthreads
+  SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
+  RESULT = ssl_threads
+  THREADS = yes
+endef
+export PROJ_sslthreads
+
+export SUBPROJS = ssl sslthreads
+
+all: $(BEST)
+
+byte: byte-code-library
+opt: native-code-library
+
+install:
+	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
+
+uninstall:
+	$(OCAMLFIND) remove $(OCAMLFIND_INSTFLAGS) $(RESULT)
+
+update: uninstall install
+
+# Catch-all target will be applied to all subprojects automatically
+%:
+	@$(MAKE) -f $(OCAMLMAKEFILE) subprojs SUBTARGET=$@
+
+#-include $(OCAMLMAKEFILE)
