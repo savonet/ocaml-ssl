@@ -15,7 +15,6 @@ export DVIPS = @DVIPS@
 export PS2PDF = @PS2PDF@
 export BEST = @BEST@
 export OCAMLLIBPATH = @CAMLLIBPATH@
-export LIBS = unix
 
 #SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
 export RES_CLIB_SUF = _stubs
@@ -27,6 +26,7 @@ export CLIBS = crypto ssl
 export CC = @CC@
 export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
 export CPPFLAGS = @CPPFLAGS@
+export NO_CUSTOM = yes
 
 define PROJ_ssl
   SOURCES = ssl_stubs.c ssl.mli ssl.ml
