@@ -49,6 +49,8 @@ all: $(BEST)
 byte: byte-code-library
 opt: native-code-library
 
+native-code-library: byte-code-library
+
 install:
 	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
 
