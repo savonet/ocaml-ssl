@@ -1,5 +1,6 @@
 0.4.4 (unreleased)
 =====
+* Added support for --enable-debugging configure option
 
 0.4.3 (2008-12-18)
 =====

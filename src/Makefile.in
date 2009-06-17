@@ -27,6 +27,7 @@ export CC = @CC@
 export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
 export CPPFLAGS = @CPPFLAGS@
 export NO_CUSTOM = yes
+OCAMLFLAGS = @OCAMLFLAGS@
 
 define PROJ_ssl
   SOURCES = ssl_stubs.c ssl.mli ssl.ml
