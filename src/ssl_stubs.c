@@ -270,7 +270,7 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert, value pr
   char *privkey_name = String_val(privkey);
 
   caml_enter_blocking_section();
-  if (SSL_CTX_use_certificate_file(ctx, cert_name, SSL_FILETYPE_PEM) <= 0)
+  if (SSL_CTX_use_certificate_chain_file(ctx, cert_name) <= 0)
   {
     caml_leave_blocking_section();
     caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));

@@ -1,6 +1,8 @@
 0.4.4 (unreleased)
 =====
-* Added support for --enable-debugging configure option
+* Use SSL_CTX_use_certificate_chain_file instead of
+  SSL_CTX_use_certificate_file.
+* Added support for --enable-debugging configure option.
 
 0.4.3 (2008-12-18)
 =====
