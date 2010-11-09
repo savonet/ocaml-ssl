@@ -19,13 +19,4 @@
 *)
 
 let init () =
-  Ssl.thread_id_function := Some (fun () -> Thread.id (Thread.self ()));
-  let mtx = Array.init (Ssl.crypto_num_locks ()) (fun _ -> Mutex.create ()) in
-    Ssl.thread_locking_function :=
-    Some
-      (fun n lock ->
-         if lock then
-           Mutex.lock mtx.(n)
-         else
-           Mutex.unlock mtx.(n)
-      )
+  Ssl.thread_safe := true

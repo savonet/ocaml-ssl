@@ -1,5 +1,6 @@
 0.4.5 (unreleased)
 =====
+* Use pthread mutexes for locking thread-safe version of ssl.
 
 0.4.4 (2010-01-06)
 =====

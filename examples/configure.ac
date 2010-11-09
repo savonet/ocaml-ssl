@@ -4,12 +4,12 @@
 AC_INIT(ocaml-ssl-examples, 0.4.3, savonet-users@lists.sourceforge.net)
 
 VERSION=$PACKAGE_VERSION
-AC_MSG_RESULT "configuring $PACKAGE_STRING"
+AC_MSG_RESULT("configuring $PACKAGE_STRING")
 
 OCAMLFIND_LDCONF=""
-AC_ARG_ENABLE([ldconf], AC_HELP_STRING([--disable-ldconf],[don't modify the dynamic loader configuration file (default is enable)]),[ac_enable_ldconf=$enableval],[ac_enable_ldconf=$enableval],[ac_enable_ldconf=yes])
+AC_ARG_ENABLE([ldconf], AC_HELP_STRING([--disable-ldconf],["don't modify the dynamic loader configuration file (default is enable)"]),[ac_enable_ldconf=$enableval],[ac_enable_ldconf=$enableval],[ac_enable_ldconf=yes])
 if test "$ac_enable_ldconf" = no ; then
-	AC_MSG_RESULT "disabling modification of ld.conf"
+	AC_MSG_RESULT("disabling modification of ld.conf")
 	OCAMLFIND_LDCONF=dummy
 fi
 

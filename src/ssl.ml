@@ -91,7 +91,7 @@ exception Read_error of ssl_error
 exception Write_error of ssl_error
 exception Verify_error of verify_error
 
-let _ =
+let () =
   Callback.register_exception "ssl_exn_method_error" Method_error;
   Callback.register_exception "ssl_exn_context_error" Context_error;
   Callback.register_exception "ssl_exn_certificate_error" Certificate_error;
@@ -106,26 +106,20 @@ let _ =
   Callback.register_exception "ssl_exn_write_error" (Write_error Error_none);
   Callback.register_exception "ssl_exn_verify_error" (Verify_error Error_v_application_verification)
 
+let thread_safe = ref false
+
 external init : bool -> unit = "ocaml_ssl_init"
 
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
-external crypto_num_locks : unit -> int = "ocaml_ssl_crypto_num_locks"
-
-let thread_id_function = ref None
-
-let _ =
-  Callback.register "caml_ssl_thread_id_function" thread_id_function
-
-let thread_locking_function = ref None
-
-let _ =
-  Callback.register "caml_ssl_thread_locking_function" thread_locking_function
-
-let init () =
-  match !thread_locking_function with
-    | None -> init false
-    | Some _ -> init true
+let ts = thread_safe
+let init ?thread_safe () =
+  let thread_safe =
+    match thread_safe with
+      | Some b -> b
+      | None -> !ts
+  in
+  init thread_safe
 
 type context_type =
   | Client_context

@@ -48,6 +48,8 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
+#include <pthread.h>
+
 static int client_verify_callback(int, X509_STORE_CTX *);
 
 /*******************
@@ -99,40 +101,70 @@ static struct custom_operations socket_ops =
  * Initialization *
  ******************/
 
-CAMLprim value ocaml_ssl_crypto_num_locks(value unit)
+struct CRYPTO_dynlock_value
 {
-  return Val_int(CRYPTO_num_locks());
-}
+  pthread_mutex_t mutex;
+};
 
-void locking_function(int mode, int n, const char *file, int line)
+static pthread_mutex_t *mutex_buf = NULL;
+
+static void locking_function(int mode, int n, const char *file, int line)
 {
-  value lf;
-
-  caml_leave_blocking_section();
-
-  lf = Field(Field(*caml_named_value("caml_ssl_thread_locking_function"), 0), 0);
   if (mode & CRYPTO_LOCK)
-    caml_callback2(lf, Val_int(n), Val_int(1));
+      pthread_mutex_lock(&mutex_buf[n]);
   else
-    caml_callback2(lf, Val_int(n), Val_int(0));
-
-  caml_enter_blocking_section();
+    pthread_mutex_unlock(&mutex_buf[n]);
 }
 
-unsigned long id_function()
+static unsigned long id_function(void)
 {
-  return Int_val(caml_callback(Field(Field(*caml_named_value("caml_ssl_thread_id_function"), 0), 0), Val_unit));
+  return ((unsigned long) pthread_self());
+}
+
+static struct CRYPTO_dynlock_value *dyn_create_function(const char *file, int line)
+{
+  struct CRYPTO_dynlock_value *value;
+
+  value = malloc(sizeof(struct CRYPTO_dynlock_value));
+  if (!value)
+    return NULL;
+  pthread_mutex_init(&value->mutex, NULL);
+
+  return value;
+}
+
+static void dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    pthread_mutex_lock(&l->mutex);
+  else
+    pthread_mutex_unlock(&l->mutex);
+}
+
+static void dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+  pthread_mutex_destroy(&l->mutex);
+  free(l);
 }
 
 CAMLprim value ocaml_ssl_init(value use_threads)
 {
+  int i;
+
   SSL_library_init();
   SSL_load_error_strings();
 
   if(Int_val(use_threads))
   {
-    CRYPTO_set_id_callback(id_function);
+    mutex_buf = malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+    assert(mutex_buf);
+    for (i = 0; i < CRYPTO_num_locks(); i++)
+      pthread_mutex_init(&mutex_buf[i], NULL);
     CRYPTO_set_locking_callback(locking_function);
+    CRYPTO_set_id_callback(id_function);
+    CRYPTO_set_dynlock_create_callback(dyn_create_function);
+    CRYPTO_set_dynlock_lock_callback(dyn_lock_function);
+    CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function);
   }
 
   return Val_unit;
