@@ -44,38 +44,38 @@ type ssl_error =
   | Error_want_accept
 
 type verify_error =
-  | Error_v_unable_to_get_issuer_cert (** Tthe issuer certificate could not be found: this occurs if the issuer certificate of an untrusted certificate cannot be found.*)
-  | Error_v_unable_to_get_ctl (** The CRL of a certificate could not be found. Unused. *)
-  | Error_v_unable_to_decrypt_cert_signature (** The certificate signature could not be decrypted. This means that the actual signature value could not be determined rather than it not matching the expected value, this is only meaningful for RSA keys.*)
-  | Error_v_unable_to_decrypt_CRL_signature (** The CRL signature could not be decrypted: this means that the actual signature value could not be determined rather than it not matching the expected value. Unused. *)
-  | Error_v_unable_to_decode_issuer_public_key (** The public key in the certificate SubjectPublicKeyInfo could not be read. *)
-  | Error_v_cert_signature_failure (** The signature of the certificate is invalid. *)
-  | Error_v_CRL_signature_failure (** The signature of the certificate is invalid. Unused. *)
-  | Error_v_cert_not_yet_valid (** The certificate is not yet valid: the notBefore date is after the current time. *)
-  | Error_v_cert_has_expired (** The certificate has expired: that is the notAfter date is before the current time. *)
-  | Error_v_CRL_not_yet_valid (** The CRL is not yet valid. Unused. *)
-  | Error_v_CRL_has_expired (** The CRL has expired. Unused. *)
-  | Error_v_error_in_cert_not_before_field (** The certificate notBefore field contains an invalid time. *)
-  | Error_v_error_in_cert_not_after_field (** The certificate notAfter field contains an invalid time. *)
-  | Error_v_error_in_CRL_last_update_field (** The CRL lastUpdate field contains an invalid time. Unused. *)
-  | Error_v_error_in_CRL_next_update_field (** The CRL nextUpdate field contains an invalid time. Unused. *)
-  | Error_v_out_of_mem (** An error occurred trying to allocate memory. This should never happen. *)
-  | Error_v_depth_zero_self_signed_cert (** The passed certificate is self signed and the same certificate cannot be found in the list of trusted certificates. *)
-  | Error_v_self_signed_cert_in_chain (** The certificate chain could be built up using the untrusted certificates but the root could not be found locally. *)
-  | Error_v_unable_to_get_issuer_cert_locally (** The issuer certificate of a locally looked up certificate could not be found. This normally means the list of trusted certificates is not complete. *)
-  | Error_v_unable_to_verify_leaf_signature (** No signatures could be verified because the chain contains only one certificate and it is not self signed. *)
-  | Error_v_cert_chain_too_long (** The certificate chain length is greater than the supplied maximum depth. Unused. *)
-  | Error_v_cert_revoked (** The certificate has been revoked. Unused. *)
-  | Error_v_invalid_CA (** A CA certificate is invalid. Either it is not a CA or its extensions are not consistent with the supplied purpose. *)
-  | Error_v_path_length_exceeded (** The basicConstraints pathlength parameter has been exceeded. *)
-  | Error_v_invalid_purpose (** The supplied certificate cannot be used for the specified purpose. *)
-  | Error_v_cert_untrusted (** The root CA is not marked as trusted for the specified purpose. *)
-  | Error_v_cert_rejected (** The root CA is marked to reject the specified purpose. *)
-  | Error_v_subject_issuer_mismatch (** The current candidate issuer certificate was rejected because its subject name did not match the issuer name of the current certificate. *)
-  | Error_v_akid_skid_mismatch (** The current candidate issuer certificate was rejected because its subject key identifier was present and did not match the authority key identifier current certificate. *)
-  | Error_v_akid_issuer_serial_mismatch (** The current candidate issuer certificate was rejected because its issuer name and serial number was present and did not match the authority key identifier of the current certificate. *)
-  | Error_v_keyusage_no_certsign (** The current candidate issuer certificate was rejected because its keyUsage extension does not permit certificate signing. *)
-  | Error_v_application_verification (** An application specific error. Unused. *)
+  | Error_v_unable_to_get_issuer_cert
+  | Error_v_unable_to_get_ctl
+  | Error_v_unable_to_decrypt_cert_signature
+  | Error_v_unable_to_decrypt_CRL_signature
+  | Error_v_unable_to_decode_issuer_public_key
+  | Error_v_cert_signature_failure
+  | Error_v_CRL_signature_failure
+  | Error_v_cert_not_yet_valid
+  | Error_v_cert_has_expired
+  | Error_v_CRL_not_yet_valid
+  | Error_v_CRL_has_expired
+  | Error_v_error_in_cert_not_before_field
+  | Error_v_error_in_cert_not_after_field
+  | Error_v_error_in_CRL_last_update_field
+  | Error_v_error_in_CRL_next_update_field
+  | Error_v_out_of_mem
+  | Error_v_depth_zero_self_signed_cert
+  | Error_v_self_signed_cert_in_chain
+  | Error_v_unable_to_get_issuer_cert_locally
+  | Error_v_unable_to_verify_leaf_signature
+  | Error_v_cert_chain_too_long
+  | Error_v_cert_revoked
+  | Error_v_invalid_CA
+  | Error_v_path_length_exceeded
+  | Error_v_invalid_purpose
+  | Error_v_cert_untrusted
+  | Error_v_cert_rejected
+  | Error_v_subject_issuer_mismatch
+  | Error_v_akid_skid_mismatch
+  | Error_v_akid_issuer_serial_mismatch
+  | Error_v_keyusage_no_certsign
+  | Error_v_application_verification
 
 exception Method_error
 exception Context_error

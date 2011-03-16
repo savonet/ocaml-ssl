@@ -18,12 +18,11 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *)
 
-(**
-  * Functions for making encrypted communications using the Secure Socket Layer
-  * (SSL). These are mostly bindings to the openssl library.
-  *
-  * @author Samuel Mimram
-  *)
+(** Functions for making encrypted communications using the Secure Socket Layer
+    (SSL). These are mostly bindings to the openssl library.
+
+    @author Samuel Mimram
+*)
 
 (* $Id$ *)
 
@@ -31,15 +30,35 @@
 
 (** An ssl error has occured (see SSL_get_error(3ssl) for details). *)
 type ssl_error =
-  | Error_none (** No error happened. This is never raised and should disappear in future versions. *)
+  | Error_none
+  (** No error happened. This is never raised and should disappear in future
+      versions. *)
   | Error_ssl
-  | Error_want_read (* The operation did not complete; the same TLS/SSL I/O function should be called again later. *)
-  | Error_want_write (* The operation did not complete; the same TLS/SSL I/O function should be called again later. *)
-  | Error_want_x509_lookup (* The operation did not complete because an application callback set by [set_client_cert_cb] has asked to be called again.  The TLS/SSL I/O function should be called again later.  Details depend on the application. *)
-  | Error_syscall (* Some I/O error occurred.  The OpenSSL error queue may contain more information on the error. *)
-  | Error_zero_return (* The TLS/SSL connection has been closed.  If the protocol version is SSL 3.0 or TLS 1.0, this result code is returned only if a closure alert has occurred in the protocol, i.e. if the connection has been closed cleanly. Note that in this case [Error_zero_return] does not necessarily indicate that the underlying transport has been closed. *)
-  | Error_want_connect (* The operation did not complete; the same TLS/SSL I/O function should be called again later. *)
-  | Error_want_accept (* The operation did not complete; the same TLS/SSL I/O function should be called again later. *)
+  | Error_want_read
+  (** The operation did not complete; the same TLS/SSL I/O function should be
+      called again later. *)
+  | Error_want_write
+  (** The operation did not complete; the same TLS/SSL I/O function should be
+      called again later. *)
+  | Error_want_x509_lookup
+  (** The operation did not complete because an application callback set by
+      [set_client_cert_cb] has asked to be called again.  The TLS/SSL I/O function
+      should be called again later. Details depend on the application. *)
+  | Error_syscall
+  (** Some I/O error occurred.  The OpenSSL error queue may contain more
+      information on the error. *)
+  | Error_zero_return
+  (** The TLS/SSL connection has been closed.  If the protocol version is SSL
+      3.0 or TLS 1.0, this result code is returned only if a closure alert has
+      occurred in the protocol, i.e. if the connection has been closed cleanly. Note
+      that in this case [Error_zero_return] does not necessarily indicate that the
+      underlying transport has been closed. *)
+  | Error_want_connect
+  (** The operation did not complete; the same TLS/SSL I/O function should be
+      called again later. *)
+  | Error_want_accept
+  (** The operation did not complete; the same TLS/SSL I/O function should be
+      called again later. *)
 
 (** The SSL method could not be initalized. *)
 exception Method_error
@@ -75,38 +94,91 @@ exception Write_error of ssl_error
 
 (** Why did the certificate verification fail? *)
 type verify_error =
-  | Error_v_unable_to_get_issuer_cert (** The issuer certificate could not be found: this occurs if the issuer certificate of an untrusted certificate cannot be found.*)
-  | Error_v_unable_to_get_ctl (** The CRL of a certificate could not be found. Unused. *)
-  | Error_v_unable_to_decrypt_cert_signature (** The certificate signature could not be decrypted. This means that the actual signature value could not be determined rather than it not matching the expected value, this is only meaningful for RSA keys.*)
-  | Error_v_unable_to_decrypt_CRL_signature (** The CRL signature could not be decrypted: this means that the actual signature value could not be determined rather than it not matching the expected value. Unused. *)
-  | Error_v_unable_to_decode_issuer_public_key (** The public key in the certificate SubjectPublicKeyInfo could not be read. *)
-  | Error_v_cert_signature_failure (** The signature of the certificate is invalid. *)
-  | Error_v_CRL_signature_failure (** The signature of the certificate is invalid. Unused. *)
-  | Error_v_cert_not_yet_valid (** The certificate is not yet valid: the notBefore date is after the current time. *)
-  | Error_v_cert_has_expired (** The certificate has expired: that is the notAfter date is before the current time. *)
-  | Error_v_CRL_not_yet_valid (** The CRL is not yet valid. Unused. *)
-  | Error_v_CRL_has_expired (** The CRL has expired. Unused. *)
-  | Error_v_error_in_cert_not_before_field (** The certificate notBefore field contains an invalid time. *)
-  | Error_v_error_in_cert_not_after_field (** The certificate notAfter field contains an invalid time. *)
-  | Error_v_error_in_CRL_last_update_field (** The CRL lastUpdate field contains an invalid time. Unused. *)
-  | Error_v_error_in_CRL_next_update_field (** The CRL nextUpdate field contains an invalid time. Unused. *)
-  | Error_v_out_of_mem (** An error occurred trying to allocate memory. This should never happen. *)
-  | Error_v_depth_zero_self_signed_cert (** The passed certificate is self signed and the same certificate cannot be found in the list of trusted certificates. *)
-  | Error_v_self_signed_cert_in_chain (** The certificate chain could be built up using the untrusted certificates but the root could not be found locally. *)
-  | Error_v_unable_to_get_issuer_cert_locally (** The issuer certificate of a locally looked up certificate could not be found. This normally means the list of trusted certificates is not complete. *)
-  | Error_v_unable_to_verify_leaf_signature (** No signatures could be verified because the chain contains only one certificate and it is not self signed. *)
-  | Error_v_cert_chain_too_long (** The certificate chain length is greater than the supplied maximum depth. Unused. *)
-  | Error_v_cert_revoked (** The certificate has been revoked. Unused. *)
-  | Error_v_invalid_CA (** A CA certificate is invalid. Either it is not a CA or its extensions are not consistent with the supplied purpose. *)
-  | Error_v_path_length_exceeded (** The basicConstraints pathlength parameter has been exceeded. *)
-  | Error_v_invalid_purpose (** The supplied certificate cannot be used for the specified purpose. *)
-  | Error_v_cert_untrusted (** The root CA is not marked as trusted for the specified purpose. *)
-  | Error_v_cert_rejected (** The root CA is marked to reject the specified purpose. *)
-  | Error_v_subject_issuer_mismatch (** The current candidate issuer certificate was rejected because its subject name did not match the issuer name of the current certificate. *)
-  | Error_v_akid_skid_mismatch (** The current candidate issuer certificate was rejected because its subject key identifier was present and did not match the authority key identifier current certificate. *)
-  | Error_v_akid_issuer_serial_mismatch (** The current candidate issuer certificate was rejected because its issuer name and serial number was present and did not match the authority key identifier of the current certificate. *)
-  | Error_v_keyusage_no_certsign (** The current candidate issuer certificate was rejected because its keyUsage extension does not permit certificate signing. *)
-  | Error_v_application_verification (** An application specific error. Unused. *)
+  | Error_v_unable_to_get_issuer_cert
+  (** The issuer certificate could not be found: this occurs if the issuer
+      certificate of an untrusted certificate cannot be found.*)
+  | Error_v_unable_to_get_ctl
+  (** The CRL of a certificate could not be found. *)
+  | Error_v_unable_to_decrypt_cert_signature
+  (** The certificate signature could not be decrypted. This means that the
+      actual signature value could not be determined rather than it not matching the
+      expected value, this is only meaningful for RSA keys. *)
+  | Error_v_unable_to_decrypt_CRL_signature
+  (** The CRL signature could not be decrypted: this means that the actual
+      signature value could not be determined rather than it not matching the
+      expected value. Unused. *)
+  | Error_v_unable_to_decode_issuer_public_key
+  (** The public key in the certificate SubjectPublicKeyInfo could not be
+      read. *)
+  | Error_v_cert_signature_failure
+  (** The signature of the certificate is invalid. *)
+  | Error_v_CRL_signature_failure
+  (** The signature of the certificate is invalid. *)
+  | Error_v_cert_not_yet_valid
+  (** The certificate is not yet valid: the notBefore date is after the current
+      time. *)
+  | Error_v_cert_has_expired
+  (** The certificate has expired: that is the notAfter date is before the
+      current time. *)
+  | Error_v_CRL_not_yet_valid
+  (** The CRL is not yet valid. *)
+  | Error_v_CRL_has_expired
+  (** The CRL has expired. *)
+  | Error_v_error_in_cert_not_before_field
+  (** The certificate notBefore field contains an invalid time. *)
+  | Error_v_error_in_cert_not_after_field
+  (** The certificate notAfter field contains an invalid time. *)
+  | Error_v_error_in_CRL_last_update_field
+  (** The CRL lastUpdate field contains an invalid time. *)
+  | Error_v_error_in_CRL_next_update_field
+  (** The CRL nextUpdate field contains an invalid time. *)
+  | Error_v_out_of_mem
+  (** An error occurred trying to allocate memory. This should never happen. *)
+  | Error_v_depth_zero_self_signed_cert
+  (** The passed certificate is self signed and the same certificate cannot be
+      found in the list of trusted certificates. *)
+  | Error_v_self_signed_cert_in_chain
+  (** The certificate chain could be built up using the untrusted certificates
+      but the root could not be found locally. *)
+  | Error_v_unable_to_get_issuer_cert_locally
+  (** The issuer certificate of a locally looked up certificate could not be
+      found. This normally means the list of trusted certificates is not
+      complete. *)
+  | Error_v_unable_to_verify_leaf_signature
+  (** No signatures could be verified because the chain contains only one
+      certificate and it is not self signed. *)
+  | Error_v_cert_chain_too_long
+  (** The certificate chain length is greater than the supplied maximum
+      depth. Unused. *)
+  | Error_v_cert_revoked
+  (** The certificate has been revoked. *)
+  | Error_v_invalid_CA
+  (** A CA certificate is invalid. Either it is not a CA or its extensions are
+      not consistent with the supplied purpose. *)
+  | Error_v_path_length_exceeded
+  (** The basicConstraints pathlength parameter has been exceeded. *)
+  | Error_v_invalid_purpose
+  (** The supplied certificate cannot be used for the specified purpose. *)
+  | Error_v_cert_untrusted
+  (** The root CA is not marked as trusted for the specified purpose. *)
+  | Error_v_cert_rejected
+  (** The root CA is marked to reject the specified purpose. *)
+  | Error_v_subject_issuer_mismatch
+  (** The current candidate issuer certificate was rejected because its subject
+      name did not match the issuer name of the current certificate. *)
+  | Error_v_akid_skid_mismatch
+  (** The current candidate issuer certificate was rejected because its subject
+      key identifier was present and did not match the authority key identifier
+      current certificate. *)
+  | Error_v_akid_issuer_serial_mismatch
+  (** The current candidate issuer certificate was rejected because its issuer
+      name and serial number was present and did not match the authority key
+      identifier of the current certificate. *)
+  | Error_v_keyusage_no_certsign
+  (** The current candidate issuer certificate was rejected because its keyUsage
+      extension does not permit certificate signing. *)
+  | Error_v_application_verification
+  (** An application specific error. Unused. *)
 
 (** An error occured while verifying the certificate. *)
 exception Verify_error of verify_error
@@ -120,7 +192,8 @@ exception Verify_error of verify_error
     [Ssl_threads.init] first. *)
 val init : ?thread_safe:bool -> unit -> unit
 
-(** Retrieve a human-readable message that corresponds to the last error that occurred. *)
+(** Retrieve a human-readable message that corresponds to the last error that
+    occurred. *)
 val get_error_string : unit -> string
 
 (** Protocol used by SSL. *)
@@ -137,7 +210,7 @@ type socket
 (** {2 Threads} *)
 
 (** You should not have to use those functions. They are only here for internal
-    * use (they are needed to make the openssl library thread-safe, see the *
+    use (they are needed to make the openssl library thread-safe, see the
     [Ssl_threads] module). *)
 
 val thread_safe : bool ref
@@ -145,8 +218,8 @@ val thread_safe : bool ref
 (** {2 Contexts} *)
 
 (** A context. A context should be created by a server or client once per
-  * program life-time and holds mainly default values for the SSL structures
-  * which are later created for the connections. *)
+    program life-time and holds mainly default values for the SSL structures
+    which are later created for the connections. *)
 type context
 
 (** Type of the context to create. *)
@@ -232,13 +305,14 @@ val get_issuer : certificate -> string
 val get_subject : certificate -> string
 
 (** [load_verify_locations ctxt cafile capath] specifies the locations for the
-  * context [ctx], at which CA certificates for verification purposes are
-  * located. [cafile] should be the name of a CA certificates file in PEM format
-  * and [capath] should be the name of a directory which contains CA
-  * certificates in PEM format. Empty strings can be used in order not to
-  * specify on of the parameters (but not both).
-  *
-  * @raise Invalid_argument if both strings are empty or if one of the files given in arguments could not be found. *)
+    context [ctx], at which CA certificates for verification purposes are
+    located. [cafile] should be the name of a CA certificates file in PEM format
+    and [capath] should be the name of a directory which contains CA certificates
+    in PEM format. Empty strings can be used in order not to specify on of the
+    parameters (but not both).
+
+    @raise Invalid_argument if both strings are empty or if one of the files
+    given in arguments could not be found. *)
 val load_verify_locations : context -> string -> string -> unit
 
 (** Get the verification result. *)
@@ -275,13 +349,11 @@ val shutdown : socket -> unit
 (** {2 I/O on SSL sockets} *)
 
 (** Check the result of the verification of the X509 certificate presented by
-  * the peer, if any. Raises a [verify_error] on failure. *)
+    the peer, if any. Raises a [verify_error] on failure. *)
 val verify : socket -> unit
 
-(** Get the file descriptor associated with a socket.
-  * It is primarly useful for [select]ing on it; you should not
-  * write or read on it.
-  *)
+(** Get the file descriptor associated with a socket. It is primarly useful for
+    [select]ing on it; you should not write or read on it. *)
 val file_descr_of_socket : socket -> Unix.file_descr
 
 (** [read sock buf off len] receives data from a connected SSL socket. *)
