@@ -295,6 +295,8 @@ type certificate
 (** [read_certificate fname] reads the certificate in the file [fname]. *)
 val read_certificate : string -> certificate
 
+val write_certificate : string -> certificate -> unit
+
 (** Get the certificate used by a socket. *)
 val get_certificate : socket -> certificate
 

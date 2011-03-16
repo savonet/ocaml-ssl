@@ -1,5 +1,6 @@
 0.4.6 (unreleased)
 =====
+* Added write_certificate function.
 
 0.4.5 (2011-03-01)
 =====

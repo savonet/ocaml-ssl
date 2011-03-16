@@ -173,6 +173,8 @@ external get_certificate : socket -> certificate = "ocaml_ssl_get_certificate"
 
 external read_certificate : string -> certificate = "ocaml_ssl_read_certificate"
 
+external write_certificate : string -> certificate -> unit = "ocaml_ssl_write_certificate"
+
 external get_issuer : certificate -> string = "ocaml_ssl_get_issuer"
 
 external get_subject : certificate -> string = "ocaml_ssl_get_subject"

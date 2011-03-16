@@ -575,6 +575,29 @@ CAMLprim value ocaml_ssl_read_certificate(value vfilename)
   return block;
 }
 
+CAMLprim value ocaml_ssl_write_certificate(value vfilename, value certificate)
+{
+  CAMLparam2(vfilename, certificate);
+  char *filename = String_val(vfilename);
+  X509 *cert = Cert_val(certificate);
+  FILE *fh = NULL;
+
+  if((fh = fopen(filename, "w")) == NULL)
+    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+
+  caml_enter_blocking_section();
+  if(PEM_write_X509(fh, cert) == 0)
+  {
+    fclose(fh);
+    caml_leave_blocking_section();
+    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+  }
+  fclose(fh);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_get_certificate(value socket)
 {
   CAMLparam1(socket);
