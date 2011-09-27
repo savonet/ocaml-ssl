@@ -1,5 +1,1 @@
-#!/bin/sh
-
-autoconf
-cd examples
-autoconf
+../autoconf/bootstrap

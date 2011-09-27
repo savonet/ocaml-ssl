@@ -1,13 +1,13 @@
 # $Id$
 
 # check for one particular file of the sources
-AC_INIT(ocaml-ssl-examples, 0.4.3, savonet-users@lists.sourceforge.net)
+AC_INIT([ocaml-ssl-examples],[0.4.3],[savonet-users@lists.sourceforge.net])
 
 VERSION=$PACKAGE_VERSION
 AC_MSG_RESULT("configuring $PACKAGE_STRING")
 
 OCAMLFIND_LDCONF=""
-AC_ARG_ENABLE([ldconf], AC_HELP_STRING([--disable-ldconf],["don't modify the dynamic loader configuration file (default is enable)"]),[ac_enable_ldconf=$enableval],[ac_enable_ldconf=$enableval],[ac_enable_ldconf=yes])
+AC_ARG_ENABLE([ldconf], AS_HELP_STRING([--disable-ldconf],["don't modify the dynamic loader configuration file (default is enable)"]),[ac_enable_ldconf=$enableval],[ac_enable_ldconf=$enableval],[ac_enable_ldconf=yes])
 if test "$ac_enable_ldconf" = no ; then
 	AC_MSG_RESULT("disabling modification of ld.conf")
 	OCAMLFIND_LDCONF=dummy
@@ -108,7 +108,7 @@ if test "$OCAMLFIND" = no ; then
 fi
 
 AC_ARG_WITH([ssl-dir],
-AC_HELP_STRING([--with-ssl-dir=path],[look for ocaml ssl library in "path" (autodetected by default)]))
+AS_HELP_STRING([--with-ssl-dir=path],[look for ocaml ssl library in "path" (autodetected by default)]))
 AC_MSG_CHECKING(for ocaml-ssl)
 if test -z "$with_ssl_dir" ; then
    I_SSL=`$OCAMLFIND query ssl`
