@@ -182,9 +182,9 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
  * Context-related functions *
  *****************************/
 
-static SSL_METHOD *get_method(int protocol, int type)
+static const SSL_METHOD *get_method(int protocol, int type)
 {
-  SSL_METHOD *method = NULL;
+  const SSL_METHOD *method = NULL;
 
   caml_enter_blocking_section();
   switch (protocol)
@@ -257,7 +257,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type)
 {
   value block;
   SSL_CTX *ctx;
-  SSL_METHOD *method = get_method(Int_val(protocol), Int_val(type));
+  const SSL_METHOD *method = get_method(Int_val(protocol), Int_val(type));
 
   caml_enter_blocking_section();
   ctx = SSL_CTX_new(method);
@@ -808,13 +808,13 @@ CAMLprim value ocaml_ssl_flush(value socket)
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
   BIO *bio;
-  int ans;
 
   caml_enter_blocking_section();
   bio = SSL_get_wbio(ssl);
   if(bio)
   {
-    ans = BIO_flush(bio);
+    /* TODO: raise an error */
+    assert(BIO_flush(bio) == 1);
   }
   caml_leave_blocking_section();
 
