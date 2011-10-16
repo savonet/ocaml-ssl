@@ -1,11 +1,9 @@
-# $Id$
-
 PROGNAME = ocaml-ssl
 DISTFILES = bootstrap CHANGES configure configure.ac COPYING Makefile README \
             src/Makefile.in src/OCamlMakefile src/META.in src/*.ml src/*.mli src/*.c \
             examples/configure* examples/Makefile*.in examples/OCamlMakefile examples/Makefile examples/*.ml \
             doc/html
-VERSION := $(shell grep 'AC_INIT' configure.ac| sed -e 's/AC_INIT([^,]*, \([^,]*\), .*)/\1/')
+VERSION := $(shell grep 'AC_INIT' configure.ac| sed -e 's/AC_INIT([^,]*,\[\([^,]*\)\],.*)/\1/')
 
 all byte opt install uninstall update:
 	$(MAKE) -C src $@
