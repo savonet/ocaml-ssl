@@ -193,23 +193,6 @@ static SSL_METHOD *get_method(int protocol, int type)
       switch (type)
       {
         case 0:
-          method = SSLv2_client_method();
-          break;
-
-        case 1:
-          method = SSLv2_server_method();
-          break;
-
-        case 2:
-          method = SSLv2_method();
-          break;
-      }
-      break;
-
-    case 1:
-      switch (type)
-      {
-        case 0:
           method = SSLv23_client_method();
           break;
 
@@ -223,7 +206,7 @@ static SSL_METHOD *get_method(int protocol, int type)
       }
       break;
 
-    case 2:
+    case 1:
       switch (type)
       {
         case 0:
@@ -240,7 +223,7 @@ static SSL_METHOD *get_method(int protocol, int type)
       }
       break;
 
-    case 3:
+    case 2:
       switch (type)
       {
         case 0:

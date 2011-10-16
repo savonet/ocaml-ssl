@@ -1,6 +1,7 @@
 0.4.6 (unreleased)
 =====
 * Added write_certificate function.
+* Remove support for SSLv2, which was dropped upstream (thanks Dario Teixeira).
 
 0.4.5 (2011-03-01)
 =====

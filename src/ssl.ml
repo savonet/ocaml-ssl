@@ -21,7 +21,6 @@
 (* $Id$ *)
 
 type protocol =
-  | SSLv2
   | SSLv23
   | SSLv3
   | TLSv1

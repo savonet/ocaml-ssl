@@ -198,7 +198,6 @@ val get_error_string : unit -> string
 
 (** Protocol used by SSL. *)
 type protocol =
-  | SSLv2 (** SSL v2 protocol *)
   | SSLv23 (** SSL v3 protocol but can rollback to v2 *)
   | SSLv3 (** SSL v3 protocol *)
   | TLSv1 (** TLS v1 protocol *)
