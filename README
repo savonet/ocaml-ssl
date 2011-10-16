@@ -1,4 +1,4 @@
-OCaml-ssl - OCaml bindings for the libssl
+OCaml-SSL - OCaml bindings for the libssl
 =========================================
 
 Author: Samuel Mimram <samuel.mimram@ens-lyon.org>

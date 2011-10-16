@@ -460,7 +460,7 @@ ifneq ($(strip $(OBJ_LINK)),)
 endif
 
 ifdef WIN32
-DLLSONAME := $(CLIB_BASE).dll
+DLLSONAME := dll$(CLIB_BASE).dll
 else
 DLLSONAME := dll$(CLIB_BASE).so
 endif

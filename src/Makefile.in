@@ -3,8 +3,6 @@
 #
 # by Samuel Mimram
 
-# $Id$
-
 
 export OCAMLMAKEFILE = OCamlMakefile
 
@@ -16,15 +14,20 @@ export PS2PDF = @PS2PDF@
 export BEST = @BEST@
 export OCAMLLIBPATH = @CAMLLIBPATH@
 
+ifeq (Win32, $(shell ocamlc -config | fgrep os_type | sed -e "s/.*: //"))
+	export WIN32 = 1
+endif
+
 #SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
 export RES_CLIB_SUF = _stubs
 export RESULT = ssl
-export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *.a *.so)
+export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *$(shell ocamlc -config | fgrep ext_lib | sed -e "s/.*: //") *$(shell ocamlc -config | fgrep ext_dll | sed -e "s/.*: //"))
 export OCAMLLDFLAGS =
 export OCAMLDOCFLAGS = -stars
 export CLIBS = crypto ssl
 export CC = @CC@
 export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
+export CLIBFLAGS = @LDFLAGS@
 export CPPFLAGS = @CPPFLAGS@
 export NO_CUSTOM = yes
 OCAMLFLAGS = @OCAMLFLAGS@
@@ -63,5 +66,3 @@ update: uninstall install
 # Catch-all target will be applied to all subprojects automatically
 %:
 	@$(MAKE) -f $(OCAMLMAKEFILE) subprojs SUBTARGET=$@
-
-#-include $(OCAMLMAKEFILE)

@@ -42,13 +42,18 @@
 #include <caml/memory.h>
 #include <caml/mlvalues.h>
 #include <caml/signals.h>
+#include <caml/unixsupport.h>
 
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <pthread.h>
+#endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
 
@@ -101,6 +106,52 @@ static struct custom_operations socket_ops =
  * Initialization *
  ******************/
 
+#ifdef WIN32
+struct CRYPTO_dynlock_value
+{
+  HANDLE mutex;
+};
+
+static HANDLE *mutex_buf = NULL;
+
+static void locking_function(int mode, int n, const char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    WaitForSingleObject(mutex_buf[n], INFINITE);
+  else
+    ReleaseMutex(mutex_buf[n]);
+}
+
+static struct CRYPTO_dynlock_value *dyn_create_function(const char *file, int line)
+{
+  struct CRYPTO_dynlock_value *value;
+
+  value = malloc(sizeof(struct CRYPTO_dynlock_value));
+  if (!value)
+    return NULL;
+  if (!(value->mutex = CreateMutex(NULL, FALSE, NULL)))
+    {
+      free(value);
+      return NULL;
+    }
+
+  return value;
+}
+
+static void dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    WaitForSingleObject(l->mutex, INFINITE);
+  else
+    ReleaseMutex(l->mutex);
+}
+
+static void dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+  CloseHandle(l->mutex);
+  free(l);
+}
+#else
 struct CRYPTO_dynlock_value
 {
   pthread_mutex_t mutex;
@@ -146,6 +197,7 @@ static void dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *fil
   pthread_mutex_destroy(&l->mutex);
   free(l);
 }
+#endif
 
 CAMLprim value ocaml_ssl_init(value use_threads)
 {
@@ -156,12 +208,23 @@ CAMLprim value ocaml_ssl_init(value use_threads)
 
   if(Int_val(use_threads))
   {
+#ifdef WIN32
+    mutex_buf = malloc(CRYPTO_num_locks() * sizeof(HANDLE));
+#else
     mutex_buf = malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+#endif
     assert(mutex_buf);
     for (i = 0; i < CRYPTO_num_locks(); i++)
+#ifdef WIN32
+      mutex_buf[i] = CreateMutex(NULL, FALSE, NULL);
+#else
       pthread_mutex_init(&mutex_buf[i], NULL);
+#endif
     CRYPTO_set_locking_callback(locking_function);
+#ifndef WIN32
+    /* Windows does not require id_function, see threads(3) */
     CRYPTO_set_id_callback(id_function);
+#endif
     CRYPTO_set_dynlock_create_callback(dyn_create_function);
     CRYPTO_set_dynlock_lock_callback(dyn_lock_function);
     CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function);
@@ -669,7 +732,11 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
 {
   CAMLparam1(context);
   CAMLlocal1(block);
+#ifdef Socket_val
+  SOCKET socket = Socket_val(socket_);
+#else
   int socket = Int_val(socket_);
+#endif
   SSL_CTX *ctx = Ctx_val(context);
   SSL *ssl;
 
