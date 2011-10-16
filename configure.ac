@@ -1,6 +1,3 @@
-# $Id$
-
-# check for one particular file of the sources
 AC_INIT([ocaml-ssl],[0.4.6],[savonet-users@lists.sourceforge.net])
 
 VERSION=$PACKAGE_VERSION
@@ -12,6 +9,8 @@ if test "$ac_enable_ldconf" = no ; then
 	AC_MSG_RESULT([disabling modification of ld.conf])
 	OCAMLFIND_LDCONF=dummy
 fi
+
+AC_CHECK_LIB(pthread, pthread_create)
 
 # Check for Ocaml compilers
 

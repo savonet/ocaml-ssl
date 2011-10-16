@@ -4,6 +4,7 @@
 * Remove support for SSLv2, which was dropped upstream (thanks Dario Teixeira).
 * Added support for compiling under Win32 (thanks David Allsopp), see
   README.win32.
+* Check for pthreads in configure.
 
 0.4.5 (2011-03-01)
 =====
