@@ -1,0 +1,7 @@
+SOURCES = stelnet.ml
+RESULT = stelnet
+LIBS = unix ssl_threads
+INCDIRS = @I_SSL@
+THREADS = yes
+
+-include OCamlMakefile

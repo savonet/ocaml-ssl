@@ -1,0 +1,7 @@
+SOURCES = stalkd.ml
+RESULT = stalkd
+LIBS = unix ssl_threads
+INCDIRS = @I_SSL@
+THREADS = yes
+
+-include OCamlMakefile

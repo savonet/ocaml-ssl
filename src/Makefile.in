@@ -1,0 +1,68 @@
+# Copyright 2003 Samuel Mimram
+# libssl bindings for OCaml.
+#
+# by Samuel Mimram
+
+
+export OCAMLMAKEFILE = OCamlMakefile
+
+export OCAMLFIND = @OCAMLFIND@
+export OCAMLFIND_LDCONF = @OCAMLFIND_LDCONF@
+export LATEX = @LATEX@
+export DVIPS = @DVIPS@
+export PS2PDF = @PS2PDF@
+export BEST = @BEST@
+export OCAMLLIBPATH = @CAMLLIBPATH@
+
+ifeq (Win32, $(shell ocamlc -config | fgrep os_type | sed -e "s/.*: //"))
+	export WIN32 = 1
+endif
+
+#SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
+export RES_CLIB_SUF = _stubs
+export RESULT = ssl
+export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *$(shell ocamlc -config | fgrep ext_lib | sed -e "s/.*: //") *$(shell ocamlc -config | fgrep ext_dll | sed -e "s/.*: //"))
+export OCAMLLDFLAGS =
+export OCAMLDOCFLAGS = -stars
+export CLIBS = crypto ssl
+export CC = @CC@
+export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
+export CLIBFLAGS = @LDFLAGS@
+export CPPFLAGS = @CPPFLAGS@
+export NO_CUSTOM = yes
+OCAMLFLAGS = @OCAMLFLAGS@
+
+define PROJ_ssl
+  SOURCES = ssl_stubs.c ssl.mli ssl.ml
+  RESULT = ssl
+  THREADS = no
+endef
+export PROJ_ssl
+
+define PROJ_sslthreads
+  SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
+  RESULT = ssl_threads
+  THREADS = yes
+endef
+export PROJ_sslthreads
+
+export SUBPROJS = ssl sslthreads
+
+all: $(BEST)
+
+byte: byte-code-library
+opt: native-code-library
+
+native-code-library: byte-code-library
+
+install:
+	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
+
+uninstall:
+	$(OCAMLFIND) remove $(OCAMLFIND_INSTFLAGS) $(RESULT)
+
+update: uninstall install
+
+# Catch-all target will be applied to all subprojects automatically
+%:
+	@$(MAKE) -f $(OCAMLMAKEFILE) subprojs SUBTARGET=$@

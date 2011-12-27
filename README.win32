@@ -1,0 +1,36 @@
+OCaml-SSL - OCaml bindings for the libssl
+=========================================
+
+Windows Installation Instructions
+=================================
+
+Author: David Allsopp <david.allsopp@metastack.com>
+
+Note - these instructions are only for the MinGW port of OCaml (tested with
+3.12.0 and OpenSSL 1.0.0d).
+
+
+Dependencies
+============
+
+These instructions allow compilation of OpenSSL from sources using the MinGW
+compiler instead of Cygwin's. You will need an installation of Cygwin with at
+least the core GCC suite (with MinGW compiler), GNU Make and Perl
+
+Extract the OpenSSL sources from the tarball and from that directory run:
+
+perl Configure mingw shared --prefix=C:/ocamlmgw
+make
+make install
+
+This will install an OCaml compiled OpenSSL library to C:\ocamlmgw
+
+
+Installation
+============
+
+To compile the OCaml-SSL, run:
+
+./configure CC='gcc -mno-cygwin' LDFLAGS=-LC:/ocamlmgw/lib CFLAGS=-IC:/ocamlmgw/include
+make
+make install

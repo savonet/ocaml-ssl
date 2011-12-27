@@ -1,0 +1,97 @@
+0.4.6 (2011-10-16)
+=====
+* Added write_certificate function.
+* Remove support for SSLv2, which was dropped upstream (thanks Dario Teixeira).
+* Added support for compiling under Win32 (thanks David Allsopp), see
+  README.win32.
+* Check for pthreads in configure.
+
+0.4.5 (2011-03-01)
+=====
+* Use pthread mutexes for locking thread-safe version of ssl.
+
+0.4.4 (2010-01-06)
+=====
+* Use SSL_CTX_use_certificate_chain_file instead of
+  SSL_CTX_use_certificate_file.
+* Added support for --enable-debugging configure option.
+* Don't link with unix library and don't build in custom mode.
+
+0.4.3 (2008-12-18)
+=====
+* Don't use blocking sections in finalizers since it causes segfaults (thanks
+  Grégoire Henry and Stéphane Glondu).
+
+0.4.2 (2007-03-29)
+=====
+* Added some missing blocking sections (reported by Oscar Hellström).
+
+0.4.1 (2007-02-21)
+=====
+* file_descr_of_socket is not marked as deprecated anymore.
+* Patched the Makefile to be compatible with FreeBSD (thanks Jaap Boender).
+* Explicitely link with libcrypto since we use it. Compilation should now work
+  on Mac OS X too (thanks Janne Hellsten).
+
+0.4.0 (2006-09-09)
+=====
+* Using caml_alloc_custom and Data_custom_val to access custom blocks.
+* Added set_password_callback function.
+* Integrated a big patch from Chris Waterson:
+- Added get_error_string function.
+- Read and write are not blocking anymore, use Unix.select and
+  file_descr_of_socket if you want blocking functions.
+- Fix SSL_CTX initialization to call SSL_CTX_set_mode(3) with
+  SSL_MODE_AUTO_RETRY flag. This causes SSL_read and SSL_write to "hide" the
+  SSL_ERROR_WANT_(READ|WRITE) errors that may occur during renegotiation on a
+  blocking socket.
+- Fix SSL_CTX initialization to call SSL_CTX_set_mode(3) with
+  SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER flag. This allows for a different buffer
+  address to be passed to a restarted non-blocking write operation, which is
+  useful since the OCaml garbage collector may move buffers around between
+  calls.
+- We do not need to store explicitely the file descriptor for SSL sockets.
+* Corrected checking of errors in ocaml_ssl_read (thanks Vincent Balat and
+  Nataliya Guts).
+* input_char now raises End_of_file when no byte could be read (thanks Nataliya
+  Guts).
+
+0.3.1 (2005-07-21)
+=====
+* The library is now under the LGPL licence + linking exception + linking with
+  openssl exception (see COPYING for more details).
+
+0.3.0 (2005-06-01)
+=====
+* Added Ssl_threads.init function to make the library thread-safe.
+* Put connect, accept and flush (and all other functions) in blocking_section to
+  allow other threads to run in the meantime.
+* Unified the three context creation functions in create_context, the
+  certificate to use should now be sepcified with use_certificate (sorry for the
+  API-breakage).
+* Added the get_verify_result function.
+* Using Store_field instead of Field(...) = ...
+* Using caml namespace functions.
+
+0.2.0 (2004-12-18)
+=====
+* Many thanks to Thomas Fischbacher for his patches:
+- Corrected int / val bugs when raising exceptions from C (those where found by
+  Mike Furr too, thanks).
+- Added many fonctions (but in Caml instead of C).
+* Context creation functions now take the protocol as argument.
+* Added the create_context function (for client and server connections).
+* Added functions for verifying certificates: client_verify_callback,
+  set_verify, set_verify_depth, verify.
+* The cipher now has its own type.
+* Added functions to handle ciphers: get_current_cipher, get_cipher_description,
+  get_cipher_name, get_cipher_version, set_cipher_list.
+* Added the read_certificate and load_verify_locations functions.
+* Added the open_connection_with_context and flush functions.
+* read and write functions are now thread-safe.
+* Cleaned the stubs (function prototypes, comments, etc.).
+* Updated OCamlMakefile and improved build system.
+
+0.1.0 (2004-02-05)
+=====
+* Initial release.

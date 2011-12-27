@@ -1,0 +1,8 @@
+name="Ssl"
+version="@VERSION@"
+description="OCaml bindings to libssl"
+requires="unix"
+archive(byte) = "ssl.cma"
+archive(native) = "ssl.cmxa"
+archive(mt,byte) = "ssl_threads.cma"
+archive(mt,native) = "ssl_threads.cmxa"
