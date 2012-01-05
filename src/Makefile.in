@@ -24,7 +24,11 @@ export RESULT = ssl
 export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *$(shell ocamlc -config | fgrep ext_lib | sed -e "s/.*: //") *$(shell ocamlc -config | fgrep ext_dll | sed -e "s/.*: //"))
 export OCAMLLDFLAGS =
 export OCAMLDOCFLAGS = -stars
-export CLIBS = crypto ssl
+ifeq (1, $(shell uname -s | grep -c "MINGW"))
+	export CLIBS = crypto ssl ws2_32 gdi32 crypt32
+else
+	export CLIBS = crypto ssl
+endif
 export CC = @CC@
 export CFLAGS = @CFLAGS@ -ansi -DCAML_NAME_SPACE -Wall
 export CLIBFLAGS = @LDFLAGS@
