@@ -3,6 +3,8 @@ AC_INIT([ocaml-ssl],[0.4.6],[savonet-users@lists.sourceforge.net])
 VERSION=$PACKAGE_VERSION
 AC_MSG_RESULT([configuring $PACKAGE_STRING])
 
+MINGW=`uname -s | grep -c "MINGW"`
+
 OCAMLFIND_LDCONF=""
 AC_ARG_ENABLE([ldconf], AS_HELP_STRING([--disable-ldconf],[don't modify the dynamic loader configuration file (default is enable)]),[ac_enable_ldconf=$enableval],[ac_enable_ldconf=$enableval],[ac_enable_ldconf=yes])
 if test "$ac_enable_ldconf" = no ; then
@@ -115,7 +117,11 @@ fi
 CAMLLIBPATH=`$OCAMLC -where`
 
 AC_PROG_CC
-AC_CHECK_LIB(ssl, SSL_new,,AC_MSG_ERROR(Cannot find libssl.))
+if test "$MINGW" = 0; then
+	AC_CHECK_LIB(ssl, SSL_new,,AC_MSG_ERROR(Cannot find libssl.))
+else
+	AC_CHECK_LIB(ssl, SSL_new,,AC_MSG_ERROR(Cannot find libssl.), [-lcrypto -lws2_32 -lgdi32 -lcrypt32])
+fi
 AC_CHECK_HEADER(openssl/ssl.h,,AC_MSG_ERROR(Cannot find libssl headers.))
 
 # other progs
