@@ -808,6 +808,7 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start, value le
 
   memmove(buf, (char*)String_val(buffer) + Int_val(start), buflen);
   caml_enter_blocking_section();
+  ERR_clear_error();
   ret = SSL_write(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
   caml_leave_blocking_section();
@@ -831,10 +832,9 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start, value len
     caml_invalid_argument("Buffer too short.");
 
   caml_enter_blocking_section();
+  ERR_clear_error();
   ret = SSL_read(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
-  if (err != SSL_ERROR_NONE)
-    err = SSL_get_error(ssl, ret);
   caml_leave_blocking_section();
   memmove(((char*)String_val(buffer)) + Int_val(start), buf, buflen);
   free(buf);
@@ -852,6 +852,7 @@ CAMLprim value ocaml_ssl_accept(value socket)
 
   int ret, err;
   caml_enter_blocking_section();
+  ERR_clear_error();
   ret = SSL_accept(ssl);
   err = SSL_get_error(ssl, ret);
   caml_leave_blocking_section();
