@@ -761,21 +761,15 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
 CAMLprim value ocaml_ssl_connect(value socket)
 {
   CAMLparam1(socket);
-  int ret;
+  int ret, err;
   SSL *ssl = SSL_val(socket);
 
   caml_enter_blocking_section();
   ret = SSL_connect(ssl);
+  err = SSL_get_error(ssl, ret);
   caml_leave_blocking_section();
-  if (ret < 0)
-  {
-    int err;
-
-    caml_enter_blocking_section();
-    err = SSL_get_error(ssl, ret);
-    caml_leave_blocking_section();
+  if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(err));
-  }
 
   CAMLreturn(Val_unit);
 }
@@ -859,12 +853,10 @@ CAMLprim value ocaml_ssl_accept(value socket)
   int ret, err;
   caml_enter_blocking_section();
   ret = SSL_accept(ssl);
-  if (ret <= 0)
-  {
-    err = SSL_get_error(ssl, ret);
-    caml_leave_blocking_section();
+  err = SSL_get_error(ssl, ret);
+  caml_leave_blocking_section();
+  if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_accept_error"), Val_int(err));
-  }
   caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
