@@ -56,6 +56,7 @@
 #endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
+static DH *load_dh_param(const char *dhfile);
 
 /*******************
  * Data structures *
@@ -608,6 +609,32 @@ CAMLprim value ocaml_ssl_get_cipher_version(value vcipher)
   return caml_copy_string(version);
 }
 
+CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path)
+{
+  CAMLparam2(context, dh_file_path);
+  DH *dh = NULL;
+  SSL_CTX *ctx = Ctx_val(context);
+  char *dh_cfile_path = String_val(dh_file_path);
+
+  if(*dh_cfile_path == 0)
+    caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
+
+  dh = load_dh_param(dh_cfile_path);
+  caml_enter_blocking_section();
+  if (dh != NULL){
+    if(SSL_CTX_set_tmp_dh(ctx,dh) != 1){
+      caml_leave_blocking_section();
+      caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
+    }
+    caml_leave_blocking_section();
+    DH_free(dh);
+  }
+  else{
+      caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
+  }
+  CAMLreturn(Val_unit);
+}
+
 /*********************************
  * Certificate-related functions *
  *********************************/
@@ -1083,4 +1110,16 @@ return_time:
     free(issuer);
 
   return ok;
+}
+static DH *load_dh_param(const char *dhfile)
+{
+  DH *ret=NULL;
+  BIO *bio;
+  
+  if ((bio=BIO_new_file(dhfile,"r")) == NULL)
+  	goto err;
+  ret=PEM_read_bio_DHparams(bio,NULL,NULL,NULL);
+err:
+  if (bio != NULL) BIO_free(bio);
+  return(ret);
 }
