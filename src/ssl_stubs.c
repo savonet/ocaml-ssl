@@ -303,6 +303,40 @@ static const SSL_METHOD *get_method(int protocol, int type)
       }
       break;
 
+    case 3:
+      switch (type)
+      {
+        case 0:
+          method = TLSv1_1_client_method();
+          break;
+
+        case 1:
+          method = TLSv1_1_server_method();
+          break;
+
+        case 2:
+          method = TLSv1_1_method();
+          break;
+      }
+      break;
+
+    case 4:
+      switch (type)
+      {
+        case 0:
+          method = TLSv1_2_client_method();
+          break;
+
+        case 1:
+          method = TLSv1_2_server_method();
+          break;
+
+        case 2:
+          method = TLSv1_2_method();
+          break;
+      }
+      break;
+
     default:
       caml_leave_blocking_section();
       caml_invalid_argument("Unknown method (this should not have happened, please report).");
