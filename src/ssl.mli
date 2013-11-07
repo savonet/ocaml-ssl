@@ -278,6 +278,9 @@ val set_cipher_list : context -> string -> unit
 (** Init DH parameters from file *)
 val init_dh_from_file : context -> string -> unit
 
+(** Init EC curve from curve name *)
+val init_ec_from_named_curve : context -> string -> unit
+
 (** Get the cipher used by a socket. *)
 val get_cipher : socket -> cipher
 
