@@ -201,6 +201,8 @@ type protocol =
   | SSLv23 (** SSL v3 protocol but can rollback to v2 *)
   | SSLv3 (** SSL v3 protocol *)
   | TLSv1 (** TLS v1 protocol *)
+  | TLSv1_1 (** TLS v1.1 protocol *)
+  | TLSv1_2 (** TLS v1.2 protocol *)
 
 (** An SSL abstract socket. *)
 type socket
@@ -272,6 +274,9 @@ type cipher
 
 (** Set the list of available ciphers for a context. See man ciphers(1) for the format of the string. *)
 val set_cipher_list : context -> string -> unit
+
+(** Init DH parameters from file *)
+val init_dh_from_file : context -> string -> unit
 
 (** Get the cipher used by a socket. *)
 val get_cipher : socket -> cipher

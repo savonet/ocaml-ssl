@@ -24,6 +24,8 @@ type protocol =
   | SSLv23
   | SSLv3
   | TLSv1
+  | TLSv1_1
+  | TLSv1_2
 
 type context
 
@@ -80,6 +82,7 @@ exception Method_error
 exception Context_error
 exception Certificate_error
 exception Cipher_error
+exception Diffie_hellman_error
 exception Private_key_error
 exception Unmatching_keys
 exception Invalid_socket
@@ -95,6 +98,7 @@ let () =
   Callback.register_exception "ssl_exn_context_error" Context_error;
   Callback.register_exception "ssl_exn_certificate_error" Certificate_error;
   Callback.register_exception "ssl_exn_cipher_error" Cipher_error;
+  Callback.register_exception "ssl_exn_diffie_hellman_error" Diffie_hellman_error;
   Callback.register_exception "ssl_exn_private_key_error" Private_key_error;
   Callback.register_exception "ssl_exn_unmatching_keys" Unmatching_keys;
   Callback.register_exception "ssl_exn_invalid_socket" Invalid_socket;
@@ -134,6 +138,8 @@ external set_password_callback : context -> (bool -> string) -> unit = "ocaml_ss
 external embed_socket : Unix.file_descr -> context -> socket = "ocaml_ssl_embed_socket"
 
 external set_cipher_list : context -> string -> unit = "ocaml_ssl_ctx_set_cipher_list"
+
+external init_dh_from_file : context -> string -> unit = "ocaml_ssl_ctx_init_dh_from_file"
 
 external load_verify_locations : context -> string -> string -> unit = "ocaml_ssl_ctx_load_verify_locations"
 
