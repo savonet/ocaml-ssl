@@ -630,6 +630,7 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
     DH_free(dh);
   }
   else{
+      caml_leave_blocking_section();
       caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
   }
   CAMLreturn(Val_unit);
