@@ -630,7 +630,41 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
     DH_free(dh);
   }
   else{
+      caml_leave_blocking_section();
       caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
+  }
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve_name)
+{
+  CAMLparam2(context, curve_name);
+  EC_KEY *ecdh = NULL;
+  int nid = 0;
+  SSL_CTX *ctx = Ctx_val(context);
+  char *ec_curve_name = String_val(curve_name);
+
+  if(*ec_curve_name == 0)
+    caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
+
+  nid = OBJ_sn2nid(ec_curve_name);
+  if(nid == 0){
+    caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
+  }
+
+  caml_enter_blocking_section();
+  ecdh = EC_KEY_new_by_curve_name(nid);
+  if(ecdh != NULL){
+    if(SSL_CTX_set_tmp_ecdh(ctx,ecdh) != 1){
+      caml_leave_blocking_section();
+      caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
+    }
+    caml_leave_blocking_section();
+    EC_KEY_free(ecdh);
+  }
+  else{
+    caml_leave_blocking_section();
+    caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
   }
   CAMLreturn(Val_unit);
 }
