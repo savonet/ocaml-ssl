@@ -626,6 +626,7 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
       caml_leave_blocking_section();
       caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
     }
+    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
     caml_leave_blocking_section();
     DH_free(dh);
   }
@@ -659,6 +660,7 @@ CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve
       caml_leave_blocking_section();
       caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
     }
+    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
     caml_leave_blocking_section();
     EC_KEY_free(ecdh);
   }
