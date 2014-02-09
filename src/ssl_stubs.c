@@ -953,7 +953,6 @@ CAMLprim value ocaml_ssl_accept(value socket)
   caml_leave_blocking_section();
   if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_accept_error"), Val_int(err));
-  caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
 }
