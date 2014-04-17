@@ -48,6 +48,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/tls1.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -854,6 +855,20 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
 
   CAMLreturn(block);
 }
+
+CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
+{
+  CAMLparam2(socket, vhostname);
+  SSL *ssl       = SSL_val(socket);
+  char *hostname = String_val(vhostname);
+
+  caml_enter_blocking_section();
+  SSL_set_tlsext_host_name(ssl, hostname);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
 
 CAMLprim value ocaml_ssl_connect(value socket)
 {

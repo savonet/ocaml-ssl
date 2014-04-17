@@ -190,6 +190,8 @@ external get_subject : certificate -> string = "ocaml_ssl_get_subject"
 
 external file_descr_of_socket : socket -> Unix.file_descr = "ocaml_ssl_get_file_descr"
 
+external set_client_SNI_hostname : socket -> string -> unit = "ocaml_ssl_set_client_SNI_hostname"
+
 external connect : socket -> unit = "ocaml_ssl_connect"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
