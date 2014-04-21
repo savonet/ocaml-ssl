@@ -1,3 +1,17 @@
+0.4.7 (2014-04-21)
+=====
+
+* Add support for TLS1.1 and TLS1.2 (thanks Thomas Calderon).
+* Add function to initialize Diffie-Hellman and elliptic curve parameters
+  (thanks Thomas Calderon and Edwin Török).
+* Add set_client_SNI_hostname to specify client-side SNI hostname (thanks
+  Mauricio Fernandez).
+* Fix double leave of blocking section in ocaml_ssl_accept (thanks Edwin Török).
+* Check for errors in SSL_connect/SSL_accept (thanks Jérôme Vouillon).
+* Clear the error queue before calling SSL_read and similar functions;
+  SSL_get_error does not work reliably otherwise (thanks Jérôme Vouillon).
+* Allow static linking on Mingw64 (thanks schadinger).
+
 0.4.6 (2011-10-16)
 =====
 * Added write_certificate function.
