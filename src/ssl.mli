@@ -342,6 +342,10 @@ val open_connection_with_context : context -> Unix.sockaddr -> socket
 (** Close an SSL connection opened with [open_connection]. *)
 val shutdown_connection : socket -> unit
 
+(** Set the hostname the client is attempting to connect to using the Server
+  * Name Indication (SNI) TLS extension. *)
+val set_client_SNI_hostname : socket -> string -> unit
+
 (** Connect an SSL socket. *)
 val connect : socket -> unit
 
