@@ -306,6 +306,7 @@ static const SSL_METHOD *get_method(int protocol, int type)
       break;
 
     case 3:
+#ifdef HAVE_TLS11
       switch (type)
       {
         case 0:
@@ -320,9 +321,11 @@ static const SSL_METHOD *get_method(int protocol, int type)
           method = TLSv1_1_method();
           break;
       }
+#endif
       break;
 
     case 4:
+#ifdef HAVE_TLS12
       switch (type)
       {
         case 0:
@@ -337,6 +340,7 @@ static const SSL_METHOD *get_method(int protocol, int type)
           method = TLSv1_2_method();
           break;
       }
+#endif
       break;
 
     default:

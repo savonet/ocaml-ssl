@@ -117,12 +117,13 @@ fi
 CAMLLIBPATH=`$OCAMLC -where`
 
 AC_PROG_CC
-if test "$MINGW" = 0; then
-	AC_CHECK_LIB(ssl, SSL_new,,AC_MSG_ERROR(Cannot find libssl.))
-else
-	AC_CHECK_LIB(ssl, SSL_new,,AC_MSG_ERROR(Cannot find libssl.), [-lcrypto -lws2_32 -lgdi32 -lcrypt32])
+if test "$MINGW" != 0; then
+   OTHER_LIBS="-lcrypto -lws2_32 -lgdi32 -lcrypt32"
 fi
+AC_CHECK_LIB(ssl,SSL_new,,AC_MSG_ERROR(Cannot find libssl.),[$OTHER_LIBS])
 AC_CHECK_HEADER(openssl/ssl.h,,AC_MSG_ERROR(Cannot find libssl headers.))
+AC_CHECK_LIB(ssl,TLSv1_1_method,[CFLAGS="$CFLAGS -DHAVE_TLS11"],,[$OTHER_LIBS])
+AC_CHECK_LIB(ssl,TLSv1_2_method,[CFLAGS="$CFLAGS -DHAVE_TLS12"],,[$OTHER_LIBS])
 
 # other progs
 AC_PATH_PROG(OCAMLFIND,ocamlfind,no)
