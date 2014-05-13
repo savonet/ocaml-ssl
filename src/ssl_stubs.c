@@ -642,6 +642,7 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
   CAMLreturn(Val_unit);
 }
 
+#ifdef HAVE_EC
 CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve_name)
 {
   CAMLparam2(context, curve_name);
@@ -675,7 +676,14 @@ CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve
   }
   CAMLreturn(Val_unit);
 }
-
+#else
+CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve_name)
+{
+    CAMLparam2(context, curve_name);
+    caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
+    CAMLreturn(Val_unit);
+}
+#endif
 /*********************************
  * Certificate-related functions *
  *********************************/
@@ -860,6 +868,7 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
   CAMLreturn(block);
 }
 
+#ifdef HAVE_SNI
 CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
 {
   CAMLparam2(socket, vhostname);
@@ -872,7 +881,14 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
 
   CAMLreturn(Val_unit);
 }
-
+#else
+CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
+{
+    CAMLparam2(socket, vhostname);
+    caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
+    CAMLreturn(Val_unit);
+}
+#endif
 
 CAMLprim value ocaml_ssl_connect(value socket)
 {
