@@ -262,6 +262,9 @@ type verify_callback
 (** Client's verification callback. Warning: this might change in the future. *)
 val client_verify_callback : verify_callback
 
+(** Set verbosity of {! client_verify_callback } *)
+val set_client_verify_callback_verbose : bool -> unit
+
 (** Set the verify mode and callback, see SSL_CTX_set_verify(3).
   * Warning: this might change in the future. *)
 val set_verify : context -> verify_mode list -> verify_callback option -> unit

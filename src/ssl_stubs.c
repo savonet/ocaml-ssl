@@ -426,6 +426,17 @@ CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
   return (value)client_verify_callback;
 }
 
+static int client_verify_callback_verbose = 1;
+
+CAMLprim value ocaml_ssl_set_client_verify_callback_verbose(value verbose)
+{
+  CAMLparam1(verbose);
+
+  client_verify_callback_verbose = Bool_val(verbose);
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode, value vcallback)
 {
   CAMLparam3(context, vmode, vcallback);
@@ -1104,7 +1115,7 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx)
   /* If the user wants us to be chatty about things then this
    * is a good time to wizz the certificate chain past quickly :-)
    */
-  if (1)
+  if (client_verify_callback_verbose)
   {
     fprintf(stderr, "Certificate[%d] subject=%s\n", depth, subject);
     fprintf(stderr, "Certificate[%d] issuer =%s\n", depth, issuer);
@@ -1123,8 +1134,11 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx)
        * connection if the server does not have a
        * real certificate!
        */
-      fprintf(stderr,"SSL: rejecting connection - server has a self-signed certificate\n");
-      fflush(stderr);
+      if (client_verify_callback_verbose)
+      {
+        fprintf(stderr,"SSL: rejecting connection - server has a self-signed certificate\n");
+        fflush(stderr);
+      }
 
       /* Sometimes it is really handy to be able to debug things
        * and still get a connection!
@@ -1144,16 +1158,19 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx)
   {
     if (1)
     {
-      fprintf(stderr, "SSL: rejecting connection - error=%d\n", error);
-      if (error == VERIFY_ERR_UNABLE_TO_GET_ISSUER)
+      if (client_verify_callback_verbose)
       {
-        fprintf(stderr, "unknown issuer: %s\n", issuer);
+        fprintf(stderr, "SSL: rejecting connection - error=%d\n", error);
+        if (error == VERIFY_ERR_UNABLE_TO_GET_ISSUER)
+        {
+          fprintf(stderr, "unknown issuer: %s\n", issuer);
+        }
+        else
+        {
+          ERR_print_errors_fp(stderr);
+        }
+        fflush(stderr);
       }
-      else
-      {
-        ERR_print_errors_fp(stderr);
-      }
-      fflush(stderr);
       ok = 0;
       goto return_time;
     }
@@ -1163,7 +1180,7 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx)
        * so that we know which issuer is unknown no matter
        * what the callers options are ...
        */
-      if (error == VERIFY_ERR_UNABLE_TO_GET_ISSUER)
+      if (error == VERIFY_ERR_UNABLE_TO_GET_ISSUER && client_verify_callback_verbose)
       {
         fprintf(stderr, "SSL: unknown issuer: %s\n", issuer);
         fflush(stderr);
