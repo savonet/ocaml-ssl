@@ -124,6 +124,8 @@ AC_CHECK_LIB(ssl,SSL_new,,AC_MSG_ERROR(Cannot find libssl.),[$OTHER_LIBS])
 AC_CHECK_HEADER(openssl/ssl.h,,AC_MSG_ERROR(Cannot find libssl headers.))
 AC_CHECK_LIB(ssl,TLSv1_1_method,[CFLAGS="$CFLAGS -DHAVE_TLS11"],,[$OTHER_LIBS])
 AC_CHECK_LIB(ssl,TLSv1_2_method,[CFLAGS="$CFLAGS -DHAVE_TLS12"],,[$OTHER_LIBS])
+AC_CHECK_LIB(crypto,EC_KEY_free,[CFLAGS="$CFLAGS -DHAVE_EC"],,[$OTHER_LIBS])
+AC_CHECK_DECL([SSL_set_tlsext_host_name], [CFLAGS="$CFLAGS -DHAVE_SNI"], [], [[#include <openssl/ssl.h>]])
 
 # other progs
 AC_PATH_PROG(OCAMLFIND,ocamlfind,no)

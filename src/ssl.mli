@@ -65,6 +65,10 @@ exception Method_error
 
 exception Context_error
 
+exception Cipher_error
+exception Diffie_hellman_error
+exception Ec_curve_error
+
 (** The SSL server certificate could not be initialized. *)
 exception Certificate_error
 
