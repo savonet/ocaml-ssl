@@ -247,6 +247,23 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
  * Context-related functions *
  *****************************/
 
+static int protocol_flags[] = {
+    SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3,
+    SSL_OP_NO_SSLv3,
+    SSL_OP_NO_TLSv1,
+#ifdef HAVE_TLS11
+    SSL_OP_NO_TLSv1_1
+#else
+    0 /* not supported, nothing to disable */
+#endif
+    ,
+#ifdef HAVE_TLS12
+    SSL_OP_NO_TLSv1_2
+#else
+    0 /* not supported ,nothing to disable */
+#endif
+};
+
 static const SSL_METHOD *get_method(int protocol, int type)
 {
   const SSL_METHOD *method = NULL;
@@ -570,6 +587,18 @@ CAMLprim value ocaml_ssl_ctx_set_cipher_list(value context, value ciphers_string
     caml_leave_blocking_section();
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
   }
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_disable_protocols(value context, value protocol_list)
+{
+  CAMLparam2(context, protocol_list);
+  SSL_CTX *ctx = Ctx_val(context);
+  int flags = caml_convert_flag_list(protocol_list, protocol_flags);
+  caml_enter_blocking_section();
+  SSL_CTX_set_options(ctx, flags);
   caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);

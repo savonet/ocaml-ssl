@@ -279,6 +279,9 @@ val set_verify_depth : context -> int -> unit
   * are a core part of the SSL/TLS protocol.*)
 type cipher
 
+(** Disable all protocols from the list *)
+val disable_protocols : context -> protocol list -> unit
+
 (** Set the list of available ciphers for a context. See man ciphers(1) for the format of the string. *)
 val set_cipher_list : context -> string -> unit
 
