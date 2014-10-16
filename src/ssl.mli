@@ -200,13 +200,23 @@ val init : ?thread_safe:bool -> unit -> unit
     occurred. *)
 val get_error_string : unit -> string
 
-(** Protocol used by SSL. *)
+(** Protocol used by SSL as the connection method. Can be further restricted
+* with {!set_protocol_restriction}. *)
 type protocol =
-  | SSLv23 (** SSL v3 protocol but can rollback to v2 *)
-  | SSLv3 (** SSL v3 protocol *)
-  | TLSv1 (** TLS v1 protocol *)
-  | TLSv1_1 (** TLS v1.1 protocol *)
-  | TLSv1_2 (** TLS v1.2 protocol *)
+  | SSLv23 (** understand SSLv2, SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols *)
+  | SSLv3 (** SSLv3 protocol only *)
+  | TLSv1 (** TLSv1 protocol only *)
+  | TLSv1_1 (** TLSv1.1 protocol only *)
+  | TLSv1_2 (** TLSv1.2 protocol only *)
+
+(** Protocols not to be used in the SSL/TLS handshake (see
+* {!set_protocol_restriction}). *)
+type protocol_restriction =
+  | NO_SSLv2
+  | NO_SSLv3
+  | NO_TLSv1
+  | NO_TLSv1_1
+  | NO_TLSv1_2
 
 (** An SSL abstract socket. *)
 type socket
@@ -235,6 +245,9 @@ type context_type =
 
 (** Create a context. *)
 val create_context : protocol -> context_type -> context
+
+(** Restrict the protocols to be accepted in the SSL/TLS handshake. *)
+val set_protocol_restriction : context -> protocol_restriction list -> unit
 
 (** [use_certificate ctx cert privkey] makes the context [ctx] use [cert] as
   * certificate's file name (in PEM format) and [privkey] as private key file

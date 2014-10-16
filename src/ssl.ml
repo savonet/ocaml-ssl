@@ -27,6 +27,13 @@ type protocol =
   | TLSv1_1
   | TLSv1_2
 
+type protocol_restriction =
+  | NO_SSLv2
+  | NO_SSLv3
+  | NO_TLSv1
+  | NO_TLSv1_1
+  | NO_TLSv1_2
+
 type context
 
 type certificate
@@ -132,6 +139,8 @@ type context_type =
   | Both_context
 
 external create_context : protocol -> context_type -> context = "ocaml_ssl_create_context"
+
+external set_protocol_restriction : context -> protocol_restriction list -> unit = "ocaml_ssl_ctx_set_proto"
 
 external use_certificate : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate"
 
