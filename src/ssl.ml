@@ -145,6 +145,8 @@ external disable_protocols : context -> protocol list -> unit = "ocaml_ssl_disab
 
 external set_cipher_list : context -> string -> unit = "ocaml_ssl_ctx_set_cipher_list"
 
+external honor_cipher_order : context -> unit = "ocaml_ssl_ctx_honor_cipher_order"
+
 external init_dh_from_file : context -> string -> unit = "ocaml_ssl_ctx_init_dh_from_file"
 
 external init_ec_from_named_curve : context -> string -> unit = "ocaml_ssl_ctx_init_ec_from_named_curve"
