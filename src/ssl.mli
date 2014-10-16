@@ -295,6 +295,13 @@ type cipher
 (** Set the list of available ciphers for a context. See man ciphers(1) for the format of the string. *)
 val set_cipher_list : context -> string -> unit
 
+(** When choosing a cipher, use the server's preferences instead of the client
+  * preferences. When not set, the SSL server will always follow the clients
+  * preferences. When set, the SSLv3/TLSv1 server will choose following its
+  * own preferences. Because of the different protocol, for SSLv2 the server
+  * will send its list of preferences to the client and the client chooses.*)
+val honor_cipher_order : context -> unit
+
 (** Init DH parameters from file *)
 val init_dh_from_file : context -> string -> unit
 

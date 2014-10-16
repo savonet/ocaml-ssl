@@ -150,6 +150,8 @@ external embed_socket : Unix.file_descr -> context -> socket = "ocaml_ssl_embed_
 
 external set_cipher_list : context -> string -> unit = "ocaml_ssl_ctx_set_cipher_list"
 
+external honor_cipher_order : context -> unit = "ocaml_ssl_ctx_honor_cipher_order"
+
 external init_dh_from_file : context -> string -> unit = "ocaml_ssl_ctx_init_dh_from_file"
 
 external init_ec_from_named_curve : context -> string -> unit = "ocaml_ssl_ctx_init_ec_from_named_curve"

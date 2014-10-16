@@ -578,6 +578,15 @@ CAMLprim value ocaml_ssl_ctx_set_proto(value context, value prot)
  CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_ctx_honor_cipher_order(value context)
+{
+ CAMLparam1(context);
+ SSL_CTX *ctx = Ctx_val(context);
+
+ SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+ CAMLreturn(Val_unit);
+}
+
 /****************************
  * Cipher-related functions *
  ****************************/
