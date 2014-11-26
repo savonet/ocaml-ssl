@@ -43,6 +43,7 @@
 #include <caml/mlvalues.h>
 #include <caml/signals.h>
 #include <caml/unixsupport.h>
+#include <caml/bigarray.h>
 
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
@@ -963,6 +964,56 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start, value le
   CAMLreturn(Val_int(ret));
 }
 
+CAMLprim value ocaml_ssl_write_bigarray(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  SSL *ssl = SSL_val(socket);
+  struct caml_ba_array *ba = Caml_ba_array_val(buffer);
+  char *buf = ((char *)ba->data) + Int_val(start);
+
+  if(Int_val(start) < 0) caml_invalid_argument("Ssl.write_bigarray: negative offset");
+  if(Int_val(length) < 0) caml_invalid_argument("Ssl.write_bigarray: negative length");
+
+  if (Int_val(start) + Int_val(length) > ba->dim[0])
+    caml_invalid_argument("Ssl.write_bigarray: buffer too short.");
+
+  caml_enter_blocking_section();
+  ERR_clear_error();
+  ret = SSL_write(ssl, buf, Int_val(length));
+  err = SSL_get_error(ssl, ret);
+  caml_leave_blocking_section();
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
+CAMLprim value ocaml_ssl_write_bigarray_blocking(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  SSL *ssl = SSL_val(socket);
+  struct caml_ba_array *ba = Caml_ba_array_val(buffer);
+  char *buf = ((char *)ba->data) + Int_val(start);
+
+  if(Int_val(start) < 0) caml_invalid_argument("Ssl.write_bigarray_blocking: negative offset");
+  if(Int_val(length) < 0) caml_invalid_argument("Ssl.write_bigarray_blocking: negative length");
+
+  if (Int_val(start) + Int_val(length) > ba->dim[0])
+    caml_invalid_argument("Ssl.write_bigarray: buffer too short.");
+
+  ERR_clear_error();
+  ret = SSL_write(ssl, buf, Int_val(length));
+  err = SSL_get_error(ssl, ret);
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
 CAMLprim value ocaml_ssl_read(value socket, value buffer, value start, value length)
 {
   CAMLparam2(socket, buffer);
@@ -981,6 +1032,56 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start, value len
   caml_leave_blocking_section();
   memmove(((char*)String_val(buffer)) + Int_val(start), buf, buflen);
   free(buf);
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
+CAMLprim value ocaml_ssl_read_into_bigarray(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  struct caml_ba_array *ba = Caml_ba_array_val(buffer);
+  char *buf = ((char *)ba->data) + Int_val(start);
+  SSL *ssl = SSL_val(socket);
+
+  if(Int_val(start) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
+  if(Int_val(length) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative length");
+
+  if (Int_val(start) + Int_val(length) > ba->dim[0])
+    caml_invalid_argument("Ssl.read_into_bigarray: buffer too short.");
+
+  caml_enter_blocking_section();
+  ERR_clear_error();
+  ret = SSL_read(ssl, buf, Int_val(length));
+  err = SSL_get_error(ssl, ret);
+  caml_leave_blocking_section();
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
+CAMLprim value ocaml_ssl_read_into_bigarray_blocking(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  struct caml_ba_array *ba = Caml_ba_array_val(buffer);
+  char *buf = ((char *)ba->data) + Int_val(start);
+  SSL *ssl = SSL_val(socket);
+
+  if(Int_val(start) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
+  if(Int_val(length) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative length");
+
+  if (Int_val(start) + Int_val(length) > ba->dim[0])
+    caml_invalid_argument("Ssl.read_into_bigarray: buffer too short.");
+
+  ERR_clear_error();
+  ret = SSL_read(ssl, buf, Int_val(length));
+  err = SSL_get_error(ssl, ret);
 
   if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
