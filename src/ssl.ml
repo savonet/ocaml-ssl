@@ -198,9 +198,9 @@ external connect : socket -> unit = "ocaml_ssl_connect"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
 
-external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
+external write : socket -> string -> int -> int -> int = "ocaml_ssl_write"
 
-external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
+external read : socket -> string -> int -> int -> int = "ocaml_ssl_read"
 
 external accept : socket -> unit = "ocaml_ssl_accept"
 
@@ -232,43 +232,43 @@ let output_string ssl s =
   ignore (write ssl s 0 (String.length s))
 
 let output_char ssl c =
-  let tmp = Bytes.create 1 in
-    Bytes.set tmp 0 c;
+  let tmp = String.create 1 in
+    tmp.[0] <- c;
     ignore (write ssl tmp 0 1)
 
 let output_int ssl i =
-  let tmp = Bytes.create 4 in
-    Bytes.set tmp 0 (char_of_int (i lsr 24));
-    Bytes.set tmp 1 (char_of_int ((i lsr 16) land 0xff));
-    Bytes.set tmp 2 (char_of_int ((i lsr 8) land 0xff));
-    Bytes.set tmp 3 (char_of_int (i land 0xff));
+  let tmp = String.create 4 in
+    tmp.[0] <- char_of_int (i lsr 24);
+    tmp.[1] <- char_of_int ((i lsr 16) land 0xff);
+    tmp.[2] <- char_of_int ((i lsr 8) land 0xff);
+    tmp.[3] <- char_of_int (i land 0xff);
     if write ssl tmp 0 4 <> 4 then failwith "output_int error: all the byte were not sent"
 
 let input_string ssl =
   let bufsize = 1024 in
-  let buf = Bytes.create bufsize in
+  let buf = String.create bufsize in
   let ret = ref "" in
   let r = ref 1 in
     while !r <> 0
     do
       r := read ssl buf 0 bufsize;
-      ret := !ret ^ (Bytes.sub buf 0 !r)
+      ret := !ret ^ (String.sub buf 0 !r)
     done;
     !ret
 
 let input_char ssl =
-  let tmp = Bytes.create 1 in
+  let tmp = String.create 1 in
     if read ssl tmp 0 1 <> 1 then
       raise End_of_file
     else
-      Bytes.get tmp 0
+      tmp.[0]
 
 let input_int ssl =
   let i = ref 0 in
-  let tmp = Bytes.create 4 in
+  let tmp = String.create 4 in
     ignore (read ssl tmp 0 4);
-    i := int_of_char (Bytes.get tmp 0);
-    i := (!i lsl 8) + int_of_char (Bytes.get tmp 1);
-    i := (!i lsl 8) + int_of_char (Bytes.get tmp 2);
-    i := (!i lsl 8) + int_of_char (Bytes.get tmp 3);
+    i := int_of_char (tmp.[0]);
+    i := (!i lsl 8) + int_of_char (tmp.[1]);
+    i := (!i lsl 8) + int_of_char (tmp.[2]);
+    i := (!i lsl 8) + int_of_char (tmp.[3]);
     !i
