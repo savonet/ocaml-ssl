@@ -35,6 +35,7 @@ export CLIBFLAGS = @LDFLAGS@
 export CPPFLAGS = @CPPFLAGS@
 export NO_CUSTOM = yes
 OCAMLFLAGS = @OCAMLFLAGS@
+export PACKS = bytes
 
 define PROJ_ssl
   SOURCES = ssl_stubs.c ssl.mli ssl.ml
