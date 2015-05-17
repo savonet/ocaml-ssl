@@ -1,9 +1,9 @@
 OCaml-SSL - OCaml bindings for the libssl
 =========================================
 
-Author: Samuel Mimram <samuel.mimram@ens-lyon.org>
-Email: savonet-users@lists.sourceforge.net
-Homepage: http://savonet.sourceforge.net/
+* Author: Samuel Mimram <samuel.mimram@ens-lyon.org>
+* Email: savonet-users@lists.sourceforge.net
+* Homepage: http://savonet.sourceforge.net/
 
 Copyright (c) 2003-2015 the Savonet Team.
 
@@ -12,7 +12,7 @@ Dependencies
 
 To build this library you need to have OCaml 3.08 (and the
 [bytes](https://github.com/chambart/ocaml-bytes) module if your OCaml is older
-than 4.03) and the openssl library.
+than 4.03) and the [openssl](https://www.openssl.org/) library.
 
 Installation
 ------------
@@ -45,14 +45,14 @@ To get started quickly you can create a self-signed ssl certificate using
 openssl.
 
 1. First, create a 1024-bit private key to use when creating your CA.:
-```
-openssl genrsa -des3 -out privkey.pem 1024
-```
+   ```
+   openssl genrsa -des3 -out privkey.pem 1024
+   ```
 2. Create a master certificate based on this key, to use when signing other
    certificates:
-```
-openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem
-```
+   ```
+   openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem
+   ```
 
 SSL acknowledgment
 ------------------
