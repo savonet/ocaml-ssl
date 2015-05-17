@@ -139,6 +139,8 @@ external set_password_callback : context -> (bool -> string) -> unit = "ocaml_ss
 
 external embed_socket : Unix.file_descr -> context -> socket = "ocaml_ssl_embed_socket"
 
+external disable_protocols : context -> protocol list -> unit = "ocaml_ssl_disable_protocols"
+
 external set_cipher_list : context -> string -> unit = "ocaml_ssl_ctx_set_cipher_list"
 
 external init_dh_from_file : context -> string -> unit = "ocaml_ssl_ctx_init_dh_from_file"
