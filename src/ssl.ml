@@ -27,6 +27,13 @@ type protocol =
   | TLSv1_1
   | TLSv1_2
 
+type protocol_restriction =
+  | NO_SSLv2
+  | NO_SSLv3
+  | NO_TLSv1
+  | NO_TLSv1_1
+  | NO_TLSv1_2
+
 type context
 
 type certificate
@@ -135,6 +142,8 @@ type context_type =
 
 external create_context : protocol -> context_type -> context = "ocaml_ssl_create_context"
 
+external set_protocol_restriction : context -> protocol_restriction list -> unit = "ocaml_ssl_ctx_set_proto"
+
 external use_certificate : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate"
 
 external set_password_callback : context -> (bool -> string) -> unit = "ocaml_ssl_ctx_set_default_passwd_cb"
@@ -144,6 +153,8 @@ external embed_socket : Unix.file_descr -> context -> socket = "ocaml_ssl_embed_
 external disable_protocols : context -> protocol list -> unit = "ocaml_ssl_disable_protocols"
 
 external set_cipher_list : context -> string -> unit = "ocaml_ssl_ctx_set_cipher_list"
+
+external honor_cipher_order : context -> unit = "ocaml_ssl_ctx_honor_cipher_order"
 
 external init_dh_from_file : context -> string -> unit = "ocaml_ssl_ctx_init_dh_from_file"
 

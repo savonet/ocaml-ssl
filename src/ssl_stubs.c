@@ -569,6 +569,42 @@ CAMLprim value ocaml_ssl_ctx_set_default_passwd_cb(value context, value cb)
   CAMLreturn(Val_unit);
 }
 
+static int proto_table[5] =
+{
+ SSL_OP_NO_SSLv2,
+ SSL_OP_NO_SSLv3,
+ SSL_OP_NO_TLSv1,
+#ifdef HAVE_TLS11
+ SSL_OP_NO_TLSv1_1,
+#else
+ 0,
+#endif
+#ifdef HAVE_TLS12
+ SSL_OP_NO_TLSv1_2
+#else
+ 0
+#endif
+};
+
+CAMLprim value ocaml_ssl_ctx_set_proto(value context, value prot)
+{
+ CAMLparam2(context, prot);
+ SSL_CTX *ctx = Ctx_val(context);
+ long flags = caml_convert_flag_list(prot, proto_table);
+ SSL_CTX_set_options(ctx, flags);
+
+ CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_ctx_honor_cipher_order(value context)
+{
+ CAMLparam1(context);
+ SSL_CTX *ctx = Ctx_val(context);
+
+ SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+ CAMLreturn(Val_unit);
+}
+
 /****************************
  * Cipher-related functions *
  ****************************/
