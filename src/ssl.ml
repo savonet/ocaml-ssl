@@ -78,6 +78,8 @@ type verify_error =
   | Error_v_keyusage_no_certsign
   | Error_v_application_verification
 
+type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
 exception Method_error
 exception Context_error
 exception Certificate_error
@@ -202,7 +204,18 @@ external verify : socket -> unit = "ocaml_ssl_verify"
 
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
+external write_bigarray : socket -> bigarray -> int -> int -> int = "ocaml_ssl_write_bigarray"
+
+external write_bigarray_blocking :
+  socket -> bigarray -> int -> int -> int = "ocaml_ssl_write_bigarray_blocking"
+
 external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
+
+external read_into_bigarray :
+  socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray"
+
+external read_into_bigarray_blocking :
+  socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray_blocking"
 
 external accept : socket -> unit = "ocaml_ssl_accept"
 

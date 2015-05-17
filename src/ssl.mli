@@ -60,6 +60,8 @@ type ssl_error =
   (** The operation did not complete; the same TLS/SSL I/O function should be
       called again later. *)
 
+type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
 (** The SSL method could not be initalized. *)
 exception Method_error
 
@@ -384,6 +386,30 @@ val read : socket -> Bytes.t -> int -> int -> int
 
 (** [write sock buf off len] sends data over a connected SSL socket. *)
 val write : socket -> Bytes.t -> int -> int -> int
+
+(** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
+    This function releases the runtime while the read takes place. *)
+val read_into_bigarray : socket -> bigarray -> int -> int -> int
+
+(** [read_into_bigarray_blocking sock ba off len] receives data from a
+    connected SSL socket.
+    This function DOES NOT release the runtime while the read takes place: it
+    must be used with nonblocking sockets. *)
+val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
+
+(** [write sock buf off len] sends data over a connected SSL socket. *)
+val write : socket -> string -> int -> int -> int
+
+(** [write_bigarray sock ba off len] sends data over a connected SSL socket.
+    This function releases the runtime while the read takes place.
+  *)
+val write_bigarray : socket -> bigarray -> int -> int -> int
+
+(** [write_bigarray sock ba off len] sends data over a connected SSL socket.
+    This function DOES NOT release the runtime while the read takes place: it
+    must be used with nonblocking sockets.
+  *)
+val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
 
 
 (** {3 High-level communication functions} *)
