@@ -377,10 +377,10 @@ val verify : socket -> unit
 val file_descr_of_socket : socket -> Unix.file_descr
 
 (** [read sock buf off len] receives data from a connected SSL socket. *)
-val read : socket -> string -> int -> int -> int
+val read : socket -> Bytes.t -> int -> int -> int
 
 (** [write sock buf off len] sends data over a connected SSL socket. *)
-val write : socket -> string -> int -> int -> int
+val write : socket -> Bytes.t -> int -> int -> int
 
 
 (** {3 High-level communication functions} *)
