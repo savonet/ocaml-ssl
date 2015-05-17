@@ -1,5 +1,7 @@
 0.5.0 (unreleased)
 =====
+* Add functions for reading into/writing from bigarrays, avoiding copy (thanks
+  mfp, closes #15).
 * Support disabling SSL protocol versions (thanks Edwin Török, closes #13).
 * Use Bytes instead of String for read and write, changes the ABI thus the
   version bump (thanks Vincent Bernardoff, closes #16).
