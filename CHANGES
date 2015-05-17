@@ -1,10 +1,11 @@
 0.5.0 (unreleased)
 =====
+* Allow to honor server cipher preferences (thanks mfp, closes #18).
 * Add functions for reading into/writing from bigarrays, avoiding copy (thanks
   mfp, closes #15).
 * Support disabling SSL protocol versions (thanks Edwin Török, closes #13).
 * Use Bytes instead of String for read and write, changes the ABI thus the
-  version bump (thanks Vincent Bernardoff, closes #16).
+  version bump (thanks Vincent Bernardoff, closes #16, and mfp, closes #19).
 * Make verbosity of client_verify_callback configurable (thanks Nicolas Trangez,
   closes #12).
 * Fix build with old versions of SSL (thanks Edwin Török, closes #10).
