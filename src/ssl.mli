@@ -204,11 +204,12 @@ val get_error_string : unit -> string
 
 (** Protocol used by SSL. *)
 type protocol =
-  | SSLv23 (** SSL v3 protocol but can rollback to v2 *)
-  | SSLv3 (** SSL v3 protocol *)
-  | TLSv1 (** TLS v1 protocol *)
-  | TLSv1_1 (** TLS v1.1 protocol *)
-  | TLSv1_2 (** TLS v1.2 protocol *)
+  | SSLv23 (** accept all possible protocols (SSLv2 if supported by openssl,
+               SSLv3, TLSv1, TLSv1.1 and TLSv1.2) *)
+  | SSLv3 (** only SSL v3 protocol *)
+  | TLSv1 (** only TLS v1 protocol *)
+  | TLSv1_1 (** only TLS v1.1 protocol *)
+  | TLSv1_2 (** only TLS v1.2 protocol *)
 
 (** An SSL abstract socket. *)
 type socket
@@ -281,7 +282,10 @@ val set_verify_depth : context -> int -> unit
   * are a core part of the SSL/TLS protocol.*)
 type cipher
 
-(** Disable all protocols from the list *)
+(** Disable all protocols from the list.
+  * Note that [SSLv23] disables both SSLv2 and SSLv3 (as opposed to all the
+  * protocols).
+  * *)
 val disable_protocols : context -> protocol list -> unit
 
 (** Set the list of available ciphers for a context. See man ciphers(1) for the format of the string. *)
