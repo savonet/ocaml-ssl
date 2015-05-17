@@ -5,55 +5,64 @@ Author: Samuel Mimram <samuel.mimram@ens-lyon.org>
 Email: savonet-users@lists.sourceforge.net
 Homepage: http://savonet.sourceforge.net/
 
-Copyright (c) 2003-2005 the Savonet Team.
-
+Copyright (c) 2003-2015 the Savonet Team.
 
 Dependencies
-============
-To build this library you need to have OCaml 3.08 and the openssl library.
+------------
 
+To build this library you need to have OCaml 3.08 (and the
+[bytes](https://github.com/chambart/ocaml-bytes) module if your OCaml is older
+than 4.03) and the openssl library.
 
 Installation
-============
+------------
+
 To compile the program type:
 
+```
 ./configure
 make
+```
 
 (you can set specific build options with the configure script, see
-./configure --help) then, to install it, type as root:
+`./configure --help`) then, to install it, type as root:
 
+```
 make install
-
+```
 
 Is this library thread-safe?
-============================
-Yes it is if and only if the first function you call in ocaml-ssl is Ssl_threads.init (and the second one should be Ssl.init).
+----------------------------
+
+Yes it is if and only if the first function you call in ocaml-ssl is
+`Ssl_threads.init` (and the second one should be `Ssl.init`).
 
 
 Creating a self-signed ssl certificate
-======================================
+--------------------------------------
+
 To get started quickly you can create a self-signed ssl certificate using
 openssl.
 
 1. First, create a 1024-bit private key to use when creating your CA.:
-
+```
 openssl genrsa -des3 -out privkey.pem 1024
-
+```
 2. Create a master certificate based on this key, to use when signing other
    certificates:
-
+```
 openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem
-
+```
 
 SSL acknowledgment
-==================
-This product includes software developed by the OpenSSL Project for use in the
-OpenSSL Toolkit. (http://www.openssl.org/)
+------------------
 
+This product includes software developed by the OpenSSL Project for use in the
+[OpenSSL Toolkit](http://www.openssl.org/).
 
 License
-=======
+-------
+
 This library is released under the LGPL version 2.1 with
 the additional exemption that compiling, linking, and/or using OpenSSL is
 allowed.
@@ -86,8 +95,4 @@ Public License.
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-
 The examples are under the GPL licence version 2.0.
-
-The version of this README is:
-$Id$
