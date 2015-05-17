@@ -45,14 +45,10 @@ To get started quickly you can create a self-signed ssl certificate using
 openssl.
 
 1. First, create a 1024-bit private key to use when creating your CA.:
-   ```
-   openssl genrsa -des3 -out privkey.pem 1024
-   ```
+   `openssl genrsa -des3 -out privkey.pem 1024`
 2. Create a master certificate based on this key, to use when signing other
    certificates:
-   ```
-   openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem
-   ```
+   `openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem`
 
 SSL acknowledgment
 ------------------
