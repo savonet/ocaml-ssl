@@ -1,4 +1,4 @@
-0.5.0 (unreleased)
+0.5.0 (2015-05-18)
 =====
 * Allow to honor server cipher preferences (thanks mfp, closes #18).
 * Add functions for reading into/writing from bigarrays, avoiding copy (thanks

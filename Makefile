@@ -1,5 +1,5 @@
 PROGNAME = ocaml-ssl
-DISTFILES = bootstrap CHANGES configure configure.ac COPYING Makefile README \
+DISTFILES = bootstrap CHANGES configure configure.ac COPYING Makefile README.md \
             src/Makefile.in src/OCamlMakefile src/META.in src/*.ml src/*.mli src/*.c \
             examples/configure* examples/Makefile*.in examples/OCamlMakefile examples/Makefile examples/*.ml \
             doc/html
