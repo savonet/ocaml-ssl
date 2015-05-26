@@ -1,4 +1,9 @@
-0.5.0 (unreleased)
+0.5.1 (unreleased)
+=====
+
+* Fix META file for versions of OCaml older than 4.02.0.
+
+0.5.0 (2015-05-10)
 =====
 * Allow to honor server cipher preferences (thanks mfp, closes #18).
 * Add functions for reading into/writing from bigarrays, avoiding copy (thanks
