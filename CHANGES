@@ -1,3 +1,9 @@
+0.5.1 (2015-05-27)
+=====
+
+* Fix META file for versions of OCaml older than 4.02.0 (thanks Anil
+  Madhavapeddy, closes #20).
+
 0.5.0 (2015-05-18)
 =====
 * Allow to honor server cipher preferences (thanks mfp, closes #18).
