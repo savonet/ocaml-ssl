@@ -1,0 +1,9 @@
+language: c
+addons:
+  apt:
+    packages:
+    - ocaml-nox
+    - ocamlfind
+    - libssl-dev
+
+script: ./bootstrap && ./configure && make
