@@ -3,6 +3,7 @@
 
 OPAM_PACKAGES='ocamlfind bytes'
 
+export OPAMYES=1
 opam init
 if [ -n "${OPAM_SWITCH}" ]; then
     opam switch ${OPAM_SWITCH}
