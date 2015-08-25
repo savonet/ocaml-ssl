@@ -2,8 +2,7 @@ language: c
 addons:
   apt:
     packages:
-    - ocaml-nox
-    - ocaml-findlib
+    - opam
     - libssl-dev
 
-script: ./bootstrap && ./configure && make
+script: bash -ex .travis-ci.sh
