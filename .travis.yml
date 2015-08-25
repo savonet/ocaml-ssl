@@ -3,7 +3,7 @@ addons:
   apt:
     packages:
     - ocaml-nox
-    - ocamlfind
+    - ocaml-findlib
     - libssl-dev
 
 script: ./bootstrap && ./configure && make
