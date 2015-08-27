@@ -12,4 +12,9 @@ eval `opam config env`
 opam install -q -y ${OPAM_PACKAGES}
 
 # compile & run tests
-./bootstrap && ./configure && make
+./bootstrap
+./configure
+make
+cd examples
+./configure --with-ssl-dir=../src
+make
