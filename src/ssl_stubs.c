@@ -289,6 +289,7 @@ static const SSL_METHOD *get_method(int protocol, int type)
       }
       break;
 
+#ifndef OPENSSL_NO_SSL3
     case 1:
       switch (type)
       {
@@ -305,6 +306,7 @@ static const SSL_METHOD *get_method(int protocol, int type)
           break;
       }
       break;
+#endif
 
     case 2:
       switch (type)
