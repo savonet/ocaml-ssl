@@ -13,4 +13,4 @@ before_install:
   - opam install -q -y ocamlfind base-bytes
   - eval `opam config env`
 
-script: ./bootstrap && ./configure && make && examples/configure --with-ssl-dir=../src && make -C examples
+script: ./bootstrap && ./configure && make && cd examples && ./configure --with-ssl-dir=../src && make
