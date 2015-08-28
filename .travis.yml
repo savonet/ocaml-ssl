@@ -7,5 +7,10 @@ addons:
     packages:
     - opam
     - libssl-dev
+before_install:
+  - export OPAMYES=1
+  - opam init
+  - opam install -q -y ocamlfind base-bytes
+  - eval `opam config env`
 
-script: bash -ex .travis-ci.sh
+script: ./bootstrap && ./configure && make && examples/configure --with-ssl-dir=../src && make -C examples
