@@ -25,8 +25,6 @@
   * @author Samuel Mimram
   *)
 
-(* $Id$ *)
-
 let certfile = ref "cert.pem"
 let privkey = ref "privkey.pem"
 let port = ref 9876
@@ -39,8 +37,8 @@ let establish_threaded_server server_handler sockaddr nbconn =
   log "establishing server";
   let domain =
     begin match sockaddr with
-      | Unix.ADDR_UNIX _ -> Unix.PF_UNIX
-      | Unix.ADDR_INET (_, _) -> Unix.PF_INET
+    | Unix.ADDR_UNIX _ -> Unix.PF_UNIX
+    | Unix.ADDR_INET (_, _) -> Unix.PF_INET
     end
   in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
@@ -51,55 +49,55 @@ let establish_threaded_server server_handler sockaddr nbconn =
     in
     let inet_addr = inet_addr_of_sockaddr caller in
     let ip = Unix.string_of_inet_addr inet_addr in
-      log (Printf.sprintf "openning connection for [%s]" ip);
-      server_handler inet_addr s;
-      Ssl.shutdown s
+    log (Printf.sprintf "openning connection for [%s]" ip);
+    server_handler inet_addr s;
+    Ssl.shutdown s
   in
   let ctx = Ssl.create_context Ssl.SSLv23 Ssl.Server_context in
-    if !password <> "" then
-      Ssl.set_password_callback ctx (fun _ -> !password);
-    Ssl.use_certificate ctx !certfile !privkey;
-    Unix.setsockopt sock Unix.SO_REUSEADDR true;
-    Unix.bind sock sockaddr;
-    Unix.listen sock nbconn;
-    let ssl_sock = Ssl.embed_socket sock ctx in
-      while true do
-        log "listening for connections";
-        let (s, caller) = Unix.accept sock in
-        let ssl_s = Ssl.embed_socket s ctx in
-          Ssl.accept ssl_s;
-          ignore (Thread.create handle_connexion (ssl_s, caller));
-      done
+  if !password <> "" then
+    Ssl.set_password_callback ctx (fun _ -> !password);
+  Ssl.use_certificate ctx !certfile !privkey;
+  Unix.setsockopt sock Unix.SO_REUSEADDR true;
+  Unix.bind sock sockaddr;
+  Unix.listen sock nbconn;
+  (* let ssl_sock = Ssl.embed_socket sock ctx in *)
+  while true do
+    log "listening for connections";
+    let (s, caller) = Unix.accept sock in
+    let ssl_s = Ssl.embed_socket s ctx in
+    Ssl.accept ssl_s;
+    ignore (Thread.create handle_connexion (ssl_s, caller));
+  done
 
-let _ =
+let () =
   let bufsize = 1024 in
-  let buf = String.create bufsize in
+  let buf = Bytes.create bufsize in
   let connected_clients = ref [] in
-    Ssl_threads.init ();
-    Ssl.init ();
-    establish_threaded_server
-      (fun addr ssl ->
-         connected_clients := (addr, ssl) :: !connected_clients;
-         log "accepted a new connection";
-         let loop = ref true in
-           while !loop
-           do
-             let l = Ssl.read ssl buf 0 bufsize in
-             let m = String.sub buf 0 l in
-             let msg = String.sub m 0 ((String.length m) - 1) in
-               log (Printf.sprintf "revceived '%s'" msg);
-               if msg = "exit" then
-                 (
-                   log "A client has quit";
-                   connected_clients := List.filter (fun (_, s) -> s != ssl) !connected_clients;
-                   Ssl.shutdown ssl;
-                   loop := false
-                 )
-               else
-                 List.iter
-                   (fun (_, s) ->
-                      ignore (Ssl.output_string s m)
-                   ) !connected_clients
-           done
-      )
-      (Unix.ADDR_INET(Unix.inet_addr_any, !port)) 100
+  Ssl_threads.init ();
+  Ssl.init ();
+  establish_threaded_server
+    (fun addr ssl ->
+      connected_clients := (addr, ssl) :: !connected_clients;
+      log "accepted a new connection";
+      let loop = ref true in
+      while !loop
+      do
+        let l = Ssl.read ssl buf 0 bufsize in
+        let m = Bytes.sub buf 0 l in
+        let msg = Bytes.sub m 0 ((Bytes.length m) - 1) in
+        log (Printf.sprintf "revceived '%s'" msg);
+        if msg = "exit" then
+          (
+            log "A client has quit";
+            connected_clients := List.filter (fun (_, s) -> s != ssl) !connected_clients;
+            Ssl.shutdown ssl;
+            loop := false
+          )
+        else
+          List.iter
+            (fun (_, s) ->
+              ignore (Ssl.output_string s m)
+            ) !connected_clients
+      done
+    )
+    (Unix.ADDR_INET(Unix.inet_addr_any, !port)) 100
