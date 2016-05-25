@@ -395,9 +395,6 @@ val file_descr_of_socket : socket -> Unix.file_descr
 (** [read sock buf off len] receives data from a connected SSL socket. *)
 val read : socket -> Bytes.t -> int -> int -> int
 
-(** [write sock buf off len] sends data over a connected SSL socket. *)
-val write : socket -> Bytes.t -> int -> int -> int
-
 (** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
     This function releases the runtime while the read takes place. *)
 val read_into_bigarray : socket -> bigarray -> int -> int -> int
@@ -409,7 +406,7 @@ val read_into_bigarray : socket -> bigarray -> int -> int -> int
 val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
 
 (** [write sock buf off len] sends data over a connected SSL socket. *)
-val write : socket -> string -> int -> int -> int
+val write : socket -> Bytes.t -> int -> int -> int
 
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
     This function releases the runtime while the read takes place.
