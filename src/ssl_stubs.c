@@ -656,7 +656,7 @@ CAMLprim value ocaml_ssl_get_cipher_name(value vcipher)
 
 CAMLprim value ocaml_ssl_get_cipher_version(value vcipher)
 {
-  char *version;
+  const char *version;
   SSL_CIPHER *cipher = (SSL_CIPHER*)vcipher;
 
   caml_enter_blocking_section();
@@ -1228,9 +1228,9 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx)
   int depth, error;
   char *xs;
 
-  depth = ctx->error_depth;
-  error = ctx->error;
-  xs = (char *)X509_STORE_CTX_get_current_cert(ctx);
+  depth = X509_STORE_CTX_get_error_depth(ctx);
+  error = X509_STORE_CTX_get_error(ctx);
+  xs = (char*)X509_STORE_CTX_get_current_cert(ctx);
 
   subject = issuer = NULL;
 
@@ -1339,6 +1339,7 @@ return_time:
 
   return ok;
 }
+
 static DH *load_dh_param(const char *dhfile)
 {
   DH *ret=NULL;
