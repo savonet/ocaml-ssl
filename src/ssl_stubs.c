@@ -24,8 +24,6 @@
  * @author Samuel Mimram
  */
 
-/* $Id$ */
-
 /*
  * WARNING: because of thread callbacks, all ssl functions should be in
  * blocking sections.

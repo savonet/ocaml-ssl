@@ -25,9 +25,9 @@ export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *$(shell oca
 export OCAMLLDFLAGS =
 export OCAMLDOCFLAGS = -stars
 ifeq (1, $(shell uname -s | grep -c "MINGW"))
-	export CLIBS = crypto ssl ws2_32 gdi32 crypt32
+	export CLIBS = ssl crypto ws2_32 gdi32 crypt32
 else
-	export CLIBS = crypto ssl
+	export CLIBS = ssl crypto
 endif
 export CC = @CC@
 export CFLAGS = @CFLAGS@ -DCAML_NAME_SPACE -Wall

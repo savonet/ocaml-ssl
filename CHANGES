@@ -2,6 +2,7 @@
 =====
 * Remove -ansi flag to be compatible with OCaml 4.04 (thanks Mark Shinwell).
 * Use accessor functions for X509_STORE_CTX.
+* Change CLIBS order to allow static linking.
 
 0.5.2 (2015-11-23)
 =====
