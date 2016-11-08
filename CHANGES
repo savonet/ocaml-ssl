@@ -1,4 +1,4 @@
-0.5.3 (unreleased)
+0.5.3 (2016-11-08)
 =====
 * Remove -ansi flag to be compatible with OCaml 4.04 (thanks Mark Shinwell).
 * Use accessor functions for X509_STORE_CTX.
