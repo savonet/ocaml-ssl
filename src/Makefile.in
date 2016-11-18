@@ -30,7 +30,7 @@ else
 	export CLIBS = ssl crypto
 endif
 export CC = @CC@
-export CFLAGS = @CFLAGS@ -DCAML_NAME_SPACE -Wall
+export CFLAGS = @CFLAGS@ -DCAML_NAME_SPACE -Wall -std=c99
 export CLIBFLAGS = @LDFLAGS@
 export CPPFLAGS = @CPPFLAGS@
 export NO_CUSTOM = yes
