@@ -69,7 +69,7 @@ let _ =
   let cert = Ssl.get_certificate ssl in
   let cipher = Ssl.get_cipher ssl in
   let bufsize = 1024 in
-  let buf = String.create bufsize in
+  let buf = Bytes.create bufsize in
   let loop = ref true in
     Printf.printf "SSL connection ok.\n%!";
     Printf.printf "Certificate issuer:  %s\nsubject: %s\n%!" (Ssl.get_issuer cert) (Ssl.get_subject cert);
@@ -79,7 +79,7 @@ let _ =
       (
         Thread.create
           (fun () ->
-             let buf = String.create bufsize in
+             let buf = Bytes.create bufsize in
                while !loop
                do
                  let r = Ssl.read ssl buf 0 bufsize in
