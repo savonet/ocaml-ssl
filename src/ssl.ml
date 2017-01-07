@@ -80,6 +80,8 @@ type verify_error =
 
 type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
+external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
+
 exception Method_error
 exception Context_error
 exception Certificate_error
@@ -95,6 +97,25 @@ exception Accept_error of ssl_error
 exception Read_error of ssl_error
 exception Write_error of ssl_error
 exception Verify_error of verify_error
+
+let () =
+  Printexc.register_printer (function
+    | Method_error -> Some ("SSL: Method error")
+    | Context_error -> Some ("SSL: Context error")
+    | Certificate_error -> Some ("SSL: Certificate error")
+    | Cipher_error -> Some ("SSL: Cihper error")
+    | Diffie_hellman_error -> Some ("SSL: Diffie Hellman error")
+    | Ec_curve_error -> Some ("SSL: EC curve error")
+    | Private_key_error -> Some ("SSL: Privte key error")
+    | Unmatching_keys -> Some ("SSL: Unmatching keys")
+    | Invalid_socket -> Some ("SSL: Invalid socket")
+    | Handler_error -> Some ("SSL: Handler error")
+    | Connection_error _ -> Some ("SSL connection() error: " ^ (get_error_string()))
+    | Accept_error _ -> Some ("SSL accept() error: " ^ (get_error_string()))
+    | Read_error _ -> Some ("SSL read() error: " ^ (get_error_string()))
+    | Write_error _ -> Some ("SSL write() error: " ^ (get_error_string()))
+    | Verify_error _ -> Some ("SSL verify() error: " ^ (get_error_string()))
+    | _ -> None)
 
 let () =
   Callback.register_exception "ssl_exn_method_error" Method_error;
@@ -116,8 +137,6 @@ let () =
 let thread_safe = ref false
 
 external init : bool -> unit = "ocaml_ssl_init"
-
-external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 let ts = thread_safe
 let init ?thread_safe () =
