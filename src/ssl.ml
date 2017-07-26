@@ -225,6 +225,8 @@ external verify : socket -> unit = "ocaml_ssl_verify"
 
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
+external write_substring : socket -> string -> int -> int -> int = "ocaml_ssl_write"
+
 external write_bigarray : socket -> bigarray -> int -> int -> int = "ocaml_ssl_write_bigarray"
 
 external write_bigarray_blocking :
@@ -265,12 +267,11 @@ let open_connection ssl_method sockaddr =
 let shutdown_connection = shutdown
 
 let output_string ssl s =
-  ignore (write ssl s 0 (String.length s))
+  ignore (write_substring ssl s 0 (String.length s))
 
 let output_char ssl c =
-  let tmp = Bytes.create 1 in
-    Bytes.set tmp 0 c;
-    ignore (write ssl tmp 0 1)
+  let tmp = String.make 1 c in
+    ignore (write_substring ssl tmp 0 1)
 
 let output_int ssl i =
   let tmp = Bytes.create 4 in
@@ -288,7 +289,7 @@ let input_string ssl =
     while !r <> 0
     do
       r := read ssl buf 0 bufsize;
-      ret := !ret ^ (Bytes.sub buf 0 !r)
+      ret := !ret ^ (Bytes.sub_string buf 0 !r)
     done;
     !ret
 

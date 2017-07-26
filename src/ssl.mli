@@ -408,6 +408,9 @@ val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
 (** [write sock buf off len] sends data over a connected SSL socket. *)
 val write : socket -> Bytes.t -> int -> int -> int
 
+(** [write_substring sock str off len] sends data over a connected SSL socket. *)
+val write_substring : socket -> string -> int -> int -> int
+
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
     This function releases the runtime while the read takes place.
   *)
