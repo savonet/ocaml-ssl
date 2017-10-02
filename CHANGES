@@ -1,10 +1,11 @@
-0.5.4 (unreleased)
+0.5.4 (2017-10-02)
 =====
+* Enable safe-string compatibility (#32).
 * Add -std=c99 to CFLAGS (#29).
 
 0.5.3 (2016-11-08)
 =====
-* Remove -ansi flag to be compatible with OCaml 4.04 (thanks Mark Shinwell, ).
+* Remove -ansi flag to be compatible with OCaml 4.04 (thanks Mark Shinwell).
 * Use accessor functions for X509_STORE_CTX.
 * Change CLIBS order to allow static linking.
 
