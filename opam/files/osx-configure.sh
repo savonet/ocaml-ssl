@@ -7,5 +7,5 @@ if [ -d "/usr/local/opt/openssl/" ]; then
   ./configure --prefix "${PREFIX}" CPPFLAGS="-I/usr/local/opt/openssl/include" LDFLAGS="-L/usr/local/opt/openssl/lib"
 else
   # MacPorts
-  ./configure --prefix "${PREFIX}" CPPFLAGS="-I/opt/local/include/openssl" LDFLAGS="-L/opt/local/lib"
+  ./configure --prefix "${PREFIX}" CPPFLAGS="-I/opt/local/include" LDFLAGS="-L/opt/local/lib"
 fi
