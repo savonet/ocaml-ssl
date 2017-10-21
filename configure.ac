@@ -13,10 +13,10 @@ fi
 
 AC_SUBST(BEST)
 
-MINGW=`uname -s | grep -c "MINGW"`
+MINGW=`$CC -dumpmachine | grep -c mingw`
 
 if test "$MINGW" != 0; then
-   OTHER_LIBS="-lcrypto -lws2_32 -lgdi32 -lcrypt32"
+   OTHER_LIBS="-lcrypto -lws2_32 -lgdi32 -lcrypt32 -lz"
 fi
 
 AC_CHECK_LIB(ssl,SSL_new,,AC_MSG_ERROR(Cannot find libssl.),[$OTHER_LIBS])
