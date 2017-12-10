@@ -27,6 +27,7 @@ AC_CHECK_LIB(crypto,EC_KEY_free,[CFLAGS="$CFLAGS -DHAVE_EC"],,[$OTHER_LIBS])
 AC_CHECK_DECL([SSL_set_tlsext_host_name], [CFLAGS="$CFLAGS -DHAVE_SNI"], [], [[#include <openssl/ssl.h>]])
 
 # Finally create the Makefile and samples
+AC_CONFIG_FILES([Makefile],[chmod a-w Makefile])
 AC_CONFIG_FILES([src/Makefile],[chmod a-w src/Makefile])
 AC_CONFIG_FILES([src/META])
 AC_OUTPUT
