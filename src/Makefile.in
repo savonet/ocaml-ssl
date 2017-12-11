@@ -4,57 +4,42 @@
 # by Samuel Mimram
 
 
-OCAMLMAKEFILE = OCamlMakefile
+export OCAMLMAKEFILE = OCamlMakefile
 
-OCAMLFIND = @OCAMLFIND@
-OCAMLFIND_LDCONF = @OCAMLFIND_LDCONF@
-OCAMLC = @OCAMLC@
-OCAMLOPT = @OCAMLOPT@
-OCAMLBEST = @OCAMLBEST@
-OCAMLMKTOP = @OCAMLMKTOP@
-OCAMLMKLIB = @OCAMLMKLIB@
-OCAMLCP = @OCAMLCP@
-OCAMLDEP = @OCAMLDEP@
-OCAMLLEX = @OCAMLLEX@
-OCAMLYACC = @OCAMLYACC@
-OCAMLDOC = @OCAMLDOC@
-AR = @AR@
-LATEX = @LATEX@
-DVIPS = @DVIPS@
-PS2PDF = @PS2PDF@
-OCAMLLIBPATH = @CAMLLIBPATH@
-CC = @CC@
-CFLAGS = -Wall @CFLAGS@
-CPPFLAGS = @CPPFLAGS@
-OCAMLDOCFLAGS = -stars
-ANNOTATE = true
+export OCAMLFIND = @OCAMLFIND@
+export OCAMLFIND_LDCONF = @OCAMLFIND_LDCONF@
+export OCAMLC = @OCAMLC@
+export OCAMLOPT = @OCAMLOPT@
+export OCAMLBEST = @OCAMLBEST@
+export OCAMLMKTOP = @OCAMLMKTOP@
+export OCAMLMKLIB = @OCAMLMKLIB@
+export OCAMLCP = @OCAMLCP@
+export OCAMLDEP = @OCAMLDEP@
+export OCAMLLEX = @OCAMLLEX@
+export OCAMLYACC = @OCAMLYACC@
+export OCAMLDOC = @OCAMLDOC@
+export AR = @AR@
+export LATEX = @LATEX@
+export DVIPS = @DVIPS@
+export PS2PDF = @PS2PDF@
+export OCAMLLIBPATH = @CAMLLIBPATH@
+export CC = @CC@
+export CFLAGS = -Wall @CFLAGS@
+export CPPFLAGS = @CPPFLAGS@
+export OCAMLDOCFLAGS = -stars
+export ANNOTATE = true
 
-SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
-RES_CLIB_SUF = _stubs
-RESULT = ssl
-LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *.a *.so)
-OCAMLDOCFLAGS = -stars
-ACLIBS = @LIBS@
-CLIBS = $(ACLIBS:-l%=%)
-LDFLAGS = @LDFLAGS@
-LIBDIRS = $(LDFLAGS:-L%=%)
-NO_CUSTOM = yes
-OCAMLFLAGS = @OCAMLFLAGS@
-
-all: $(OCAMLBEST)
-
-byte: byte-code-library
-opt: native-code-library
-
-native-code-library: byte-code-library
-
-install:
-	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
-
-uninstall:
-	$(OCAMLFIND) remove $(OCAMLFIND_INSTFLAGS) $(RESULT)
-
-update: uninstall install
+#SOURCES = ssl_stubs.c ssl.mli ssl.ml ssl_threads.ml
+export RES_CLIB_SUF = _stubs
+export RESULT = ssl
+export LIBINSTALL_FILES = $(wildcard *.mli *.cmi *.cma *.cmxa *.cmx *.a *.so)
+export OCAMLDOCFLAGS = -stars
+export ACLIBS = @LIBS@
+export CLIBS = $(ACLIBS:-l%=%)
+export LDFLAGS = @LDFLAGS@
+export LIBDIRS = $(LDFLAGS:-L%=%)
+export NO_CUSTOM = yes
+export OCAMLFLAGS = @OCAMLFLAGS@
 
 define PROJ_ssl
   SOURCES = ssl_stubs.c ssl.mli ssl.ml
@@ -72,4 +57,21 @@ export PROJ_sslthreads
 
 export SUBPROJS = ssl sslthreads
 
--include $(OCAMLMAKEFILE)
+all: $(OCAMLBEST)
+
+byte: byte-code-library
+opt: native-code-library
+
+native-code-library: byte-code-library
+
+install:
+	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
+
+uninstall:
+	$(OCAMLFIND) remove $(OCAMLFIND_INSTFLAGS) $(RESULT)
+
+update: uninstall install
+
+# Catch-all target will be applied to all subprojects automatically
+%:
+	@$(MAKE) -f $(OCAMLMAKEFILE) subprojs SUBTARGET=$@

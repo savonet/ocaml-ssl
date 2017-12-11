@@ -12,6 +12,13 @@ if test "$MINGW" != 0; then
 fi
 AC_SUBST(LIBS)
 
+if test "$OCAMLOPT" = no ; then
+    OCAMLBEST="bcl"
+else
+    OCAMLBEST="bcl ncl"
+fi
+AC_SUBST(OCAMLBEST)
+
 AC_CHECK_LIB(ssl,SSL_new,,AC_MSG_ERROR(Cannot find libssl.),[$LIBS])
 AC_CHECK_HEADER(openssl/ssl.h,,AC_MSG_ERROR(Cannot find libssl headers.))
 AC_CHECK_LIB(ssl,TLSv1_1_method,[CFLAGS="$CFLAGS -DHAVE_TLS11"],,[$LIBS])
