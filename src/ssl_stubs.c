@@ -105,6 +105,18 @@ static struct custom_operations socket_ops =
   custom_deserialize_default
 };
 
+/* Option types */
+#define Val_none Val_int(0)
+
+static value Val_some(value v)
+{
+  CAMLparam1(v);
+  CAMLlocal1(some);
+  some = caml_alloc(1, 0);
+  Store_field(some, 0, v);
+  CAMLreturn(some);
+}
+
 
 /******************
  * Initialization *
@@ -568,6 +580,68 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value v
   CAMLreturn(Val_unit);
 }
 
+static int get_alpn_buffer_length(value vprotos)
+{
+  value protos_tl = vprotos;
+  int total_len = 0;
+  while (protos_tl != Val_emptylist)
+  {
+    total_len += caml_string_length(Field(protos_tl, 0)) + 1;
+    protos_tl = Field(protos_tl, 1);
+  }
+  return total_len;
+}
+
+static void build_alpn_protocol_buffer(value vprotos, unsigned char *protos)
+{
+  int proto_idx = 0;
+  while (vprotos != Val_emptylist)
+  {
+    value head = Field(vprotos, 0);
+    int len = caml_string_length(head);
+    protos[proto_idx++] = len;
+
+    int i;
+    for (i = 0; i < len; i++)
+      protos[proto_idx++] = Byte_u(head, i);
+    vprotos = Field(vprotos, 1);
+  }
+}
+
+CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos)
+{
+  CAMLparam2(context, vprotos);
+  SSL_CTX *ctx = Ctx_val(context);
+
+  int total_len = get_alpn_buffer_length(vprotos);
+  unsigned char protos[total_len];
+  build_alpn_protocol_buffer(vprotos, protos);
+
+  caml_enter_blocking_section();
+  SSL_CTX_set_alpn_protos(ctx, protos, sizeof(protos));
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value callback)
+{
+  CAMLparam2(context, callback);
+
+  /* SSL_CTX *ctx = Ctx_val(context); */
+  /* int (*cb) (SSL *ssl, */
+  /*            const unsigned char **out, */
+  /*            unsigned char *outlen, */
+  /*            const unsigned char *in, */
+  /*            unsigned int inlen, */
+  /*            void *arg); */
+  /* void *arg; */
+  /* SSL_CTX_set_alpn_select_cb(ctx, cb, arg); */
+  /* TODO implement this. */
+
+  CAMLreturn(Val_unit);
+}
+
 static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
   value s;
@@ -992,6 +1066,36 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
     CAMLreturn(Val_unit);
 }
 #endif
+
+CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
+{
+  CAMLparam2(socket, vprotos);
+  SSL *ssl = SSL_val(socket);
+
+  int total_len = get_alpn_buffer_length(vprotos);
+  unsigned char protos[total_len];
+  build_alpn_protocol_buffer(vprotos, protos);
+
+  caml_enter_blocking_section();
+  SSL_set_alpn_protos(ssl, protos, sizeof(protos));
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
+{
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+
+  const unsigned char *data;
+  unsigned int len;
+  SSL_get0_alpn_selected(ssl, &data, &len);
+
+  if (len == 0) CAMLreturn(Val_none);
+
+  CAMLreturn(Val_some(caml_copy_string((const char*) data)));
+}
 
 CAMLprim value ocaml_ssl_connect(value socket)
 {
@@ -1449,7 +1553,7 @@ static DH *load_dh_param(const char *dhfile)
 {
   DH *ret=NULL;
   BIO *bio;
-  
+
   if ((bio=BIO_new_file(dhfile,"r")) == NULL)
   	goto err;
   ret=PEM_read_bio_DHparams(bio,NULL,NULL,NULL);
