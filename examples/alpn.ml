@@ -30,12 +30,13 @@ let test_server proto_list =
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
   let ctx = Ssl.create_context Ssl.TLSv1_2 Ssl.Server_context in
   Ssl.use_certificate ctx certfile privkey;
+  let rec first_match l1 = function
+    | [] -> None
+    | x::_ when List.mem x l1 -> Some x
+    | _::xs -> first_match l1 xs
+  in
   Ssl.set_context_alpn_select_callback ctx (fun client_protos ->
-      log "entering callback";
-      log (Printf.sprintf "list length: %d" (List.length client_protos));
-      List.iter print_endline client_protos;
-      if List.length client_protos > 0 then Some (List.nth client_protos 0)
-      else None
+      first_match client_protos proto_list
     );
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
   Unix.bind sock sockaddr;
