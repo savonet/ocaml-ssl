@@ -106,6 +106,7 @@ static struct custom_operations socket_ops =
 };
 
 /* Option types */
+
 #define Val_none Val_int(0)
 
 static value Val_some(value v)
@@ -624,20 +625,80 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos)
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value callback)
+static value build_alpn_protocol_list(const unsigned char *protocol_buffer, unsigned int len)
 {
-  CAMLparam2(context, callback);
+  CAMLparam0();
+  CAMLlocal3(protocol_list, current, tail);
 
-  /* SSL_CTX *ctx = Ctx_val(context); */
-  /* int (*cb) (SSL *ssl, */
-  /*            const unsigned char **out, */
-  /*            unsigned char *outlen, */
-  /*            const unsigned char *in, */
-  /*            unsigned int inlen, */
-  /*            void *arg); */
-  /* void *arg; */
-  /* SSL_CTX_set_alpn_select_cb(ctx, cb, arg); */
-  /* TODO implement this. */
+  int idx = 0;
+  protocol_list = Val_emptylist;
+
+  while (idx < len)
+  {
+    int proto_len = (int) protocol_buffer[idx++];
+    char proto[proto_len + 1];
+    int i;
+    for (i = 0; i < proto_len; i++)
+      proto[i] = (char) protocol_buffer[idx++];
+    proto[proto_len] = '\0';
+
+    tail = caml_alloc(2, 0);
+    Store_field(tail, 0, caml_copy_string(proto));
+    Store_field(tail, 1, Val_emptylist);
+
+    if (protocol_list == Val_emptylist)
+      protocol_list = tail;
+    else
+      Store_field(current, 1, tail);
+
+    current = tail;
+  }
+
+  CAMLreturn(protocol_list);
+}
+
+static int alpn_select_cb(SSL *ssl,
+                          const unsigned char **out,
+                          unsigned char *outlen,
+                          const unsigned char *in,
+                          unsigned int inlen,
+                          void *arg)
+{
+  CAMLparam0();
+  CAMLlocal3(protocol_list, selected_protocol, selected_protocol_opt);
+
+  int len;
+
+  caml_leave_blocking_section();
+  protocol_list = build_alpn_protocol_list(in, inlen);
+  selected_protocol_opt = caml_callback(*((value*)arg), protocol_list);
+
+  if (selected_protocol_opt == Val_none)
+    return SSL_TLSEXT_ERR_NOACK;
+
+  selected_protocol = Field(selected_protocol_opt, 0);
+  len = caml_string_length(selected_protocol);
+  *out = Bytes_val(selected_protocol);
+  *outlen = len;
+  caml_enter_blocking_section();
+
+  return SSL_TLSEXT_ERR_OK;
+}
+
+CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb)
+{
+  CAMLparam2(context, cb);
+  SSL_CTX *ctx = Ctx_val(context);
+
+  value *select_cb;
+
+  select_cb = malloc(sizeof(value));
+  *select_cb = cb;
+  caml_register_global_root(select_cb);
+
+  caml_enter_blocking_section();
+  SSL_CTX_set_alpn_select_cb(ctx, alpn_select_cb, select_cb);
+  caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
 }
