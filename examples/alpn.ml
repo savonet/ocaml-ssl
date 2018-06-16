@@ -60,3 +60,33 @@ let test_server proto_list =
     | Some proto -> log (Printf.sprintf "selected protocol: %s" proto)
   in
   Ssl.shutdown ssl_s
+
+let () =
+  let usage = "usage: ./alpn (server|client) protocol[,protocol]" in
+  let split_on_char sep s =
+    let r = ref [] in
+    let j = ref (String.length s) in
+    for i = String.length s - 1 downto 0 do
+      if s.[i] = sep then begin
+        r := String.sub s (i + 1) (!j - i - 1) :: !r;
+        j := i
+      end
+    done;
+    String.sub s 0 !j :: !r
+  in
+  let typ = ref "" in
+  let protocols = ref [] in
+  Arg.parse [
+    "-t", Arg.String (fun t -> typ := t), "Type (server or client)";
+    "-p", Arg.String (fun p -> protocols := split_on_char ',' p), "Comma-separated protocols";
+  ] (fun _ -> ()) usage;
+  match !typ with
+  | "server" -> test_server !protocols
+  | "client" -> test_client !protocols
+  | _ -> failwith "Invalid type, use server or client."
+
+(* Usage:
+ocamlfind ocamlc alpn.ml -g -o alpn -package ssl -linkpkg -ccopt -L/path/to/openssl/lib -cclib -lssl -cclib -lcrypto
+./alpn -t server -p h2,http/1.1
+./alpn -t client -p h2/http/1.1
+*)
