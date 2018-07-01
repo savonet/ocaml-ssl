@@ -89,5 +89,5 @@ let () =
 (* Usage:
 ocamlfind ocamlc alpn.ml -g -o alpn -package ssl -linkpkg -ccopt -L/path/to/openssl/lib -cclib -lssl -cclib -lcrypto
 ./alpn -t server -p h2,http/1.1
-./alpn -t client -p h2/http/1.1
+./alpn -t client -p h2,http/1.1
 *)
