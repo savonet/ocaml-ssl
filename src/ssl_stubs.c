@@ -581,6 +581,7 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value v
   CAMLreturn(Val_unit);
 }
 
+#ifdef HAVE_ALPN
 static int get_alpn_buffer_length(value vprotos)
 {
   value protos_tl = vprotos;
@@ -702,6 +703,21 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb)
 
   CAMLreturn(Val_unit);
 }
+#else
+CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos)
+{
+  CAMLparam2(context, vprotos);
+  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb)
+{
+  CAMLparam2(context, cb);
+  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
+  CAMLreturn(Val_unit);
+}
+#endif
 
 static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
@@ -1128,6 +1144,7 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
 }
 #endif
 
+#ifdef HAVE_ALPN
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
 {
   CAMLparam2(socket, vprotos);
@@ -1157,6 +1174,21 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
 
   CAMLreturn(Val_some(caml_copy_string((const char*) data)));
 }
+#else
+CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
+{
+  CAMLparam2(socket, vprotos);
+  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
+{
+  CAMLparam1(socket);
+  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
+  CAMLreturn(Val_unit);
+}
+#endif
 
 CAMLprim value ocaml_ssl_connect(value socket)
 {
