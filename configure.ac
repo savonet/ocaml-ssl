@@ -25,6 +25,7 @@ AC_CHECK_LIB(ssl,TLSv1_1_method,[CFLAGS="$CFLAGS -DHAVE_TLS11"],,[$LIBS])
 AC_CHECK_LIB(ssl,TLSv1_2_method,[CFLAGS="$CFLAGS -DHAVE_TLS12"],,[$LIBS])
 AC_CHECK_LIB(crypto,EC_KEY_free,[CFLAGS="$CFLAGS -DHAVE_EC"],,[$LIBS])
 AC_CHECK_DECL([SSL_set_tlsext_host_name], [CFLAGS="$CFLAGS -DHAVE_SNI"], [], [[#include <openssl/ssl.h>]])
+AC_CHECK_DECL([SSL_set_alpn_protos], [CFLAGS="$CFLAGS -DHAVE_ALPN"], [], [[#include <openssl/ssl.h>]])
 
 # Finally create the Makefile and samples
 AC_CONFIG_FILES([Makefile],[chmod a-w Makefile])
