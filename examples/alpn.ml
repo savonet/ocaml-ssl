@@ -14,8 +14,8 @@ let test_client proto_list =
 
 
 let test_server proto_list =
-  let certfile = "/Users/bobbypriambodo/Projects/forks/ocaml-tls/certificates/server.pem" in
-  let privkey = "/Users/bobbypriambodo/Projects/forks/ocaml-tls/certificates/server.key" in
+  let certfile = "cert.pem" in
+  let privkey = "privkey.key" in
   let log s =
     Printf.printf "[II] %s\n%!" s
   in
