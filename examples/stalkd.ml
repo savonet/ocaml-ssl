@@ -77,27 +77,28 @@ let () =
   Ssl.init ();
   establish_threaded_server
     (fun addr ssl ->
-      connected_clients := (addr, ssl) :: !connected_clients;
-      log "accepted a new connection";
-      let loop = ref true in
-      while !loop
-      do
-        let l = Ssl.read ssl buf 0 bufsize in
-        let m = Bytes.sub buf 0 l in
-        let msg = Bytes.sub m 0 ((Bytes.length m) - 1) in
-        log (Printf.sprintf "revceived '%s'" msg);
-        if msg = "exit" then
-          (
-            log "A client has quit";
-            connected_clients := List.filter (fun (_, s) -> s != ssl) !connected_clients;
-            Ssl.shutdown ssl;
-            loop := false
-          )
-        else
-          List.iter
-            (fun (_, s) ->
-              ignore (Ssl.output_string s m)
-            ) !connected_clients
-      done
+       connected_clients := (addr, ssl) :: !connected_clients;
+       log "accepted a new connection";
+       let loop = ref true in
+       while !loop
+       do
+         let l = Ssl.read ssl buf 0 bufsize in
+         let m = Bytes.sub buf 0 l in
+         let msg = Bytes.sub m 0 ((Bytes.length m) - 1) in
+         let msg = Bytes.to_string msg in
+         log (Printf.sprintf "revceived '%s'" msg);
+         if msg = "exit" then
+           (
+             log "A client has quit";
+             connected_clients := List.filter (fun (_, s) -> s != ssl) !connected_clients;
+             Ssl.shutdown ssl;
+             loop := false
+           )
+         else
+           List.iter
+             (fun (_, s) ->
+                ignore (Ssl.output_string s (Bytes.to_string m))
+             ) !connected_clients
+       done
     )
     (Unix.ADDR_INET(Unix.inet_addr_any, !port)) 100
