@@ -10,7 +10,7 @@ addons:
 before_install:
   - export OPAMYES=1
   - opam init
-  - opam install -q -y ocamlfind base-bytes
+  - opam install -q -y dune
   - eval `opam config env`
 
-script: ./bootstrap && ./configure && make && cd examples && ./configure --with-ssl-dir=../src && make
+script: dune build @default @runtest

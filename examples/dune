@@ -1,0 +1,7 @@
+(alias
+ (name default)
+ (deps stalkd.exe stelnet.exe))
+
+(executables
+ (names stalkd stelnet)
+ (libraries threads unix ssl))
