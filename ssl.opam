@@ -1,4 +1,6 @@
 opam-version: "1.2"
+name: "ssl"
+version: "0.5.6"
 maintainer: "Christopher Zimmermann <christopher@gmerlin.de>"
             author: "Samuel Mimram <samuel.mimram@ens-lyon.org>"
 homepage: "https://github.com/savonet/ocaml-ssl"

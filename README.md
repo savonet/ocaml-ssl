@@ -7,28 +7,13 @@ OCaml-SSL - OCaml bindings for the libssl
 
 Copyright (c) 2003-2015 the Savonet Team.
 
-Dependencies
-------------
-
-To build this library you need to have OCaml 3.08 (and the
-[bytes](https://github.com/chambart/ocaml-bytes) module if your OCaml is older
-than 4.03) and the [openssl](https://www.openssl.org/) library.
-
 Installation
 ------------
 
-To compile the program type:
+`ocaml-ssl` can be installed via [OPAM](https://opam.ocaml.org):
 
 ```
-./configure
-make
-```
-
-(you can set specific build options with the configure script, see
-`./configure --help`) then, to install it, type as root:
-
-```
-make install
+opam install ssl
 ```
 
 Is this library thread-safe?
