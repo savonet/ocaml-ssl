@@ -1,0 +1,26 @@
+{
+  "name": "angstrom",
+  "version": "1.2",
+  "description": "TBD",
+  "license": "GPLv3",
+  "esy": {
+    "build": [
+      "dune build -p angstrom -j4"
+    ],
+    "install": [
+      "esy-installer"
+    ],
+    "buildsInSource": "_build"
+  },
+  "dependencies": {
+    "@opam/base-unix": "*",
+    "@opam/conf-openssl": "*"
+  },
+  "peerDependencies": {
+    "ocaml": "~4.6.0"
+  },
+  "devDependencies": {
+    "ocaml": "~4.6.0",
+    "@opam/dune": "*"
+  }
+}
