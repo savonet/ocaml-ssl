@@ -5,7 +5,7 @@
   "license": "GPLv3",
   "esy": {
     "build": [
-      "dune build -p angstrom -j4"
+      "dune build -p ssl -j4"
     ],
     "install": [
       "esy-installer"
@@ -13,8 +13,7 @@
     "buildsInSource": "_build"
   },
   "dependencies": {
-    "@opam/base-unix": "*",
-    "@opam/conf-openssl": "*"
+    "@opam/base-unix": "*"
   },
   "peerDependencies": {
     "ocaml": "~4.6.0"
