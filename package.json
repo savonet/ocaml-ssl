@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@opam/dune": "*",
-    "@opam/base-unix": "*"
+    "@opam/base-unix": "*",
+    "bryphe/esy-openssl": "bryphe/esy-openssl#c8dfbff"
   },
   "peerDependencies": {
     "ocaml": "~4.6.0"
