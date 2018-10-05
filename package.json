@@ -13,6 +13,7 @@
     "buildsInSource": "_build"
   },
   "dependencies": {
+    "@opam/dune": "*",
     "@opam/base-unix": "*"
   },
   "peerDependencies": {
