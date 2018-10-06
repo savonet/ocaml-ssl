@@ -1,5 +1,5 @@
 {
-  "hash": "575f24d1dadc663744243beeda19eb32",
+  "hash": "178ada701de76eceb171659195b63322",
   "root": "ocaml-ssl@path:.",
   "node": {
     "ocaml-ssl@path:.": {
@@ -12,7 +12,7 @@
       },
       "dependencies": [
         "@opam/base-unix@opam:base", "@opam/dune@opam:1.3.0",
-        "esy-openssl@github:bryphe/esy-openssl#c8dfbff", "ocaml@4.6.6"
+        "esy-openssl@github:bryphe/esy-openssl#7debb25", "ocaml@4.6.6"
       ]
     },
     "ocaml@4.6.6": {
@@ -26,11 +26,11 @@
       },
       "dependencies": []
     },
-    "esy-openssl@github:bryphe/esy-openssl#c8dfbff": {
+    "esy-openssl@github:bryphe/esy-openssl#7debb25": {
       "record": {
         "name": "esy-openssl",
-        "version": "github:bryphe/esy-openssl#c8dfbff",
-        "source": "github:bryphe/esy-openssl#c8dfbff",
+        "version": "github:bryphe/esy-openssl#7debb25",
+        "source": "github:bryphe/esy-openssl#7debb25",
         "files": [],
         "opam": null
       },
