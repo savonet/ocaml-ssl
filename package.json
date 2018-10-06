@@ -1,0 +1,27 @@
+{
+  "name": "ocaml-ssl",
+  "version": "1.2",
+  "description": "TBD",
+  "license": "GPLv3",
+  "esy": {
+    "build": [
+      "dune build -p ssl -j4"
+    ],
+    "install": [
+      "esy-installer"
+    ],
+    "buildsInSource": "_build"
+  },
+  "dependencies": {
+    "@opam/dune": "*",
+    "@opam/base-unix": "*",
+    "esy-openssl": "bryphe/esy-openssl#7debb25"
+  },
+  "peerDependencies": {
+    "ocaml": "~4.6.0"
+  },
+  "devDependencies": {
+    "ocaml": "~4.6.0",
+    "@opam/dune": "*"
+  }
+}

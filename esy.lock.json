@@ -1,0 +1,89 @@
+{
+  "hash": "178ada701de76eceb171659195b63322",
+  "root": "ocaml-ssl@path:.",
+  "node": {
+    "ocaml-ssl@path:.": {
+      "record": {
+        "name": "ocaml-ssl",
+        "version": "path:.",
+        "source": "path:.",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": [
+        "@opam/base-unix@opam:base", "@opam/dune@opam:1.3.0",
+        "esy-openssl@github:bryphe/esy-openssl#7debb25", "ocaml@4.6.6"
+      ]
+    },
+    "ocaml@4.6.6": {
+      "record": {
+        "name": "ocaml",
+        "version": "4.6.6",
+        "source":
+          "archive:https://registry.npmjs.org/ocaml/-/ocaml-4.6.6.tgz#sha1:769f01e91dd1492b17420fdb00be14dda3451134",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    },
+    "esy-openssl@github:bryphe/esy-openssl#7debb25": {
+      "record": {
+        "name": "esy-openssl",
+        "version": "github:bryphe/esy-openssl#7debb25",
+        "source": "github:bryphe/esy-openssl#7debb25",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    },
+    "@opam/dune@opam:1.3.0": {
+      "record": {
+        "name": "@opam/dune",
+        "version": "opam:1.3.0",
+        "source":
+          "archive:https://github.com/ocaml/dune/releases/download/1.3.0/dune-1.3.0.tbz#md5:d7c926bd6b7549cb54d5463aaccf0c91",
+        "files": [],
+        "opam": {
+          "name": "dune",
+          "version": "1.3.0",
+          "opam":
+            "opam-version: \"2.0\"\nname: \"dune\"\nversion: \"1.3.0\"\nsynopsis: \"Fast, portable and opinionated build system\"\ndescription: \"\"\"\ndune is a build system that was designed to simplify the release of\nJane Street packages. It reads metadata from \"dune\" files following a\nvery simple s-expression syntax.\n\ndune is fast, it has very low-overhead and support parallel builds on\nall platforms. It has no system dependencies, all you need to build\ndune and packages using dune is OCaml. You don't need or make or bash\nas long as the packages themselves don't use bash explicitly.\n\ndune supports multi-package development by simply dropping multiple\nrepositories into the same directory.\n\nIt also supports multi-context builds, such as building against\nseveral opam roots/switches simultaneously. This helps maintaining\npackages across several versions of OCaml and gives cross-compilation\nfor free.\"\"\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02\"}\n]\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib] {opam-version < \"2\"}\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"\nurl {\n  src: \"https://github.com/ocaml/dune/releases/download/1.3.0/dune-1.3.0.tbz\"\n  checksum: \"md5=d7c926bd6b7549cb54d5463aaccf0c91\"\n}",
+          "override": {
+            "build": [
+              [ "ocaml", "bootstrap.ml" ],
+              [ "./boot.exe", "--release", "-j", "4" ]
+            ]
+          }
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1", "ocaml@4.6.6" ]
+    },
+    "@opam/base-unix@opam:base": {
+      "record": {
+        "name": "@opam/base-unix",
+        "version": "opam:base",
+        "source": "no-source:",
+        "files": [],
+        "opam": {
+          "name": "base-unix",
+          "version": "base",
+          "opam":
+            "opam-version: \"2.0\"\nname: \"base-unix\"\nversion: \"base\"\nsynopsis: \"\"\ndescription: \"Unix library distributed with the OCaml compiler\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"",
+          "override": null
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+    },
+    "@esy-ocaml/substs@0.0.1": {
+      "record": {
+        "name": "@esy-ocaml/substs",
+        "version": "0.0.1",
+        "source":
+          "archive:https://registry.npmjs.org/@esy-ocaml/substs/-/substs-0.0.1.tgz#sha1:59ebdbbaedcda123fc7ed8fb2b302b7d819e9a46",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    }
+  }
+}
