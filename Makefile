@@ -26,11 +26,10 @@ NAME_VERSION := $$(opam query --name-version)
 ARCHIVE      := $$(opam query --archive)
 
 release:
-	git tag -a v$(VERSION) -m "Version $(VERSION)."
-	git push origin v$(VERSION)
+	git tag -a $(VERSION) -m "Version $(VERSION)."
+	git push origin $(VERSION)
 	opam publish prepare $(NAME_VERSION) $(ARCHIVE)
 	cp descr $(NAME_VERSION)
 	grep -Ev '^(name|version):' opam >$(NAME_VERSION)/opam
 	opam publish submit $(NAME_VERSION)
 	rm -rf $(NAME_VERSION)
-
