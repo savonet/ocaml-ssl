@@ -1,3 +1,8 @@
+0.5.7 (2018-10-25)
+=====
+* Correctly set #defines (#40).
+* Correctly deal with non-existent directories for Homebrew (#42).
+
 0.5.6 (2018-09-12)
 =====
 * Switch to the dune build system.
