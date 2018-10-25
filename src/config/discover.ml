@@ -1,8 +1,11 @@
 module C = Configurator.V1
 
+let directory_exists fsp =
+  Sys.file_exists fsp && Sys.is_directory fsp
+
 let default c : C.Pkg_config.package_conf =
   if C.ocaml_config_var_exn c "system" = "macosx" then
-    if Sys.is_directory "/usr/local/opt/openssl" then
+    if directory_exists "/usr/local/opt/openssl" then
       { libs = ["-L/usr/local/opt/openssl/lib"]
       ; cflags = ["-I/usr/local/opt/openssl/include"]
       }
