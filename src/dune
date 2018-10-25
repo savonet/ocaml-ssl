@@ -8,5 +8,5 @@
  (c_names ssl_stubs))
 
 (rule
- (targets c_flags.sexp c_library_flags.sexp)
+ (targets c_flags.sexp c_library_flags.sexp ocaml_ssl.h)
  (action (run ./config/discover.exe)))

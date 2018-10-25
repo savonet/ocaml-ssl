@@ -49,6 +49,8 @@
 #include <openssl/crypto.h>
 #include <openssl/tls1.h>
 
+#include "ocaml_ssl.h"
+
 #ifdef WIN32
 #include <windows.h>
 #else

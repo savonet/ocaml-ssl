@@ -11,7 +11,7 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "dune" {build}
+  "dune" {build & >= "1.2.1"}
   "base-unix"
   "conf-openssl"
 ]
