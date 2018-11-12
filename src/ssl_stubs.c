@@ -263,6 +263,12 @@ static int protocol_flags[] = {
 #else
     0 /* not supported ,nothing to disable */
 #endif
+    ,
+#ifdef HAVE_TLS13
+    SSL_OP_NO_TLSv1_3
+#else
+    0 /* not supported, nothing to disable */
+#endif
 };
 
 static const SSL_METHOD *get_method(int protocol, int type)
@@ -358,6 +364,25 @@ static const SSL_METHOD *get_method(int protocol, int type)
 
         case 2:
           method = TLSv1_2_method();
+          break;
+      }
+#endif
+      break;
+
+    case 5:
+#ifdef HAVE_TLS13
+      switch (type)
+      {
+        case 0:
+          method = TLSv1_3_client_method();
+          break;
+
+        case 1:
+          method = TLSv1_3_server_method();
+          break;
+
+        case 2:
+          method = TLSv1_3_method();
           break;
       }
 #endif

@@ -205,11 +205,12 @@ val get_error_string : unit -> string
 (** Protocol used by SSL. *)
 type protocol =
   | SSLv23 (** accept all possible protocols (SSLv2 if supported by openssl,
-               SSLv3, TLSv1, TLSv1.1 and TLSv1.2) *)
+               SSLv3, TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3) *)
   | SSLv3 (** only SSL v3 protocol *)
   | TLSv1 (** only TLS v1 protocol *)
   | TLSv1_1 (** only TLS v1.1 protocol *)
   | TLSv1_2 (** only TLS v1.2 protocol *)
+  | TLSv1_3 (** only TLS v1.3 protocol *)
 
 (** An SSL abstract socket. *)
 type socket

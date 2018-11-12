@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
 let function_tests =
   [ "TLSv1_1_method", "HAVE_TLS11"
   ; "TLSv1_2_method", "HAVE_TLS12"
+  ; "TLSv1_3_method", "HAVE_TLS13"
   ; "EC_KEY_free", "HAVE_EC"
   ]
 
