@@ -85,11 +85,11 @@ external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 exception Method_error
 exception Context_error
-exception Certificate_error
+exception Certificate_error of string
 exception Cipher_error
 exception Diffie_hellman_error
 exception Ec_curve_error
-exception Private_key_error
+exception Private_key_error of string
 exception Unmatching_keys
 exception Invalid_socket
 exception Handler_error
@@ -103,11 +103,11 @@ let () =
   Printexc.register_printer (function
     | Method_error -> Some ("SSL: Method error")
     | Context_error -> Some ("SSL: Context error")
-    | Certificate_error -> Some ("SSL: Certificate error:" ^ (get_error_string()))
+    | Certificate_error s -> Some ("SSL: Certificate error: " ^ s)
     | Cipher_error -> Some ("SSL: Cihper error")
     | Diffie_hellman_error -> Some ("SSL: Diffie Hellman error")
     | Ec_curve_error -> Some ("SSL: EC curve error")
-    | Private_key_error -> Some ("SSL: Privte key error" ^ (get_error_string()))
+    | Private_key_error s -> Some ("SSL: Privte key error: " ^ s)
     | Unmatching_keys -> Some ("SSL: Unmatching keys")
     | Invalid_socket -> Some ("SSL: Invalid socket")
     | Handler_error -> Some ("SSL: Handler error")
@@ -121,11 +121,11 @@ let () =
 let () =
   Callback.register_exception "ssl_exn_method_error" Method_error;
   Callback.register_exception "ssl_exn_context_error" Context_error;
-  Callback.register_exception "ssl_exn_certificate_error" Certificate_error;
+  Callback.register_exception "ssl_exn_certificate_error" (Certificate_error "");
   Callback.register_exception "ssl_exn_cipher_error" Cipher_error;
   Callback.register_exception "ssl_exn_diffie_hellman_error" Diffie_hellman_error;
   Callback.register_exception "ssl_exn_ec_curve_error" Ec_curve_error;
-  Callback.register_exception "ssl_exn_private_key_error" Private_key_error;
+  Callback.register_exception "ssl_exn_private_key_error" (Private_key_error "");
   Callback.register_exception "ssl_exn_unmatching_keys" Unmatching_keys;
   Callback.register_exception "ssl_exn_invalid_socket" Invalid_socket;
   Callback.register_exception "ssl_exn_handler_error" Handler_error;

@@ -1,3 +1,7 @@
+0.6.0 ()
+=====
+* Better error reporting.
+
 0.5.7 (2018-10-25)
 =====
 * Correctly set #defines (#40).

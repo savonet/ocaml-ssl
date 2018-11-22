@@ -72,10 +72,10 @@ exception Diffie_hellman_error
 exception Ec_curve_error
 
 (** The SSL server certificate could not be initialized. *)
-exception Certificate_error
+exception Certificate_error of string
 
 (** The SSL server private key could not be intialized. *)
-exception Private_key_error
+exception Private_key_error of string
 
 (** The SSL private key does not match the certificate public key. *)
 exception Unmatching_keys

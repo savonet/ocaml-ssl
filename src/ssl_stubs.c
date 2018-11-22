@@ -431,17 +431,20 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert, value pr
   SSL_CTX *ctx = Ctx_val(context);
   char *cert_name = String_val(cert);
   char *privkey_name = String_val(privkey);
+  char buf[256];
 
   caml_enter_blocking_section();
   if (SSL_CTX_use_certificate_chain_file(ctx, cert_name) <= 0)
   {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_leave_blocking_section();
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
   }
   if (SSL_CTX_use_PrivateKey_file(ctx, privkey_name, SSL_FILETYPE_PEM) <= 0)
   {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_leave_blocking_section();
-    caml_raise_constant(*caml_named_value("ssl_exn_private_key_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_private_key_error"), caml_copy_string(buf));
   }
   if (!SSL_CTX_check_private_key(ctx))
   {
@@ -547,6 +550,7 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value v
   SSL_CTX *ctx = Ctx_val(context);
   char *filename = String_val(vfilename);
   STACK_OF(X509_NAME) *cert_names;
+  char buf[256];
 
   caml_enter_blocking_section();
   cert_names = SSL_load_client_CA_file(filename);
@@ -554,8 +558,9 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value v
     SSL_CTX_set_client_CA_list(ctx, cert_names);
   else
   {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_leave_blocking_section();
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
   }
   caml_leave_blocking_section();
 
@@ -789,16 +794,18 @@ CAMLprim value ocaml_ssl_read_certificate(value vfilename)
   char *filename = String_val(vfilename);
   X509 *cert = NULL;
   FILE *fh = NULL;
+  char buf[256];
 
   if((fh = fopen(filename, "r")) == NULL)
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string("couldn't open certificate file"));
 
   caml_enter_blocking_section();
   if((PEM_read_X509(fh, &cert, 0, 0)) == NULL)
   {
     fclose(fh);
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_leave_blocking_section();
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
   }
   fclose(fh);
   caml_leave_blocking_section();
@@ -814,16 +821,18 @@ CAMLprim value ocaml_ssl_write_certificate(value vfilename, value certificate)
   char *filename = String_val(vfilename);
   X509 *cert = Cert_val(certificate);
   FILE *fh = NULL;
+  char buf[256];
 
   if((fh = fopen(filename, "w")) == NULL)
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string("couldn't open certificate file"));
 
   caml_enter_blocking_section();
   if(PEM_write_X509(fh, cert) == 0)
   {
     fclose(fh);
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_leave_blocking_section();
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
   }
   fclose(fh);
   caml_leave_blocking_section();
@@ -835,13 +844,16 @@ CAMLprim value ocaml_ssl_get_certificate(value socket)
 {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
+  char buf[256];
 
   caml_enter_blocking_section();
   X509 *cert = SSL_get_peer_certificate(ssl);
   caml_leave_blocking_section();
 
-  if (!cert)
-    caml_raise_constant(*caml_named_value("ssl_exn_certificate_error"));
+  if (!cert) {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
+  }
 
   CAMLlocal1(block);
   block = caml_alloc_final(2, finalize_cert, 0, 1);
