@@ -388,15 +388,15 @@ static const SSL_METHOD *get_method(int protocol, int type)
       switch (type)
       {
         case 0:
-          method = TLSv1_3_client_method();
+          method = TLS_client_method();
           break;
 
         case 1:
-          method = TLSv1_3_server_method();
+          method = TLS_server_method();
           break;
 
         case 2:
-          method = TLSv1_3_method();
+          method = TLS_method();
           break;
       }
 #endif
