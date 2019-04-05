@@ -48,6 +48,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/tls1.h>
+#include <openssl/x509v3.h>
 
 #include "ocaml_ssl.h"
 
@@ -1025,6 +1026,60 @@ CAMLprim value ocaml_ssl_verify(value socket)
     else
       caml_raise_with_arg(*caml_named_value("ssl_exn_verify_error"), Val_int(31));
   }
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_set_hostflags(value socket, value flag_lst)
+{
+  CAMLparam2(socket, flag_lst);
+  SSL *ssl = SSL_val(socket);
+  unsigned int flags = 0;
+
+  while (Is_block(flag_lst))
+  {
+    switch(Int_val(Field(flag_lst, 0)))
+    {
+      case 0:
+        flags |= X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT;
+        break;
+      case 1:
+        flags |= X509_CHECK_FLAG_NEVER_CHECK_SUBJECT;
+        break;
+      case 2:
+        flags |= X509_CHECK_FLAG_NO_WILDCARDS;
+        break;
+      case 3:
+        flags |= X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS;
+        break;
+      case 4:
+        flags |= X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS;
+        break;
+      case 5:
+        flags |= X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS;
+        break;
+      default:
+        caml_invalid_argument("flags");
+    }
+    flag_lst = Field(flag_lst, 1);
+  }
+
+  caml_enter_blocking_section();
+  SSL_set_hostflags(ssl, flags);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_set1_host(value socket, value host)
+{
+  CAMLparam2(socket, host);
+  SSL *ssl = SSL_val(socket);
+  const char *hostname = String_val (host);
+
+  caml_enter_blocking_section();
+  SSL_set1_host (ssl, hostname);
+  caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
 }

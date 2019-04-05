@@ -226,6 +226,18 @@ external connect : socket -> unit = "ocaml_ssl_connect"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
 
+type x509_check_flag =
+  | Always_check_subject
+  | Never_check_subject
+  | No_wildcards
+  | No_partial_wildcards
+  | Multi_label_wildcards
+  | Single_label_subdomains
+
+external set_hostflags : socket -> x509_check_flag list -> unit = "ocaml_ssl_set_hostflags"
+
+external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
+
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
 external write_substring : socket -> string -> int -> int -> int = "ocaml_ssl_write"
