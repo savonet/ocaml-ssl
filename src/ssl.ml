@@ -173,6 +173,8 @@ external init_ec_from_named_curve : context -> string -> unit = "ocaml_ssl_ctx_i
 
 external load_verify_locations : context -> string -> string -> unit = "ocaml_ssl_ctx_load_verify_locations"
 
+external set_default_verify_paths : context -> bool = "ocaml_ssl_ctx_set_default_verify_paths"
+
 external get_verify_result : socket -> int = "ocaml_ssl_get_verify_result"
 
 type verify_mode =
@@ -223,6 +225,18 @@ external set_client_SNI_hostname : socket -> string -> unit = "ocaml_ssl_set_cli
 external connect : socket -> unit = "ocaml_ssl_connect"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
+
+type x509_check_flag =
+  | Always_check_subject
+  | Never_check_subject
+  | No_wildcards
+  | No_partial_wildcards
+  | Multi_label_wildcards
+  | Single_label_subdomains
+
+external set_hostflags : socket -> x509_check_flag list -> unit = "ocaml_ssl_set_hostflags"
+
+external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 

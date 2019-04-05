@@ -348,6 +348,10 @@ val get_subject : certificate -> string
     given in arguments could not be found. *)
 val load_verify_locations : context -> string -> string -> unit
 
+(** Specifies that the default locations from which CA certificates are loaded
+    should be used. Returns [true] on success. *)
+val set_default_verify_paths : context -> bool
+
 (** Get the verification result. *)
 val get_verify_result : socket -> int
 
@@ -388,6 +392,21 @@ val shutdown : socket -> unit
 (** Check the result of the verification of the X509 certificate presented by
     the peer, if any. Raises a [verify_error] on failure. *)
 val verify : socket -> unit
+
+(** Flags to specify how a certificate is matched against a given host name *)
+type x509_check_flag =
+  | Always_check_subject
+  | Never_check_subject
+  | No_wildcards
+  | No_partial_wildcards
+  | Multi_label_wildcards
+  | Single_label_subdomains
+
+(* Specify how a certificate should be matched against the host name *)
+val set_hostflags : socket -> x509_check_flag list -> unit
+
+(* Set the expected host name to be verified. *)
+val set_host : socket -> string -> unit
 
 (** Get the file descriptor associated with a socket. It is primarly useful for
     [select]ing on it; you should not write or read on it. *)
