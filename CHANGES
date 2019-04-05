@@ -1,6 +1,7 @@
 0.6.0 ()
 =====
 * Better error reporting.
+* Add support for hostname validation (#49).
 
 0.5.7 (2018-10-25)
 =====
