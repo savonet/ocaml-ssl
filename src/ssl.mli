@@ -348,6 +348,10 @@ val get_subject : certificate -> string
     given in arguments could not be found. *)
 val load_verify_locations : context -> string -> string -> unit
 
+(** Specifies that the default locations from which CA certificates are loaded
+    should be used. Returns [true] on success. *)
+val set_default_verify_paths : context -> bool
+
 (** Get the verification result. *)
 val get_verify_result : socket -> int
 

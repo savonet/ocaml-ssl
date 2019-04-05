@@ -910,6 +910,19 @@ CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file,
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_ctx_set_default_verify_paths(value context)
+{
+  CAMLparam1(context);
+  int ret;
+  SSL_CTX *ctx = Ctx_val(context);
+
+  caml_enter_blocking_section();
+  ret = SSL_CTX_set_default_verify_paths(ctx);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_bool(ret));
+}
+
 /*************************
  * Operations on sockets *
  *************************/

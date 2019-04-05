@@ -173,6 +173,8 @@ external init_ec_from_named_curve : context -> string -> unit = "ocaml_ssl_ctx_i
 
 external load_verify_locations : context -> string -> string -> unit = "ocaml_ssl_ctx_load_verify_locations"
 
+external set_default_verify_paths : context -> bool = "ocaml_ssl_ctx_set_default_verify_paths"
+
 external get_verify_result : socket -> int = "ocaml_ssl_get_verify_result"
 
 type verify_mode =
