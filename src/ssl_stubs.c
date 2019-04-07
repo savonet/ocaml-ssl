@@ -679,7 +679,7 @@ static int alpn_select_cb(SSL *ssl,
 
   selected_protocol = Field(selected_protocol_opt, 0);
   len = caml_string_length(selected_protocol);
-  *out = Bytes_val(selected_protocol);
+  *out = String_val(selected_protocol);
   *outlen = len;
   caml_enter_blocking_section();
 
