@@ -1172,7 +1172,15 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
 
   if (len == 0) CAMLreturn(Val_none);
 
-  CAMLreturn(Val_some(caml_copy_string((const char*) data)));
+  /* Note: we use `caml_alloc_initialized_string` instead of `copy_string` here
+   * because the selected protocol in `data` is not NULL-terminated.
+   * From https://www.openssl.org/docs/man1.0.2/man3/SSL_get0_alpn_selected.html:
+   *   SSL_get0_alpn_selected() returns a pointer to the selected protocol in
+   *   data with length len. It is not NUL-terminated. data is set to NULL and
+   *   len is set to 0 if no protocol has been selected. data must not be
+   *   freed.
+   */
+  CAMLreturn(Val_some(caml_alloc_initialized_string(len, (const char*) data)));
 }
 #else
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
