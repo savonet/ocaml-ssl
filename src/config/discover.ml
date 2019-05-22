@@ -4,18 +4,26 @@ let directory_exists fsp =
   Sys.file_exists fsp && Sys.is_directory fsp
 
 let default c : C.Pkg_config.package_conf =
+  let cflags = match Sys.getenv_opt "CFLAGS" with
+  | Some cflags -> [ cflags ]
+  | None -> []
+  in
+  let libs = match Sys.getenv_opt "LDFLAGS" with
+  | Some libs -> [ libs ]
+  | None -> []
+  in
   if C.ocaml_config_var_exn c "system" = "macosx" then
     if directory_exists "/usr/local/opt/openssl" then
-      { libs = ["-L/usr/local/opt/openssl/lib"]
-      ; cflags = ["-I/usr/local/opt/openssl/include"]
+      { libs = ["-L/usr/local/opt/openssl/lib"] @ libs
+      ; cflags = ["-I/usr/local/opt/openssl/include"] @ cflags
       }
     else
-      { libs = ["-L/opt/local/lib"]
-      ; cflags = ["-I/opt/local/include"]
+      { libs = ["-L/opt/local/lib"] @ libs
+      ; cflags = ["-I/opt/local/include"] @ cflags
       }
   else
-    { libs   = ["-lssl"; "-lcrypto"]
-    ; cflags = []
+    { libs   = ["-lssl"; "-lcrypto"] @ libs
+    ; cflags = cflags
     }
 
 let prog fun_name =
