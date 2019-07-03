@@ -29,12 +29,13 @@ int main(int argc, char **argv) {
 let function_tests =
   [ "TLSv1_1_method", "HAVE_TLS11"
   ; "TLSv1_2_method", "HAVE_TLS12"
-  ; "TLSv1_3_method", "HAVE_TLS13"
   ; "EC_KEY_free", "HAVE_EC"
+  ; "SSL_set_alpn_protos", "HAVE_ALPN"
   ]
 
 let macro_tests =
   [ "SSL_set_tlsext_host_name", "HAVE_SNI"
+  ; "SSL_EXT_TLS1_3_ONLY", "HAVE_TLS13"
   ]
 
 let () =

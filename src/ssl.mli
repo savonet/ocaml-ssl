@@ -276,6 +276,12 @@ val set_verify : context -> verify_mode list -> verify_callback option -> unit
 (** Set the maximum depth for the certificate chain verification that shall be allowed. *)
 val set_verify_depth : context -> int -> unit
 
+(** Set the list of supported ALPN protocols for negotiation to the context. *)
+val set_context_alpn_protos : context -> string list -> unit
+
+(** Set the callback to allow server to select the preferred protocol from client's available protocols. *)
+val set_context_alpn_select_callback : context -> (string list -> string option) -> unit
+
 
 (** {2 Ciphers} *)
 
@@ -373,6 +379,12 @@ val shutdown_connection : socket -> unit
 (** Set the hostname the client is attempting to connect to using the Server
   * Name Indication (SNI) TLS extension. *)
 val set_client_SNI_hostname : socket -> string -> unit
+
+(** Set the list of supported ALPN protocols for negotiation to the connection. *)
+val set_alpn_protos : socket -> string list -> unit
+
+(** Get the negotiated protocol from the connection. *)
+val get_negotiated_alpn_protocol : socket -> string option
 
 (** Connect an SSL socket. *)
 val connect : socket -> unit

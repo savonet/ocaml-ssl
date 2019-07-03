@@ -196,6 +196,10 @@ external set_verify_depth : context -> int -> unit = "ocaml_ssl_ctx_set_verify_d
 
 external set_client_CA_list_from_file : context -> string -> unit = "ocaml_ssl_ctx_set_client_CA_list_from_file"
 
+external set_context_alpn_protos : context -> string list -> unit = "ocaml_ssl_ctx_set_alpn_protos"
+
+external set_context_alpn_select_callback : context -> (string list -> string option) -> unit = "ocaml_ssl_ctx_set_alpn_select_callback"
+
 type cipher
 
 external get_cipher : socket -> cipher = "ocaml_ssl_get_current_cipher"
@@ -221,6 +225,10 @@ external get_subject : certificate -> string = "ocaml_ssl_get_subject"
 external file_descr_of_socket : socket -> Unix.file_descr = "ocaml_ssl_get_file_descr"
 
 external set_client_SNI_hostname : socket -> string -> unit = "ocaml_ssl_set_client_SNI_hostname"
+
+external set_alpn_protos : socket -> string list -> unit = "ocaml_ssl_set_alpn_protos"
+
+external get_negotiated_alpn_protocol : socket -> string option = "ocaml_ssl_get_negotiated_alpn_protocol"
 
 external connect : socket -> unit = "ocaml_ssl_connect"
 
