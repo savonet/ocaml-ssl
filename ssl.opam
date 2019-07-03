@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "ssl"
-version: "0.6.0"
+version: "0.5.8"
 maintainer: "Christopher Zimmermann <christopher@gmerlin.de>"
 homepage: "https://github.com/savonet/ocaml-ssl"
 dev-repo: "git+https://github.com/savonet/ocaml-ssl.git"
