@@ -1,4 +1,4 @@
-0.5.8 (unreleased)
+0.5.8 (2019-07-03)
 =====
 * Better error reporting.
 * Add support for hostname validation (#49).
