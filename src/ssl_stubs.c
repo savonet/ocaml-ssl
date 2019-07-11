@@ -1272,7 +1272,7 @@ CAMLprim value ocaml_ssl_set_hostflags(value socket, value flag_lst)
   }
 
   caml_enter_blocking_section();
-  SSL_set_hostflags(ssl, flags);
+  X509_VERIFY_PARAM_set_hostflags(SSL_get0_param(ssl), flags);
   caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
@@ -1285,7 +1285,7 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host)
   const char *hostname = String_val (host);
 
   caml_enter_blocking_section();
-  SSL_set1_host (ssl, hostname);
+  X509_VERIFY_PARAM_set1_host (SSL_get0_param(ssl), hostname, 0);
   caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);
