@@ -1254,18 +1254,15 @@ CAMLprim value ocaml_ssl_set_hostflags(value socket, value flag_lst)
         flags |= X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT;
         break;
       case 1:
-        flags |= X509_CHECK_FLAG_NEVER_CHECK_SUBJECT;
-        break;
-      case 2:
         flags |= X509_CHECK_FLAG_NO_WILDCARDS;
         break;
-      case 3:
+      case 2:
         flags |= X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS;
         break;
-      case 4:
+      case 3:
         flags |= X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS;
         break;
-      case 5:
+      case 4:
         flags |= X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS;
         break;
       default:

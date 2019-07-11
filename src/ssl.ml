@@ -236,7 +236,6 @@ external verify : socket -> unit = "ocaml_ssl_verify"
 
 type x509_check_flag =
   | Always_check_subject
-  | Never_check_subject
   | No_wildcards
   | No_partial_wildcards
   | Multi_label_wildcards
