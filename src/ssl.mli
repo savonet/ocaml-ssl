@@ -408,7 +408,6 @@ val verify : socket -> unit
 (** Flags to specify how a certificate is matched against a given host name *)
 type x509_check_flag =
   | Always_check_subject
-  | Never_check_subject
   | No_wildcards
   | No_partial_wildcards
   | Multi_label_wildcards
