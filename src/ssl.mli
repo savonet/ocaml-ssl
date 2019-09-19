@@ -245,6 +245,8 @@ val create_context : protocol -> context_type -> context
   * name. *)
 val use_certificate : context -> string -> string -> unit
 
+val use_certificate_from_string : context -> string -> string -> unit
+
 (** Set the callback function called to get passwords for encrypted PEM files.
   * The callback function takes a boolean argument which indicates if it's used
   * for reading/decryption ([false]) or writing/encryption ([true]).
