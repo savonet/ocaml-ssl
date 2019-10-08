@@ -285,126 +285,23 @@ static int protocol_flags[] = {
 #endif
 };
 
-static const SSL_METHOD *get_method(int protocol, int type)
+static const SSL_METHOD *get_method(int type)
 {
   const SSL_METHOD *method = NULL;
 
   caml_enter_blocking_section();
-  switch (protocol)
+  switch (type)
   {
     case 0:
-      switch (type)
-      {
-        case 0:
-          method = SSLv23_client_method();
-          break;
-
-        case 1:
-          method = SSLv23_server_method();
-          break;
-
-        case 2:
-          method = SSLv23_method();
-          break;
-      }
+      method = TLS_client_method();
       break;
 
-#ifndef OPENSSL_NO_SSL3
     case 1:
-      switch (type)
-      {
-        case 0:
-          method = SSLv3_client_method();
-          break;
-
-        case 1:
-          method = SSLv3_server_method();
-          break;
-
-        case 2:
-          method = SSLv3_method();
-          break;
-      }
+      method = TLS_server_method();
       break;
-#endif
 
     case 2:
-      switch (type)
-      {
-        case 0:
-          method = TLSv1_client_method();
-          break;
-
-        case 1:
-          method = TLSv1_server_method();
-          break;
-
-        case 2:
-          method = TLSv1_method();
-          break;
-      }
-      break;
-
-    case 3:
-#ifdef HAVE_TLS11
-      switch (type)
-      {
-        case 0:
-          method = TLSv1_1_client_method();
-          break;
-
-        case 1:
-          method = TLSv1_1_server_method();
-          break;
-
-        case 2:
-          method = TLSv1_1_method();
-          break;
-      }
-#endif
-      break;
-
-    case 4:
-#ifdef HAVE_TLS12
-      switch (type)
-      {
-        case 0:
-          method = TLSv1_2_client_method();
-          break;
-
-        case 1:
-          method = TLSv1_2_server_method();
-          break;
-
-        case 2:
-          method = TLSv1_2_method();
-          break;
-      }
-#endif
-      break;
-
-    case 5:
-#ifdef HAVE_TLS13
-      switch (type)
-      {
-        case 0:
-          method = TLS_client_method();
-          break;
-
-        case 1:
-          method = TLS_server_method();
-          break;
-
-        case 2:
-          method = TLS_method();
-          break;
-      }
-#endif
-      break;
-
-    default:
-      caml_leave_blocking_section();
-      caml_invalid_argument("Unknown method (this should not have happened, please report).");
+      method = TLS_method();
       break;
   }
   caml_leave_blocking_section();
@@ -415,11 +312,80 @@ static const SSL_METHOD *get_method(int protocol, int type)
   return method;
 }
 
+static void set_protocol(SSL_CTX *ssl_context, int protocol)
+{
+#ifdef HAVE_TLS13
+  int max_proto = TLS1_3_VERSION;
+#else
+  int max_proto = TLS1_2_VERSION;
+#endif
+  switch (protocol)
+  {
+    case 0:
+      if (!SSL_CTX_set_min_proto_version(ssl_context, SSL3_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, max_proto)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to SSLv3");
+      }
+      break;
+
+    case 1:
+      if (!SSL_CTX_set_min_proto_version(ssl_context, SSL3_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, SSL3_VERSION)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to SSLv3");
+      }
+      break;
+
+    case 2:
+      if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, TLS1_VERSION)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to TLSv1");
+      }
+      break;
+
+    case 3:
+      if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_1_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, TLS1_1_VERSION)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to TLSv1_1");
+      }
+      break;
+
+    case 4:
+      if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_2_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, TLS1_2_VERSION)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to TLSv1_2");
+      }
+      break;
+
+    case 5:
+#ifdef HAVE_TLS13
+      if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_3_VERSION) ||
+          !SSL_CTX_set_max_proto_version(ssl_context, TLS1_3_VERSION)) {
+        caml_leave_blocking_section();
+        caml_invalid_argument("Failed to set protocol to TLSv1_3");
+      }
+#else
+      caml_leave_blocking_section();
+      caml_invalid_argument("TLSv1_3 is unsupported");
+#endif
+      break;
+
+    default:
+      caml_leave_blocking_section();
+      caml_invalid_argument("Unknown method (this should not have happened, please report).");
+      break;
+  }
+}
+
 CAMLprim value ocaml_ssl_create_context(value protocol, value type)
 {
   value block;
   SSL_CTX *ctx;
-  const SSL_METHOD *method = get_method(Int_val(protocol), Int_val(type));
+  const SSL_METHOD *method = get_method(Int_val(type));
 
   caml_enter_blocking_section();
   ctx = SSL_CTX_new(method);
@@ -428,6 +394,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type)
     caml_leave_blocking_section();
     caml_raise_constant(*caml_named_value("ssl_exn_context_error"));
   }
+  set_protocol(ctx, Int_val(protocol));
   /* In non-blocking mode, accept a buffer with a different address on
      a write retry (since the GC may need to move it). In blocking
      mode, hide SSL_ERROR_WANT_(READ|WRITE) from us. */
