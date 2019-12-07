@@ -6,6 +6,7 @@ addons:
     sources:
     - avsm
     packages:
+    - ocaml-nox
     - opam
     - libssl-dev
 before_install:
