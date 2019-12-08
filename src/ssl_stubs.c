@@ -483,6 +483,18 @@ CAMLprim value ocaml_ssl_get_verify_result(value socket)
   CAMLreturn(Val_int(ans));
 }
 
+CAMLprim value ocaml_ssl_get_verify_error_string(value verrn)
+{
+  int errn = Int_val(verrn);
+  const char *error_string;
+
+  caml_enter_blocking_section();
+  error_string = X509_verify_cert_error_string(errn);
+  caml_leave_blocking_section();
+
+  return caml_copy_string(error_string);
+}
+
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
 {
   return (value)client_verify_callback;
@@ -1037,6 +1049,48 @@ CAMLprim value ocaml_ssl_get_subject(value certificate)
   if (subject == NULL) caml_raise_not_found ();
 
   CAMLreturn(caml_copy_string(subject));
+}
+
+static value alloc_tm(struct tm *tm)
+{
+  value res;
+  res = caml_alloc_small(9, 0);
+  Field(res,0) = Val_int(tm->tm_sec);
+  Field(res,1) = Val_int(tm->tm_min);
+  Field(res,2) = Val_int(tm->tm_hour);
+  Field(res,3) = Val_int(tm->tm_mday);
+  Field(res,4) = Val_int(tm->tm_mon);
+  Field(res,5) = Val_int(tm->tm_year);
+  Field(res,6) = Val_int(tm->tm_wday);
+  Field(res,7) = Val_int(tm->tm_yday);
+  Field(res,8) = tm->tm_isdst ? Val_true : Val_false;
+  return res;
+}
+
+CAMLprim value ocaml_ssl_get_start_date(value certificate)
+{
+  CAMLparam1(certificate);
+  X509 *cert = Cert_val(certificate);
+  struct tm t;
+
+  caml_enter_blocking_section();
+  ASN1_TIME_to_tm(X509_get0_notBefore(cert), &t);
+  caml_leave_blocking_section();
+
+  CAMLreturn(alloc_tm(&t));
+}
+
+CAMLprim value ocaml_ssl_get_expiration_date(value certificate)
+{
+  CAMLparam1(certificate);
+  X509 *cert = Cert_val(certificate);
+  struct tm t;
+
+  caml_enter_blocking_section();
+  ASN1_TIME_to_tm(X509_get0_notAfter(cert), &t);
+  caml_leave_blocking_section();
+
+  CAMLreturn(alloc_tm(&t));
 }
 
 CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file, value ca_path)

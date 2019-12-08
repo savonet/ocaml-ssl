@@ -343,6 +343,10 @@ val get_issuer : certificate -> string
 (** Get the subject of a certificate. *)
 val get_subject : certificate -> string
 
+val get_start_date : certificate -> Unix.tm
+
+val get_expiration_date : certificate -> Unix.tm
+
 (** [load_verify_locations ctxt cafile capath] specifies the locations for the
     context [ctx], at which CA certificates for verification purposes are
     located. [cafile] should be the name of a CA certificates file in PEM format
@@ -361,6 +365,9 @@ val set_default_verify_paths : context -> bool
 (** Get the verification result. *)
 val get_verify_result : socket -> int
 
+(** Get a human readable verification error message for the verification error
+    Its input should be the result of calling [get_verify_result]. *)
+val get_verify_error_string : int -> string
 
 (** {2 Creating, connecting and closing sockets} *)
 
