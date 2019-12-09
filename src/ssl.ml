@@ -155,6 +155,8 @@ external create_context : protocol -> context_type -> context = "ocaml_ssl_creat
 
 external use_certificate : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate"
 
+external use_certificate_from_string : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate_from_string"
+
 external set_password_callback : context -> (bool -> string) -> unit = "ocaml_ssl_ctx_set_default_passwd_cb"
 
 external embed_socket : Unix.file_descr -> context -> socket = "ocaml_ssl_embed_socket"
