@@ -674,8 +674,11 @@ static int alpn_select_cb(SSL *ssl,
   protocol_list = build_alpn_protocol_list(in, inlen);
   selected_protocol_opt = caml_callback(*((value*)arg), protocol_list);
 
-  if (selected_protocol_opt == Val_none)
+  if(selected_protocol_opt == Val_none)
+  {
+    caml_enter_blocking_section();
     return SSL_TLSEXT_ERR_NOACK;
+  }
 
   selected_protocol = Field(selected_protocol_opt, 0);
   len = caml_string_length(selected_protocol);
