@@ -1,3 +1,8 @@
+0.5.10
+======
+* Add `get_verify_error_string`, `get_start_date`, `get_expiration_date` (#57).
+* Release master lock on ALPN failure (#58).
+
 0.5.9 (2019-07-15)
 =====
 * Backward compatibility with OpenSSL 1.0.2 (#53).
