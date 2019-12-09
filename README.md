@@ -7,6 +7,11 @@ OCaml-SSL - OCaml bindings for the libssl
 
 Copyright (c) 2003-2015 the Savonet Team.
 
+[![LGPL license](https://img.shields.io/badge/License-LGPL-green.svg)](https://github.com/savonet/liquidsoap/blob/master/COPYING)
+[![GitHub release](https://img.shields.io/github/release/savonet/ocaml-ssl.svg)](https://GitHub.com/savonet/ocaml-ssl/releases/)
+[![Install with Opam !](https://img.shields.io/badge/Install%20with-Opam-1abc9c.svg)](http://opam.ocaml.org/packages/ssl/)
+[![Build Status](https://travis-ci.org/savonet/ocaml-ssl.svg?branch=master)](https://travis-ci.org/savonet/ocaml-ssl)
+
 Installation
 ------------
 
