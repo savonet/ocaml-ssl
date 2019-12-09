@@ -175,6 +175,8 @@ external set_default_verify_paths : context -> bool = "ocaml_ssl_ctx_set_default
 
 external get_verify_result : socket -> int = "ocaml_ssl_get_verify_result"
 
+external get_verify_error_string : int -> string = "ocaml_ssl_get_verify_error_string"
+
 type verify_mode =
   | Verify_peer
   | Verify_fail_if_no_peer_cert
@@ -219,6 +221,10 @@ external write_certificate : string -> certificate -> unit = "ocaml_ssl_write_ce
 external get_issuer : certificate -> string = "ocaml_ssl_get_issuer"
 
 external get_subject : certificate -> string = "ocaml_ssl_get_subject"
+
+external get_start_date : certificate -> Unix.tm = "ocaml_ssl_get_start_date"
+
+external get_expiration_date : certificate -> Unix.tm = "ocaml_ssl_get_expiration_date"
 
 external file_descr_of_socket : socket -> Unix.file_descr = "ocaml_ssl_get_file_descr"
 
