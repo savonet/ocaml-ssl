@@ -24,8 +24,6 @@
     @author Samuel Mimram
 *)
 
-(* $Id$ *)
-
 (** {1 Exceptions and errors} *)
 
 (** An ssl error has occured (see SSL_get_error(3ssl) for details). *)
@@ -245,6 +243,9 @@ val create_context : protocol -> context_type -> context
   * name. *)
 val use_certificate : context -> string -> string -> unit
 
+(** Use a certificate whose contents is given as argument (you should use
+    instead [use_certificate] if you want to read the certificate from a
+    file). *)
 val use_certificate_from_string : context -> string -> string -> unit
 
 (** Set the callback function called to get passwords for encrypted PEM files.
@@ -345,8 +346,10 @@ val get_issuer : certificate -> string
 (** Get the subject of a certificate. *)
 val get_subject : certificate -> string
 
+(** Get the start date of a certificate. *)
 val get_start_date : certificate -> Unix.tm
 
+(** Get the expiration date of a certificate. *)
 val get_expiration_date : certificate -> Unix.tm
 
 (** [load_verify_locations ctxt cafile capath] specifies the locations for the
