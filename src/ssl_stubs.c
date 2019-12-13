@@ -849,6 +849,45 @@ CAMLprim value ocaml_ssl_disable_protocols(value context, value protocol_list)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_version(value socket)
+{
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  int version;
+  int ret;
+
+  caml_enter_blocking_section();
+  version = SSL_version(ssl);
+  caml_leave_blocking_section();
+
+  switch(version) {
+    case SSL3_VERSION:
+      ret = 1;
+      break;
+
+    case TLS1_VERSION:
+      ret = 2;
+      break;
+
+    case TLS1_1_VERSION:
+      ret = 3;
+      break;
+
+    case TLS1_2_VERSION:
+      ret = 4;
+      break;
+
+    case TLS1_3_VERSION:
+      ret = 5;
+      break;
+
+    default:
+      caml_failwith("Ssl.version");
+  }
+
+  CAMLreturn(Val_int(ret));
+}
+
 CAMLprim value ocaml_ssl_get_current_cipher(value socket)
 {
   CAMLparam1(socket);

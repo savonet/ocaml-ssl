@@ -326,6 +326,14 @@ val get_cipher_name : cipher -> string
 (** Get the version of a cipher. *)
 val get_cipher_version : cipher -> string
 
+val version : socket -> protocol
+(** Get the version used for the connection. As per the
+   {{:https://www.openssl.org/docs/man1.1.1/man3/SSL_get_version.html} OpenSSL
+   documentation}, should only be called after the initial handshake has been
+   completed. Prior to that the results returned from these functions may be
+   unreliable.
+
+  @raise Failure if the version is unknown *)
 
 (** {2 Certificates} *)
 
