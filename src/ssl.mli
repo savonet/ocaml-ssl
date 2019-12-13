@@ -276,13 +276,15 @@ val set_client_verify_callback_verbose : bool -> unit
   * Warning: this might change in the future. *)
 val set_verify : context -> verify_mode list -> verify_callback option -> unit
 
-(** Set the maximum depth for the certificate chain verification that shall be allowed. *)
+(** Set the maximum depth for the certificate chain verification that shall be
+    allowed. *)
 val set_verify_depth : context -> int -> unit
 
 (** Set the list of supported ALPN protocols for negotiation to the context. *)
 val set_context_alpn_protos : context -> string list -> unit
 
-(** Set the callback to allow server to select the preferred protocol from client's available protocols. *)
+(** Set the callback to allow server to select the preferred protocol from
+    client's available protocols. *)
 val set_context_alpn_select_callback : context -> (string list -> string option) -> unit
 
 
@@ -298,7 +300,8 @@ type cipher
   * *)
 val disable_protocols : context -> protocol list -> unit
 
-(** Set the list of available ciphers for a context. See man ciphers(1) for the format of the string. *)
+(** Set the list of available ciphers for a context. See man ciphers(1) for the
+    format of the string. *)
 val set_cipher_list : context -> string -> unit
 
 (** When choosing a cipher, use the server's preferences instead of the client
@@ -326,7 +329,6 @@ val get_cipher_name : cipher -> string
 (** Get the version of a cipher. *)
 val get_cipher_version : cipher -> string
 
-val version : socket -> protocol
 (** Get the version used for the connection. As per the
    {{:https://www.openssl.org/docs/man1.1.1/man3/SSL_get_version.html} OpenSSL
    documentation}, should only be called after the initial handshake has been
@@ -334,6 +336,7 @@ val version : socket -> protocol
    unreliable.
 
   @raise Failure if the version is unknown *)
+val version : socket -> protocol
 
 (** {2 Certificates} *)
 
@@ -463,14 +466,12 @@ val write : socket -> Bytes.t -> int -> int -> int
 val write_substring : socket -> string -> int -> int -> int
 
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
-    This function releases the runtime while the read takes place.
-  *)
+    This function releases the runtime while the read takes place. *)
 val write_bigarray : socket -> bigarray -> int -> int -> int
 
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
     This function DOES NOT release the runtime while the read takes place: it
-    must be used with nonblocking sockets.
-  *)
+    must be used with nonblocking sockets. *)
 val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
 
 
