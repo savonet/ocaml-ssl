@@ -202,6 +202,8 @@ external set_context_alpn_protos : context -> string list -> unit = "ocaml_ssl_c
 
 external set_context_alpn_select_callback : context -> (string list -> string option) -> unit = "ocaml_ssl_ctx_set_alpn_select_callback"
 
+external version : socket -> protocol = "ocaml_ssl_version"
+
 type cipher
 
 external get_cipher : socket -> cipher = "ocaml_ssl_get_current_cipher"
