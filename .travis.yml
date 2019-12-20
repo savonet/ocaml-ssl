@@ -1,18 +1,9 @@
 language: c
 dist: bionic
-sudo: false
-addons:
-  apt:
-    sources:
-    - avsm
-    packages:
-    - ocaml-nox
-    - opam
-    - libssl-dev
-before_install:
-  - export OPAMYES=1
-  - opam init
-  - opam install -q -y dune
-  - eval `opam config env`
-
-script: dune build @default @runtest
+sudo: required
+install: test -e .travis.opam.sh || wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
+script: bash -ex .travis-opam.sh
+env:
+  - OCAML_VERSION=4.08
+os:
+  - linux
