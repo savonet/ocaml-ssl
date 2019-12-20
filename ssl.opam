@@ -11,7 +11,7 @@ build: [
 ]
 depends: [
   "ocaml" {>= "4.02.0"}
-  "dune" {>= "1.2.1"}
+  "dune" {>= "2.0.0"}
   "dune-configurator"
   "base-unix"
   "conf-libssl"
