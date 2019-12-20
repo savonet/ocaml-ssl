@@ -4,6 +4,7 @@
 * Add `get_verify_error_string`, `get_start_date`, `get_expiration_date` (#57).
 * Release master lock on ALPN failure (#58).
 * Add `version` (#60).
+* Switch to dune 2 (#61).
 
 0.5.9 (2019-07-15)
 =====

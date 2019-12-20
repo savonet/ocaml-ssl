@@ -3,9 +3,11 @@
  (public_name ssl)
  (libraries unix)
  (wrapped false)
- (c_flags (:include c_flags.sexp))
- (c_library_flags (:include c_library_flags.sexp))
- (c_names ssl_stubs))
+ (foreign_stubs
+   (language c)
+   (names ssl_stubs)
+   (flags (:include c_flags.sexp)))
+ (c_library_flags (:include c_library_flags.sexp)))
 
 (rule
  (targets c_flags.sexp c_library_flags.sexp ocaml_ssl.h)
