@@ -1660,12 +1660,16 @@ CAMLprim value ocaml_ssl_shutdown(value socket)
 
   caml_enter_blocking_section();
   ret = SSL_shutdown(ssl);
-  if (!ret)
-    SSL_shutdown(ssl);
   caml_leave_blocking_section();
-  /* close(SSL_get_fd(SSL_val(socket))); */
-
-  CAMLreturn(Val_unit);
+  switch (ret) {
+    case 0:
+    case 1:
+      /* close(SSL_get_fd(SSL_val(socket))); */
+      CAMLreturn(Val_int(ret));
+    default:
+      ret = SSL_get_error(ssl, ret);
+      caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(ret));
+  }
 }
 
 /* ======================================================== */
