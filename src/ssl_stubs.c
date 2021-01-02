@@ -50,7 +50,7 @@
 #include <openssl/tls1.h>
 #include <openssl/x509v3.h>
 
-// #include "ocaml_ssl.h"
+#include "ocaml_ssl.h"
 
 #ifdef WIN32
 #include <windows.h>
