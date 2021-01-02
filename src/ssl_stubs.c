@@ -50,7 +50,7 @@
 #include <openssl/tls1.h>
 #include <openssl/x509v3.h>
 
-#include "ocaml_ssl.h"
+// #include "ocaml_ssl.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -529,6 +529,34 @@ CAMLprim value ocaml_ssl_get_verify_error_string(value verrn)
   caml_leave_blocking_section();
 
   return caml_copy_string(error_string);
+}
+
+CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
+{
+  CAMLparam2(vevp, vcert);
+  CAMLlocal1(vdigest);
+  char buf[384/8];
+  const EVP_MD *evp;
+  if (vevp == hash_variant("SHA384"))
+      evp = EVP_sha384();
+  else if(vevp == hash_variant("SHA256"))
+      evp = EVP_sha256();
+  else
+      evp = EVP_sha1();
+  size_t digest_size = EVP_MD_size(evp);
+  assert(digest_size <= sizeof(buf));
+  X509 *x509 = *((X509 **) Data_custom_val(vcert));
+  caml_enter_blocking_section();
+  int status = X509_digest(x509, evp, (unsigned char*)buf, NULL);
+  caml_leave_blocking_section();
+  if (0 == status)
+    {
+      ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+      caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
+    }
+  vdigest = caml_alloc_string(digest_size);
+  memcpy(Bytes_val(vdigest), buf, digest_size);
+  CAMLreturn(vdigest);
 }
 
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
