@@ -1,5 +1,6 @@
-0.5.10 (unreleased)
+0.5.10 (2021-02-01)
 ======
+
 - Add `use_certificate_from_string` (#54).
 - Add `get_verify_error_string`, `get_start_date`, `get_expiration_date` (#57).
 - Release master lock on ALPN failure (#58).
