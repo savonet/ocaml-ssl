@@ -385,6 +385,9 @@ val get_verify_result : socket -> int
     Its input should be the result of calling [get_verify_result]. *)
 val get_verify_error_string : int -> string
 
+(** Get the digest of the certificate as a binary string, using the SHA1, SHA256 or SHA384 hashing algorithm. *)
+val digest : [`SHA1 | `SHA256 | `SHA384] -> certificate -> string
+
 (** {2 Creating, connecting and closing sockets} *)
 
 (** Embed a Unix socket into an SSL socket. *)

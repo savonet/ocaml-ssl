@@ -179,6 +179,8 @@ external get_verify_result : socket -> int = "ocaml_ssl_get_verify_result"
 
 external get_verify_error_string : int -> string = "ocaml_ssl_get_verify_error_string"
 
+external digest : [`SHA1 | `SHA256 | `SHA384] -> certificate -> string = "ocaml_ssl_digest"
+
 type verify_mode =
   | Verify_peer
   | Verify_fail_if_no_peer_cert

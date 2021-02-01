@@ -1,0 +1,3 @@
+(test
+ (name ssl_test)
+ (libraries ssl alcotest))
