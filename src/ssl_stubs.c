@@ -443,8 +443,8 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert, value pr
 {
   CAMLparam3(context, cert, privkey);
   SSL_CTX *ctx = Ctx_val(context);
-  char *cert_name = String_val(cert);
-  char *privkey_name = String_val(privkey);
+  const char *cert_name = String_val(cert);
+  const char *privkey_name = String_val(privkey);
   char buf[256];
 
   caml_enter_blocking_section();
@@ -474,9 +474,9 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context, value ce
 {
   CAMLparam3(context, cert, privkey);
   SSL_CTX *ctx = Ctx_val(context);
-  char *cert_data = String_val(cert);
+  const char *cert_data = String_val(cert);
   int cert_data_length = caml_string_length(cert);
-  char *privkey_data = String_val(privkey);
+  const char *privkey_data = String_val(privkey);
   int privkey_data_length = caml_string_length(privkey);
   char buf[256];
   X509 *x509_cert = NULL;
@@ -638,7 +638,7 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value v
 {
   CAMLparam2(context, vfilename);
   SSL_CTX *ctx = Ctx_val(context);
-  char *filename = String_val(vfilename);
+  const char *filename = String_val(vfilename);
   STACK_OF(X509_NAME) *cert_names;
   char buf[256];
 
@@ -849,7 +849,7 @@ CAMLprim value ocaml_ssl_ctx_set_cipher_list(value context, value ciphers_string
 {
   CAMLparam2(context, ciphers_string);
   SSL_CTX *ctx = Ctx_val(context);
-  char *ciphers = String_val(ciphers_string);
+  const char *ciphers = String_val(ciphers_string);
 
   if(*ciphers == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
@@ -971,7 +971,7 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
   CAMLparam2(context, dh_file_path);
   DH *dh = NULL;
   SSL_CTX *ctx = Ctx_val(context);
-  char *dh_cfile_path = String_val(dh_file_path);
+  const char *dh_cfile_path = String_val(dh_file_path);
 
   if(*dh_cfile_path == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
@@ -1001,7 +1001,7 @@ CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context, value curve
   EC_KEY *ecdh = NULL;
   int nid = 0;
   SSL_CTX *ctx = Ctx_val(context);
-  char *ec_curve_name = String_val(curve_name);
+  const char *ec_curve_name = String_val(curve_name);
 
   if(*ec_curve_name == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
@@ -1061,7 +1061,7 @@ static struct custom_operations cert_ops =
 CAMLprim value ocaml_ssl_read_certificate(value vfilename)
 {
   value block;
-  char *filename = String_val(vfilename);
+  const char *filename = String_val(vfilename);
   X509 *cert = NULL;
   FILE *fh = NULL;
   char buf[256];
@@ -1088,7 +1088,7 @@ CAMLprim value ocaml_ssl_read_certificate(value vfilename)
 CAMLprim value ocaml_ssl_write_certificate(value vfilename, value certificate)
 {
   CAMLparam2(vfilename, certificate);
-  char *filename = String_val(vfilename);
+  const char *filename = String_val(vfilename);
   X509 *cert = Cert_val(certificate);
   FILE *fh = NULL;
   char buf[256];
@@ -1203,8 +1203,8 @@ CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file,
 {
   CAMLparam3(context, ca_file, ca_path);
   SSL_CTX *ctx = Ctx_val(context);
-  char *CAfile = String_val(ca_file);
-  char *CApath = String_val(ca_path);
+  const char *CAfile = String_val(ca_file);
+  const char *CApath = String_val(ca_path);
 
   if(*CAfile == 0)
     CAfile = NULL;
@@ -1287,7 +1287,7 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket, value vhostname)
 {
   CAMLparam2(socket, vhostname);
   SSL *ssl       = SSL_val(socket);
-  char *hostname = String_val(vhostname);
+  const char *hostname = String_val(vhostname);
 
   caml_enter_blocking_section();
   SSL_set_tlsext_host_name(ssl, hostname);
@@ -1324,6 +1324,7 @@ CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
 CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
 {
   CAMLparam1(socket);
+  CAMLlocal1(proto);
   SSL *ssl = SSL_val(socket);
 
   const unsigned char *data;
@@ -1342,7 +1343,7 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
    *   len is set to 0 if no protocol has been selected. data must not be
    *   freed.
    */
-  value proto = caml_alloc_string (len);
+  proto = caml_alloc_string (len);
   memcpy((char *)String_val(proto), (const char*)data, len);
 
   CAMLreturn(Val_some(proto));
