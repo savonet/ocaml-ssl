@@ -442,6 +442,26 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type)
   return block;
 }
 
+CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
+  CAMLparam2(context, cert);
+  SSL_CTX *ctx = Ctx_val(context);
+  const char *cert_data = String_val(cert);
+  int cert_data_length = caml_string_length(cert);
+  char buf[256];
+  X509 *x509_cert = NULL;
+  BIO *cbio;
+
+  cbio = BIO_new_mem_buf((void*)cert_data, cert_data_length);
+  x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  if (NULL == x509_cert || SSL_CTX_add_extra_chain_cert(ctx, x509_cert) <= 0)
+  {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert, value privkey)
 {
   CAMLparam3(context, cert, privkey);

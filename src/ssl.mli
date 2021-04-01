@@ -238,6 +238,11 @@ type context_type =
 (** Create a context. *)
 val create_context : protocol -> context_type -> context
 
+(** Add an additional certificate to the extra chain certificates
+  * associated with the [ctx]. The value should be contents of the
+  * certificate as string in PEM format. *)
+val add_extra_chain_cert : context -> string -> unit
+
 (** [use_certificate ctx cert privkey] makes the context [ctx] use [cert] as
   * certificate's file name (in PEM format) and [privkey] as private key file
   * name. *)
