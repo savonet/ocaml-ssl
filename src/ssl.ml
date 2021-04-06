@@ -155,6 +155,8 @@ external create_context : protocol -> context_type -> context = "ocaml_ssl_creat
 
 external add_extra_chain_cert : context -> string -> unit = "ocaml_ssl_ctx_add_extra_chain_cert"
 
+external add_cert_to_store : context -> string -> unit = "ocaml_ssl_ctx_add_cert_to_store"
+
 external use_certificate : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate"
 
 external use_certificate_from_string : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate_from_string"
