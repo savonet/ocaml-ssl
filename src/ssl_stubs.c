@@ -531,7 +531,7 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context, value ce
   int privkey_data_length = caml_string_length(privkey);
   char buf[256];
   X509 *x509_cert = NULL;
-  RSA *rsa = NULL;
+  EVP_PKEY *pkey = NULL;
   BIO *cbio, *kbio;
 
   cbio = BIO_new_mem_buf((void*)cert_data, cert_data_length);
@@ -543,8 +543,8 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context, value ce
   }
 
   kbio = BIO_new_mem_buf((void*)privkey_data, privkey_data_length);
-  rsa = PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL);
-  if (NULL == rsa || SSL_CTX_use_RSAPrivateKey(ctx, rsa) <= 0)
+  pkey = PEM_read_bio_PrivateKey(kbio, NULL, 0, NULL);
+  if (NULL == pkey || SSL_CTX_use_PrivateKey(ctx, pkey) <= 0)
   {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_raise_with_arg(*caml_named_value("ssl_exn_private_key_error"), caml_copy_string(buf));
