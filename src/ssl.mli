@@ -456,6 +456,11 @@ val set_hostflags : socket -> x509_check_flag list -> unit
 (* Set the expected host name to be verified. *)
 val set_host : socket -> string -> unit
 
+(** Set the expected ip address to be verified. Ip address is dotted decimal quad
+    for IPv4 and colon-separated hexadecimal for IPv6.
+    The condensed "::" notation is supported for IPv6 addresses. *)
+val set_ip : socket -> string -> unit
+
 (** Get the file descriptor associated with a socket. It is primarly useful for
     [select]ing on it; you should not write or read on it. *)
 val file_descr_of_socket : socket -> Unix.file_descr

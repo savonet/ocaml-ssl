@@ -259,6 +259,8 @@ external set_hostflags : socket -> x509_check_flag list -> unit = "ocaml_ssl_set
 
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 
+external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
+
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
 external write_substring : socket -> string -> int -> int -> int = "ocaml_ssl_write"

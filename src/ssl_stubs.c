@@ -1536,6 +1536,19 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_set1_ip(value socket, value ip)
+{
+  CAMLparam2(socket, ip);
+  SSL *ssl = SSL_val(socket);
+  const char *ipval = String_val (ip);
+
+  caml_enter_blocking_section();
+  X509_VERIFY_PARAM_set1_ip_asc (SSL_get0_param(ssl), ipval);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_write(value socket, value buffer, value start, value length)
 {
   CAMLparam2(socket, buffer);
