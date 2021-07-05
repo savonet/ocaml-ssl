@@ -2,6 +2,7 @@
 ======
 
 - Add `digest` function (#65, #66).
+- Restore compatibility with openssl < 1.1.0 (#73).
 
 0.5.10 (2021-02-01)
 ======
