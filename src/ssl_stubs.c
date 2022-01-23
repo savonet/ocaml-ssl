@@ -1175,7 +1175,7 @@ static value alloc_tm(struct tm *tm)
   return res;
 }
 
-#ifdef ASN1_TIME_to_tm
+#ifdef HAVE_ASN1_TIME_TO_TM
 CAMLprim value ocaml_ssl_get_start_date(value certificate)
 {
   CAMLparam1(certificate);
