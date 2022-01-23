@@ -35,12 +35,7 @@ let log s =
 
 let establish_threaded_server server_handler sockaddr nbconn =
   log "establishing server";
-  let domain =
-    begin match sockaddr with
-    | Unix.ADDR_UNIX _ -> Unix.PF_UNIX
-    | Unix.ADDR_INET (_, _) -> Unix.PF_INET
-    end
-  in
+  let domain = Unix.domain_of_sockaddr sockaddr in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
   let handle_connexion (s, caller) =
     let inet_addr_of_sockaddr = function
