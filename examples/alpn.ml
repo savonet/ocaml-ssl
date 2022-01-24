@@ -21,12 +21,7 @@ let test_server proto_list =
   in
   Ssl.init ();
   let sockaddr = Unix.ADDR_INET(Unix.inet_addr_of_string "127.0.0.1", 4433) in
-  let domain =
-    begin match sockaddr with
-    | Unix.ADDR_UNIX _ -> Unix.PF_UNIX
-    | Unix.ADDR_INET (_, _) -> Unix.PF_INET
-    end
-  in
+  let domain = Unix.domain_of_sockaddr sockaddr in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
   let ctx = Ssl.create_context Ssl.TLSv1_2 Ssl.Server_context in
   Ssl.use_certificate ctx certfile privkey;

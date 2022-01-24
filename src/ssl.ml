@@ -279,11 +279,7 @@ external flush : socket -> unit = "ocaml_ssl_flush"
 external shutdown : socket -> unit = "ocaml_ssl_shutdown"
 
 let open_connection_with_context context sockaddr =
-  let domain =
-    match sockaddr with
-      | Unix.ADDR_UNIX _ -> Unix.PF_UNIX
-      | Unix.ADDR_INET(_, _) -> Unix.PF_INET
-  in
+  let domain = Unix.domain_of_sockaddr sockaddr in
   let sock =
     Unix.socket domain Unix.SOCK_STREAM 0 in
     try
