@@ -31,6 +31,7 @@ let function_tests =
   ; "TLSv1_2_method", "HAVE_TLS12"
   ; "EC_KEY_free", "HAVE_EC"
   ; "SSL_set_alpn_protos", "HAVE_ALPN"
+  ; "ASN1_TIME_to_tm", "HAVE_ASN1_TIME_TO_TM"
   ]
 
 let macro_tests =
