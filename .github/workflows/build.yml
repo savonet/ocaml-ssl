@@ -1,0 +1,20 @@
+name: Build
+on: [push]
+jobs:
+  build:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, macos-latest]
+        ocaml-version: ['4.09.0']
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-version: ${{ matrix.ocaml-version }}
+    - name: Setup opam
+      run: opam pin add -n .
+    - name: Install dependencies
+      run: opam depext -yt mad
+    - name: Build and test
+      run: opam install -t .

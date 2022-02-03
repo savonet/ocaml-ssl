@@ -1,0 +1,26 @@
+name: Build doc
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_doc:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Setup OCaml
+      uses: avsm/setup-ocaml@v2
+    - name: Pin locally
+      run: opam pin -y add -n .
+    - name: Install dependencies
+      run: opam install -y odoc
+    - name: Build doc
+      run: opam exec dune build @doc
+    - name: Deploy doc
+      uses: JamesIves/github-pages-deploy-action@4.1.6
+      with:
+        branch: gh-pages
+        folder: _build/default/_doc/_html
