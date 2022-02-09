@@ -537,9 +537,9 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
   CAMLlocal1(vdigest);
   char buf[384/8];
   const EVP_MD *evp;
-  if (vevp == hash_variant("SHA384"))
+  if (vevp == caml_hash_variant("SHA384"))
       evp = EVP_sha384();
-  else if(vevp == hash_variant("SHA256"))
+  else if(vevp == caml_hash_variant("SHA256"))
       evp = EVP_sha256();
   else
       evp = EVP_sha1();
