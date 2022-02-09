@@ -3,6 +3,7 @@
 
 - Add `digest` function (#65, #66).
 - Restore compatibility with openssl < 1.1.0 (#73).
+- Improved compatibility with OCaml 5 (#79).
 
 0.5.10 (2021-02-01)
 ======
