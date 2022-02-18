@@ -559,11 +559,6 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
   CAMLreturn(vdigest);
 }
 
-CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
-{
-  return (value)client_verify_callback;
-}
-
 static int client_verify_callback_verbose = 1;
 
 CAMLprim value ocaml_ssl_set_client_verify_callback_verbose(value verbose)
@@ -610,7 +605,7 @@ CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode, value vcallb
   }
 
   if (Is_block(vcallback))
-    callback = (int(*) (int, X509_STORE_CTX*))Field(vcallback, 0);
+    callback = (int(*) (int, X509_STORE_CTX*)) client_verify_callback;
 
   caml_enter_blocking_section();
   SSL_CTX_set_verify(ctx, mode, callback);

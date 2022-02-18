@@ -264,7 +264,7 @@ type verify_mode =
   | Verify_client_once (** Implies [Verify_peer]. *)
 
 (** A callback function for verification. Warning: this might change in the future. *)
-type verify_callback
+type verify_callback = unit
 
 (** Client's verification callback. Warning: this might change in the future. *)
 val client_verify_callback : verify_callback

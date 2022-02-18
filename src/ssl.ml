@@ -186,11 +186,9 @@ type verify_mode =
   | Verify_fail_if_no_peer_cert
   | Verify_client_once
 
-type verify_callback
+type verify_callback = unit
 
-external get_client_verify_callback_ptr : unit -> verify_callback = "ocaml_ssl_get_client_verify_callback_ptr"
-
-let client_verify_callback = get_client_verify_callback_ptr ()
+let client_verify_callback = ()
 
 external set_client_verify_callback_verbose : bool -> unit = "ocaml_ssl_set_client_verify_callback_verbose"
 
