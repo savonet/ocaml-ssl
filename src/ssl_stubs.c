@@ -59,6 +59,7 @@
 #endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
+static value vclient_verify_callback = Val_int(0);
 static DH *load_dh_param(const char *dhfile);
 
 /*******************
@@ -561,7 +562,12 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
 
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
 {
-  return (value)client_verify_callback;
+  if (Is_long(vclient_verify_callback)) {
+    vclient_verify_callback = caml_alloc_shr(1, Abstract_tag);
+    *((int(**) (int, X509_STORE_CTX*))Data_abstract_val(vclient_verify_callback)) = client_verify_callback;
+    caml_register_generational_global_root(&vclient_verify_callback);
+  }
+  return vclient_verify_callback;
 }
 
 static int client_verify_callback_verbose = 1;
@@ -610,7 +616,12 @@ CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode, value vcallb
   }
 
   if (Is_block(vcallback))
-    callback = (int(*) (int, X509_STORE_CTX*))Field(vcallback, 0);
+  {
+    vcallback = Field(vcallback, 0);
+    if (!Is_block(vcallback) || Tag_val(vcallback) != Abstract_tag || Wosize_val(vcallback) != 1)
+      caml_invalid_argument("callback");
+    callback = *((int(**) (int, X509_STORE_CTX*))Data_abstract_val(vcallback));
+  }
 
   caml_enter_blocking_section();
   SSL_CTX_set_verify(ctx, mode, callback);
