@@ -3,8 +3,11 @@
 build:
 	dune build @default
 
+coverage:
+	bisect-ppx-report html
+
 test:
-	dune runtest
+	dune runtest --instrument-with bisect_ppx --force
 
 install:
 	dune install
