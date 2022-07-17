@@ -1,3 +1,5 @@
+.vscode
 *.install
 .merlin
 _build
+.devcontainer.json
