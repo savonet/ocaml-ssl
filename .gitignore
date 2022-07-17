@@ -2,4 +2,4 @@
 *.install
 .merlin
 _build
-.devcontainer.json
+_coverage
