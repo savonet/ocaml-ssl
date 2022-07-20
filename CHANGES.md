@@ -1,5 +1,5 @@
-0.5.11 (unreleased)
-======
+0.5.11
+=====
 
 - Add `digest` function (#65, #66).
 - Restore compatibility with openssl < 1.1.0 (#73).
