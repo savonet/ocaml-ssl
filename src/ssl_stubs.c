@@ -442,6 +442,54 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type)
   return block;
 }
 
+CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
+  CAMLparam2(context, cert);
+  SSL_CTX *ctx = Ctx_val(context);
+  const char *cert_data = String_val(cert);
+  int cert_data_length = caml_string_length(cert);
+  char buf[256];
+  X509 *x509_cert = NULL;
+  BIO *cbio;
+
+  caml_enter_blocking_section();
+  cbio = BIO_new_mem_buf((void*)cert_data, cert_data_length);
+  x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  if (NULL == x509_cert || SSL_CTX_add_extra_chain_cert(ctx, x509_cert) <= 0)
+  {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    caml_leave_blocking_section();
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
+  }
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_ctx_add_cert_to_store(value context, value cert) {
+  CAMLparam2(context,cert);
+  SSL_CTX *ctx = Ctx_val(context);
+  const char *cert_data = String_val(cert);
+  int cert_data_length = caml_string_length(cert);
+  char buf[256];
+  X509 *x509_cert = NULL;
+  BIO *cbio;
+
+  caml_enter_blocking_section();
+  cbio = BIO_new_mem_buf((void*)cert_data, cert_data_length);
+  x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+
+  X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+
+  if (NULL == x509_cert || X509_STORE_add_cert(store, x509_cert) <= 0) {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    caml_leave_blocking_section();
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"), caml_copy_string(buf));
+  }
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert, value privkey)
 {
   CAMLparam3(context, cert, privkey);
@@ -483,7 +531,7 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context, value ce
   int privkey_data_length = caml_string_length(privkey);
   char buf[256];
   X509 *x509_cert = NULL;
-  RSA *rsa = NULL;
+  EVP_PKEY *pkey = NULL;
   BIO *cbio, *kbio;
 
   cbio = BIO_new_mem_buf((void*)cert_data, cert_data_length);
@@ -495,8 +543,8 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context, value ce
   }
 
   kbio = BIO_new_mem_buf((void*)privkey_data, privkey_data_length);
-  rsa = PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL);
-  if (NULL == rsa || SSL_CTX_use_RSAPrivateKey(ctx, rsa) <= 0)
+  pkey = PEM_read_bio_PrivateKey(kbio, NULL, 0, NULL);
+  if (NULL == pkey || SSL_CTX_use_PrivateKey(ctx, pkey) <= 0)
   {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
     caml_raise_with_arg(*caml_named_value("ssl_exn_private_key_error"), caml_copy_string(buf));
@@ -1483,6 +1531,19 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host)
 
   caml_enter_blocking_section();
   X509_VERIFY_PARAM_set1_host (SSL_get0_param(ssl), hostname, 0);
+  caml_leave_blocking_section();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_set1_ip(value socket, value ip)
+{
+  CAMLparam2(socket, ip);
+  SSL *ssl = SSL_val(socket);
+  const char *ipval = String_val (ip);
+
+  caml_enter_blocking_section();
+  X509_VERIFY_PARAM_set1_ip_asc (SSL_get0_param(ssl), ipval);
   caml_leave_blocking_section();
 
   CAMLreturn(Val_unit);

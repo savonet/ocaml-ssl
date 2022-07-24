@@ -1,3 +1,14 @@
+Unreleased
+=====
+
+- Add a few verification functions (#71):
+  - `add_extra_chain_cert` to send additional chain certificates to the peer.
+  - `add_cert_to_store`: to allow verification of the peer certificate CA.
+  - `set_ip`: sets the expected IP address to be verified on a SSL socket.
+
+- Improve `use_certificate_from_string` (#71) to read any type of key (rather
+  than just RSA).
+
 0.5.11
 =====
 

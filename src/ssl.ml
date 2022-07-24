@@ -153,6 +153,10 @@ type context_type =
 
 external create_context : protocol -> context_type -> context = "ocaml_ssl_create_context"
 
+external add_extra_chain_cert : context -> string -> unit = "ocaml_ssl_ctx_add_extra_chain_cert"
+
+external add_cert_to_store : context -> string -> unit = "ocaml_ssl_ctx_add_cert_to_store"
+
 external use_certificate : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate"
 
 external use_certificate_from_string : context -> string -> string -> unit = "ocaml_ssl_ctx_use_certificate_from_string"
@@ -254,6 +258,8 @@ type x509_check_flag =
 external set_hostflags : socket -> x509_check_flag list -> unit = "ocaml_ssl_set_hostflags"
 
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
+
+external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
 external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
