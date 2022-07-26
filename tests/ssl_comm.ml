@@ -1,11 +1,11 @@
+open Alcotest
 let test_init () = 
-    Ssl.(init () |> ignore)
+    Ssl.init () |> ignore
 
 let () =
-  let open Alcotest in
-  run "Ssl"
+  Alcotest.run "Ssl communication"
     [
-      ( "Init",
+      ( "Communication",
         [
           test_case "Test init" `Quick test_init;
         ] );
