@@ -12,3 +12,8 @@
  (name ssl_context)
  (modules ssl_context)
  (libraries ssl alcotest))
+
+ (test
+ (name ssl_ciphers)
+ (modules ssl_ciphers)
+ (libraries ssl alcotest))
