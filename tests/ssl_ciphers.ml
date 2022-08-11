@@ -1,6 +1,17 @@
 open Ssl
 open Alcotest
 
+let pp_protocol ppf = function
+  | SSLv23 -> Format.fprintf ppf "SSLv23" 
+  | SSLv3 -> Format.fprintf ppf "SSLv3"
+  | TLSv1 -> Format.fprintf ppf "TLSv1"
+  | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"
+  | TLSv1_2 -> Format.fprintf ppf "TLSv1_2"
+  | TLSv1_3 -> Format.fprintf ppf "TLSv1_3"
+
+let protocol_testable =
+  Alcotest.testable pp_protocol (fun r1 r2 -> r1 == r2)
+
 let test_disable_protocols () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.disable_protocols context [SSLv23];
@@ -33,7 +44,13 @@ let test_socket_cipher_funcs () =
   let ssl = open_connection_with_context context addr in
   let cipher = Ssl.get_cipher ssl in
   let name = Ssl.get_cipher_name cipher in
-  check string "cipher name" "TLS_AES_256_GCM_SHA384" name
+  let description = Ssl.get_cipher_description cipher in
+  let version = Ssl.get_cipher_version cipher in
+  let socket_version = Ssl.version ssl in
+  check string "cipher name" "TLS_AES_256_GCM_SHA384" name;
+  check string "cipher description" "TLS_AES_256_GCM_SHA384  TLSv1.3 Kx=any      Au=any  Enc=AESGCM(256) Mac=AEAD\n" description;
+  check string "cipher version" "TLSv1.3" version;
+  check protocol_testable "socket version"  TLSv1_3 socket_version
 
 let () =
 Alcotest.run "Ssl cipher functions"
