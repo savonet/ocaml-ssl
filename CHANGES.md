@@ -9,6 +9,8 @@ Unreleased
 - Improve `use_certificate_from_string` (#71) to read any type of key (rather
   than just RSA).
 
+- Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
+
 0.5.11
 =====
 
