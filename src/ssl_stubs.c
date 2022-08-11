@@ -221,6 +221,7 @@ static void dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *fil
 
 CAMLprim value ocaml_ssl_init(value use_threads)
 {
+  CAMLparam1(use_threads);
   int i;
 
   SSL_library_init();
@@ -250,14 +251,15 @@ CAMLprim value ocaml_ssl_init(value use_threads)
     CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function);
   }
 
-  return Val_unit;
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value ocaml_ssl_get_error_string(value unit)
 {
+  CAMLparam1(unit);
   char buf[256];
   ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
-  return caml_copy_string(buf);
+  CAMLreturn(caml_copy_string(buf));
 }
 
 
@@ -420,7 +422,8 @@ static const SSL_METHOD *get_method(int protocol, int type)
 
 CAMLprim value ocaml_ssl_create_context(value protocol, value type)
 {
-  value block;
+  CAMLparam2(protocol, type);
+  CAMLlocal1(block);
   SSL_CTX *ctx;
   const SSL_METHOD *method = get_method(Int_val(protocol), Int_val(type));
 
@@ -439,7 +442,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type)
 
   block = caml_alloc_custom(&ctx_ops, sizeof(SSL_CTX*), 0, 1);
   Ctx_val(block) = ctx;
-  return block;
+  CAMLreturn(block);
 }
 
 CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
@@ -572,6 +575,7 @@ CAMLprim value ocaml_ssl_get_verify_result(value socket)
 
 CAMLprim value ocaml_ssl_get_verify_error_string(value verrn)
 {
+  CAMLparam1(verrn);
   int errn = Int_val(verrn);
   const char *error_string;
 
@@ -579,7 +583,7 @@ CAMLprim value ocaml_ssl_get_verify_error_string(value verrn)
   error_string = X509_verify_cert_error_string(errn);
   caml_acquire_runtime_system();
 
-  return caml_copy_string(error_string);
+  CAMLreturn(caml_copy_string(error_string));
 }
 
 CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
@@ -612,15 +616,16 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
 
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
 {
+  CAMLparam1(unit);
 #ifdef NO_NAKED_POINTERS
   if (Is_long(vclient_verify_callback)) {
     vclient_verify_callback = caml_alloc_shr(1, Abstract_tag);
     *((int(**) (int, X509_STORE_CTX*))Data_abstract_val(vclient_verify_callback)) = client_verify_callback;
     caml_register_generational_global_root(&vclient_verify_callback);
   }
-  return vclient_verify_callback;
+  CAMLreturn(vclient_verify_callback);
 #else
-  return (value)client_verify_callback;
+  CAMLreturn((value)client_verify_callback);
 #endif
 }
 
@@ -690,6 +695,7 @@ CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode, value vcallb
 
 CAMLprim value ocaml_ssl_ctx_set_verify_depth(value context, value vdepth)
 {
+  CAMLparam2(context, vdepth);
   SSL_CTX *ctx = Ctx_val(context);
   int depth = Int_val(vdepth);
 
@@ -700,7 +706,7 @@ CAMLprim value ocaml_ssl_ctx_set_verify_depth(value context, value vdepth)
   SSL_CTX_set_verify_depth(ctx, depth);
   caml_acquire_runtime_system();
 
-  return Val_unit;
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context, value vfilename)
@@ -831,7 +837,7 @@ CAMLprim value caml_alpn_select_cb(SSL *ssl,
   *out = String_val(selected_protocol);
   *outlen = len;
 
-  return SSL_TLSEXT_ERR_OK;
+  CAMLreturn(SSL_TLSEXT_ERR_OK);
 }
 
 static int alpn_select_cb(SSL *ssl,
@@ -1018,6 +1024,7 @@ CAMLprim value ocaml_ssl_get_current_cipher(value socket)
 
 CAMLprim value ocaml_ssl_get_cipher_description(value vcipher)
 {
+  CAMLparam1(vcipher);
   char buf[1024];
   SSL_CIPHER *cipher = (SSL_CIPHER*)vcipher;
 
@@ -1025,11 +1032,12 @@ CAMLprim value ocaml_ssl_get_cipher_description(value vcipher)
   SSL_CIPHER_description(cipher, buf, 1024);
   caml_acquire_runtime_system();
 
-  return caml_copy_string(buf);
+  CAMLreturn(caml_copy_string(buf));
 }
 
 CAMLprim value ocaml_ssl_get_cipher_name(value vcipher)
 {
+  CAMLparam1(vcipher);
   const char *name;
   SSL_CIPHER *cipher = (SSL_CIPHER*)vcipher;
 
@@ -1037,11 +1045,12 @@ CAMLprim value ocaml_ssl_get_cipher_name(value vcipher)
   name = SSL_CIPHER_get_name(cipher);
   caml_acquire_runtime_system();
 
-  return caml_copy_string(name);
+  CAMLreturn(caml_copy_string(name));
 }
 
 CAMLprim value ocaml_ssl_get_cipher_version(value vcipher)
 {
+  CAMLparam1(vcipher);
   const char *version;
   SSL_CIPHER *cipher = (SSL_CIPHER*)vcipher;
 
@@ -1049,7 +1058,7 @@ CAMLprim value ocaml_ssl_get_cipher_version(value vcipher)
   version = SSL_CIPHER_get_version(cipher);
   caml_acquire_runtime_system();
 
-  return caml_copy_string(version);
+  CAMLreturn(caml_copy_string(version));
 }
 
 CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path)
@@ -1072,11 +1081,11 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context, value dh_file_path
     SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
     caml_acquire_runtime_system();
     DH_free(dh);
-  }
-  else{
+  } else {
       caml_acquire_runtime_system();
       caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
   }
+
   CAMLreturn(Val_unit);
 }
 
@@ -1146,7 +1155,8 @@ static struct custom_operations cert_ops =
 
 CAMLprim value ocaml_ssl_read_certificate(value vfilename)
 {
-  value block;
+  CAMLparam1(vfilename);
+  CAMLlocal1(block);
   const char *filename = String_val(vfilename);
   X509 *cert = NULL;
   FILE *fh = NULL;
@@ -1168,7 +1178,7 @@ CAMLprim value ocaml_ssl_read_certificate(value vfilename)
 
   block = caml_alloc_custom(&cert_ops, sizeof(X509*), 0, 1);
   Cert_val(block) = cert;
-  return block;
+  CAMLreturn(block);
 }
 
 CAMLprim value ocaml_ssl_write_certificate(value vfilename, value certificate)
@@ -1353,7 +1363,7 @@ CAMLprim value ocaml_ssl_get_file_descr(value socket)
 
 CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
 {
-  CAMLparam1(context);
+  CAMLparam2(socket_, context);
   CAMLlocal1(block);
 #ifdef Socket_val
   SOCKET socket = Socket_val(socket_);
