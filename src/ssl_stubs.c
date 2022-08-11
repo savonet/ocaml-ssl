@@ -803,25 +803,26 @@ static value build_alpn_protocol_list(const unsigned char *protocol_buffer, unsi
   CAMLreturn(protocol_list);
 }
 
-static int alpn_select_cb(SSL *ssl,
-                          const unsigned char **out,
-                          unsigned char *outlen,
-                          const unsigned char *in,
-                          unsigned int inlen,
-                          void *arg)
+
+/* The `alpn_select_cb` function below acquires the runtime lock before calling
+ * this one. Some more info in https://github.com/ocaml/ocaml/issues/11485 */
+CAMLprim value caml_alpn_select_cb(SSL *ssl,
+                                   const unsigned char **out,
+                                   unsigned char *outlen,
+                                   const unsigned char *in,
+                                   unsigned int inlen,
+                                   void *arg)
 {
   CAMLparam0();
   CAMLlocal3(protocol_list, selected_protocol, selected_protocol_opt);
 
   int len;
 
-  caml_acquire_runtime_system();
   protocol_list = build_alpn_protocol_list(in, inlen);
   selected_protocol_opt = caml_callback(*((value*)arg), protocol_list);
 
   if(selected_protocol_opt == Val_none)
   {
-    caml_release_runtime_system();
     return SSL_TLSEXT_ERR_NOACK;
   }
 
@@ -829,9 +830,23 @@ static int alpn_select_cb(SSL *ssl,
   len = caml_string_length(selected_protocol);
   *out = String_val(selected_protocol);
   *outlen = len;
-  caml_release_runtime_system();
 
   return SSL_TLSEXT_ERR_OK;
+}
+
+static int alpn_select_cb(SSL *ssl,
+                          const unsigned char **out,
+                          unsigned char *outlen,
+                          const unsigned char *in,
+                          unsigned int inlen,
+                          void *arg)
+{
+  int res;
+  caml_acquire_runtime_system();
+  res = caml_alpn_select_cb(ssl, out, outlen, in, inlen, arg);
+  caml_release_runtime_system();
+
+  return res;
 }
 
 CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb)
