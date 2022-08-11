@@ -405,10 +405,10 @@ val digest : [`SHA1 | `SHA256 | `SHA384] -> certificate -> string
 val embed_socket : Unix.file_descr -> context -> socket
 
 (** Open an SSL connection. *)
-val open_connection : protocol -> Unix.sockaddr -> socket
+val open_connection : ?timeout:float -> protocol -> Unix.sockaddr -> socket
 
 (** Open an SSL connection with the specified context. *)
-val open_connection_with_context : context -> Unix.sockaddr -> socket
+val open_connection_with_context : ?timeout:float -> context -> Unix.sockaddr -> socket
 
 (** Close an SSL connection opened with [open_connection]. *)
 val shutdown_connection : socket -> unit

@@ -284,19 +284,29 @@ external flush : socket -> unit = "ocaml_ssl_flush"
 
 external shutdown : socket -> unit = "ocaml_ssl_shutdown"
 
-let open_connection_with_context context sockaddr =
+let open_connection_with_context ?timeout context sockaddr =
   let domain = Unix.domain_of_sockaddr sockaddr in
+  let handles_timeout = Option.is_some timeout in
   let sock =
     Unix.socket domain Unix.SOCK_STREAM 0 in
     try
-      Unix.connect sock sockaddr;
+      if handles_timeout then Unix.set_nonblock sock;
+      (try Unix.connect sock sockaddr with Unix.Unix_error (EINPROGRESS, _, _) -> ());
+      (if handles_timeout then
+         let (_, ok, _) = Unix.select [] [sock] [] (Option.get timeout) in
+         match Unix.getsockopt_error sock with
+           | Some err -> raise (Unix.Unix_error (err, "open_connection_with_context", ""))
+           | None ->
+               if ok <> [sock] then
+                 raise (Unix.Unix_error (ETIMEDOUT, "open_connection_with_context", ""));
+               Unix.clear_nonblock sock);
       let ssl = embed_socket sock context in
         connect ssl; ssl
     with
       | exn -> Unix.close sock; raise exn
 
-let open_connection ssl_method sockaddr =
-  open_connection_with_context (create_context ssl_method Client_context) sockaddr
+let open_connection ?timeout ssl_method sockaddr =
+  open_connection_with_context ?timeout (create_context ssl_method Client_context) sockaddr
 
 let shutdown_connection = shutdown
 
