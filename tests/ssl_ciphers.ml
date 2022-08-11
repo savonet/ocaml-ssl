@@ -26,14 +26,14 @@ let test_init_ec_from_named_curve () =
   check string "no errors" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ())
 
 let test_socket_cipher_funcs () =
-  let context = Ssl.create_context TLSv1_3 Server_context in
-  let domain = Unix.domain_of_sockaddr (Unix.ADDR_UNIX "test") in
-  let socket = Unix.socket domain Unix.SOCK_STREAM 0 in
-  Unix.connect socket (Unix.ADDR_UNIX "test");
-  let ssl = embed_socket socket context in
-  Ssl.get_cipher ssl |> ignore;
-  (*let name = Ssl.get_cipher_name cipher in*)
-  check bool "cipher name" true true
+  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
+  Test_server.server_thread addr |> ignore;
+ 
+  let context = Ssl.create_context TLSv1_3 Client_context in
+  let ssl = open_connection_with_context context addr in
+  let cipher = Ssl.get_cipher ssl in
+  let name = Ssl.get_cipher_name cipher in
+  check string "cipher name" "TLS_AES_256_GCM_SHA384" name
 
 let () =
 Alcotest.run "Ssl cipher functions"
