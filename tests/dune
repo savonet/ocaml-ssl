@@ -1,3 +1,4 @@
 (test
  (name ssl_test)
- (libraries ssl alcotest))
+ (libraries ssl alcotest)
+ (deps digicert_certificate.pem))
