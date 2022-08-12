@@ -5,11 +5,10 @@ Unreleased
   - `add_extra_chain_cert` to send additional chain certificates to the peer.
   - `add_cert_to_store`: to allow verification of the peer certificate CA.
   - `set_ip`: sets the expected IP address to be verified on a SSL socket.
-
 - Improve `use_certificate_from_string` (#71) to read any type of key (rather
   than just RSA).
-
 - Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
+- Audit the C FFI and add `CAMLparamX` and `CAMLreturn` calls (#90).
 
 0.5.11
 =====
