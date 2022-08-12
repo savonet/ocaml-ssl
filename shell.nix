@@ -1,4 +1,5 @@
 { packages
+, lib
 , mkShell
 , release-mode ? false
 , cacert
@@ -12,12 +13,16 @@ mkShell {
   OCAMLRUNPARAM = "b";
   inputsFrom = packages;
   buildInputs =
-    (if release-mode then [
+    (with ocamlPackages; [
+      merlin
+      ocamlformat
+      utop
+      alcotest
+    ]) ++ lib.optional release-mode [
       cacert
       curl
       ocamlPackages.dune-release
       git
       opam
-    ] else [ ]) ++
-    (with ocamlPackages; [ merlin ocamlformat utop ]);
+    ];
 }
