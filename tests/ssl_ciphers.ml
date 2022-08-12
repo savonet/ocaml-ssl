@@ -39,7 +39,7 @@ let test_init_ec_from_named_curve () =
 let test_socket_cipher_funcs () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
   Test_server.server_thread addr |> ignore;
- 
+
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = open_connection_with_context context addr in
   let cipher = Ssl.get_cipher ssl in

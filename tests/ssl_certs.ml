@@ -15,7 +15,7 @@ let test_read_cert () =
   check string "read digest" "_m\228R\240\250\023\253\1927\146CP(W'\238z\2489" digest
 
 let test_cert_connection () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
+  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1338) in
   Test_server.server_thread addr |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
