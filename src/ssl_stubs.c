@@ -829,7 +829,7 @@ CAMLprim value caml_alpn_select_cb(SSL *ssl,
 
   if(selected_protocol_opt == Val_none)
   {
-    return SSL_TLSEXT_ERR_NOACK;
+    CAMLreturn(SSL_TLSEXT_ERR_NOACK);
   }
 
   selected_protocol = Field(selected_protocol_opt, 0);
