@@ -22,3 +22,8 @@
  (name ssl_ciphers)
  (modules ssl_ciphers)
  (libraries ssl alcotest test_server))
+
+(test
+ (name ssl_certs)
+ (modules ssl_certs)
+ (libraries ssl alcotest test_server))
