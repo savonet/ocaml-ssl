@@ -1,8 +1,7 @@
 (library
  (name test_server)
  (modules test_server)
- (libraries ssl threads)
- (deps ca.pem ca.key))
+ (libraries ssl threads))
 
 (test
  (name ssl_test)
@@ -31,9 +30,10 @@
  (name ssl_certs)
  (modules ssl_certs)
  (libraries ssl alcotest test_server)
- (deps client.pem ca.pem))
+ (deps client.pem ca.pem ca.key))
 
  (test
  (name ssl_sock)
  (modules ssl_sock)
- (libraries ssl alcotest test_server))
+ (libraries ssl alcotest test_server)
+ (deps ca.pem ca.key))
