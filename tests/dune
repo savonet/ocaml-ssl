@@ -27,3 +27,8 @@
  (name ssl_certs)
  (modules ssl_certs)
  (libraries ssl alcotest test_server))
+
+ (test
+ (name ssl_sock)
+ (modules ssl_sock)
+ (libraries ssl alcotest test_server))
