@@ -6,7 +6,7 @@ let certstring = really_input_string certfile (in_channel_length certfile)
 let clientkeyfile = open_in "client.key"
 let clientkeystring = really_input_string clientkeyfile (in_channel_length clientkeyfile)
 let serverkeyfile = open_in "server.key"
-let serverkeystring = really_input_string serverkeyfile (in_channel_length clientkeyfile)
+let serverkeystring = really_input_string serverkeyfile (in_channel_length serverkeyfile)
 
 let test_create_context () = 
   Ssl.create_context TLSv1_3 Server_context |> ignore;
