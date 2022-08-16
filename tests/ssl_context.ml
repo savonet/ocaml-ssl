@@ -16,29 +16,29 @@ let test_add_extra_chain_cert () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.add_extra_chain_cert context certstring;
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
-  check_raises "certificate error" (Certificate_error "error:0909006C:PEM routines:get_name:no start line") (fun () -> Ssl.add_extra_chain_cert context "")
+  check_raises "certificate error" (Certificate_error "") (fun () -> try Ssl.add_extra_chain_cert context "" with | Certificate_error _ -> raise (Certificate_error "") )
 
 let test_add_cert_to_store () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.add_cert_to_store context certstring;
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
-  check_raises "certificate error" (Certificate_error "error:0909006C:PEM routines:get_name:no start line") (fun () -> Ssl.add_cert_to_store context "")
+  check_raises "certificate error" (Certificate_error "") (fun () -> try Ssl.add_cert_to_store context "" with | Certificate_error _ -> raise (Certificate_error ""))
 
 let test_use_certificate () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate context "client.pem" "client.key";
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
-  check_raises "certificate error" (Certificate_error "error:02001002:system library:fopen:No such file or directory")  (fun () -> Ssl.use_certificate context "" "client.key");
-  check_raises "key error" (Private_key_error "error:02001002:system library:fopen:No such file or directory") (fun () -> Ssl.use_certificate context "client.pem" "");
-  check_raises "unmatching key" (Private_key_error "error:0B080074:x509 certificate routines:X509_check_private_key:key values mismatch") (fun () -> Ssl.use_certificate context "client.pem" "server.key")
+  check_raises "certificate error" (Certificate_error "")  (fun () -> try Ssl.use_certificate context "" "client.key" with | Certificate_error _ -> raise (Certificate_error ""));
+  check_raises "key error" (Private_key_error "") (fun () -> try Ssl.use_certificate context "client.pem" "" with | Private_key_error _ -> raise (Private_key_error ""));
+  check_raises "unmatching key" (Private_key_error "") (fun () -> try Ssl.use_certificate context "client.pem" "server.key" with | Private_key_error _ -> raise (Private_key_error ""))
 
 let test_use_certificate_from_string () = 
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate_from_string context certstring clientkeystring;
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
-  check_raises "certificate error" (Certificate_error "error:0909006C:PEM routines:get_name:no start line") (fun () -> Ssl.use_certificate_from_string context "" clientkeystring);
-  check_raises "key error" (Private_key_error "error:0909006C:PEM routines:get_name:no start line") (fun () -> Ssl.use_certificate_from_string context certstring "");
-  check_raises "unmatching key" (Private_key_error "error:0B080074:x509 certificate routines:X509_check_private_key:key values mismatch") (fun () -> Ssl.use_certificate_from_string context certstring serverkeystring)
+  check_raises "certificate error" (Certificate_error "") (fun () -> try Ssl.use_certificate_from_string context "" clientkeystring with | Certificate_error _ -> raise (Certificate_error ""));
+  check_raises "key error" (Private_key_error "") (fun () -> try Ssl.use_certificate_from_string context certstring "" with | Private_key_error _ -> raise (Private_key_error ""));
+  check_raises "unmatching key" (Private_key_error "") (fun () -> try Ssl.use_certificate_from_string context certstring serverkeystring with | Private_key_error _ -> raise (Private_key_error ""))
 
 let test_set_password_callback () =
   let context = Ssl.create_context TLSv1_3 Server_context in
@@ -49,7 +49,7 @@ let test_set_client_CA_list_from_file () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.set_client_CA_list_from_file context "ca.pem";
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
-  check_raises "certificate error" (Certificate_error "error:02001002:system library:fopen:No such file or directory") (fun () -> Ssl.set_client_CA_list_from_file context "")
+  check_raises "certificate error" (Certificate_error "") (fun () -> try Ssl.set_client_CA_list_from_file context "" with | Certificate_error _ -> raise (Certificate_error ""))
 
 let test_set_client_verify_callback () =
   let context = Ssl.create_context TLSv1_3 Server_context in
