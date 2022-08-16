@@ -1,7 +1,7 @@
 (library
- (name test_server)
- (modules test_server)
- (libraries ssl threads))
+ (name util)
+ (modules util)
+ (libraries ssl threads str alcotest))
 
 (test
  (name ssl_test)
@@ -17,23 +17,23 @@
  (test
  (name ssl_context)
  (modules ssl_context)
- (libraries ssl alcotest)
+ (libraries ssl alcotest util)
  (deps client.pem client.key server.key ca.pem ca.key))
 
  (test
  (name ssl_ciphers)
  (modules ssl_ciphers)
- (libraries ssl alcotest test_server)
+ (libraries ssl alcotest util)
  (deps client.pem client.key dh4096.pem))
 
 (test
  (name ssl_certs)
  (modules ssl_certs)
- (libraries ssl alcotest test_server)
+ (libraries ssl alcotest util)
  (deps client.pem ca.pem ca.key))
 
  (test
  (name ssl_sock)
  (modules ssl_sock)
- (libraries ssl alcotest test_server)
+ (libraries ssl alcotest util)
  (deps ca.pem ca.key))

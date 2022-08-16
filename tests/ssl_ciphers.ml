@@ -1,27 +1,16 @@
 open Ssl
 open Alcotest
-
-let pp_protocol ppf = function
-  | SSLv23 -> Format.fprintf ppf "SSLv23" 
-  | SSLv3 -> Format.fprintf ppf "SSLv3"
-  | TLSv1 -> Format.fprintf ppf "TLSv1"
-  | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"
-  | TLSv1_2 -> Format.fprintf ppf "TLSv1_2"
-  | TLSv1_3 -> Format.fprintf ppf "TLSv1_3"
-
-let protocol_testable =
-  Alcotest.testable pp_protocol (fun r1 r2 -> r1 == r2)
-
+open Util
 let test_disable_protocols () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.disable_protocols context [SSLv23];
-  check string "no errors" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ())
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error )
 
 let test_set_cipher_list () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.set_cipher_list context "ALL";
   Ssl.honor_cipher_order context;
-  check string "no errors" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ());
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
   check_raises "empty cipher list" (Cipher_error) (fun () -> Ssl.set_cipher_list context "");
   check_raises "invalid cipher list" (Cipher_error) (fun () -> Ssl.set_cipher_list context "NULL-MD55:ASD")
 
@@ -29,16 +18,16 @@ let test_cipher_init_dh () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate context "client.pem" "client.key";
   Ssl.init_dh_from_file context "dh4096.pem";
-  check string "no errors" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ())
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error )
 
 let test_init_ec_from_named_curve () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.init_ec_from_named_curve context "secp384r1";
-  check string "no errors" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ())
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error )
 
 let test_socket_cipher_funcs () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
-  Test_server.server_thread addr |> ignore;
+  Util.server_thread addr |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = open_connection_with_context context addr in

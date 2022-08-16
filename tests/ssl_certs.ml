@@ -1,8 +1,9 @@
 open Alcotest
+open Util
 
 let test_read_cert () = 
   let cert = Ssl.read_certificate "client.pem" in
-  check string "read certificate" "error:00000000:lib(0):func(0):reason(0)" (Ssl.get_error_string ());
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
   let issuer = Ssl.get_issuer cert in
   let subject = Ssl.get_subject cert in
   let start_date = Ssl.get_start_date cert in
@@ -16,7 +17,7 @@ let test_read_cert () =
 
 let test_cert_connection () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1338) in
-  Test_server.server_thread addr |> ignore;
+  Util.server_thread addr |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let set_default = Ssl.set_default_verify_paths context in

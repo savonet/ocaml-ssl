@@ -21,3 +21,16 @@ let server_listen addr =
   done
 let server_thread addr = 
   Thread.create server_listen addr
+
+let check_ssl_no_error err = Str.string_partial_match (Str.regexp_string "error:00000000:lib(0)") err 0
+
+let pp_protocol ppf = function
+  | SSLv23 -> Format.fprintf ppf "SSLv23" 
+  | SSLv3 -> Format.fprintf ppf "SSLv3"
+  | TLSv1 -> Format.fprintf ppf "TLSv1"
+  | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"
+  | TLSv1_2 -> Format.fprintf ppf "TLSv1_2"
+  | TLSv1_3 -> Format.fprintf ppf "TLSv1_3"
+
+let protocol_testable =
+  Alcotest.testable pp_protocol (fun r1 r2 -> r1 == r2)
