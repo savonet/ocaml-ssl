@@ -18,6 +18,8 @@ jobs:
     - uses: ocaml/setup-ocaml@v2
       with:
         ocaml-compiler: ${{ matrix.ocaml-version }}
+    - name: Ensure openssl
+      run: brew install openssl@3
     - name: Setup opam
       run: opam pin add -n .
     - name: Install dependencies
