@@ -19,6 +19,7 @@ jobs:
       with:
         ocaml-compiler: ${{ matrix.ocaml-version }}
     - name: Ensure openssl
+      if: runner.os == 'macOS'
       run: brew install openssl@3
     - name: Setup opam
       run: opam pin add -n .
