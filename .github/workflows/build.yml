@@ -17,7 +17,10 @@ jobs:
     - uses: actions/checkout@v2
     - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-version: ${{ matrix.ocaml-version }}
+        ocaml-compiler: ${{ matrix.ocaml-version }}
+    - name: Ensure openssl
+      if: runner.os == 'macOS'
+      run: brew install openssl@3
     - name: Setup opam
       run: opam pin add -n .
     - name: Install dependencies
