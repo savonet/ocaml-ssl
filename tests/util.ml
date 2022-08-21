@@ -23,7 +23,6 @@ let server_listen args =
       | _ -> Thread.exit ();
   done
 let server_thread addr = 
-  Printf.printf "%s" "reached";
   let mutex = Mutex.create () in
   Mutex.lock mutex;
   let condition = Condition.create () in
