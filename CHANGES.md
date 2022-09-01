@@ -1,6 +1,9 @@
 Unreleased
 =====
 
+0.5.12 (2022-08-12)
+=====
+
 - Add a few verification functions (#71):
   - `add_extra_chain_cert` to send additional chain certificates to the peer.
   - `add_cert_to_store`: to allow verification of the peer certificate CA.
@@ -10,7 +13,7 @@ Unreleased
 - Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
 - Audit the C FFI and add `CAMLparamX` and `CAMLreturn` calls (#90).
 
-0.5.11
+0.5.11 (2022-07-24)
 =====
 
 - Add `digest` function (#65, #66).
