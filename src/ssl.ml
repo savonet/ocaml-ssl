@@ -282,7 +282,7 @@ external accept : socket -> unit = "ocaml_ssl_accept"
 
 external flush : socket -> unit = "ocaml_ssl_flush"
 
-external shutdown : socket -> bool = "ocaml_ssl_shutdown"
+external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
 
 let open_connection_with_context context sockaddr =
   let domain = Unix.domain_of_sockaddr sockaddr in
@@ -298,11 +298,11 @@ let open_connection_with_context context sockaddr =
 let open_connection ssl_method sockaddr =
   open_connection_with_context (create_context ssl_method Client_context) sockaddr
 
-let close_notify = shutdown
+let close_notify = ssl_shutdown
 
-let rec shutdown sock =
+let shutdown sock =
   if not (close_notify sock)
-  then shutdown sock
+  then ignore (close_notify sock : bool)
 
 let shutdown_connection = shutdown
 
