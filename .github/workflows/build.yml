@@ -35,9 +35,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: cachix/install-nix-action@v17
-    - uses: cachix/cachix-action@v10
       with:
-        name: anmonteiro
+        extra_nix_config: |
+          extra-substituters = https://anmonteiro.nix-cache.workers.dev
+          extra-trusted-public-keys = ocaml.nix-cache.com-1:/xI2h2+56rwFfKyyFVbkJSeGqSIYMC/Je+7XXqGKDIY=
     - name: "Run nix-build"
       run: nix-build ./nix/ci/test.nix --argstr ocamlVersion ${{ matrix.ocamlVersion }}
 
