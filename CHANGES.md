@@ -1,9 +1,28 @@
-0.5.11 (unreleased)
-======
+Unreleased
+=====
+
+0.5.12 (2022-08-12)
+=====
+
+- Add a few verification functions (#71):
+  - `add_extra_chain_cert` to send additional chain certificates to the peer.
+  - `add_cert_to_store`: to allow verification of the peer certificate CA.
+  - `set_ip`: sets the expected IP address to be verified on a SSL socket.
+- Improve `use_certificate_from_string` (#71) to read any type of key (rather
+  than just RSA).
+- Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
+- Audit the C FFI and add `CAMLparamX` and `CAMLreturn` calls (#90).
+
+0.5.11 (2022-07-24)
+=====
 
 - Add `digest` function (#65, #66).
 - Restore compatibility with openssl < 1.1.0 (#73).
 - Improved compatibility with OCaml 5 (#79).
+- Fix `client_verify_callback` for `NO_NAKED_POINTERS` mode. A user-provided
+  verification function in C remains an out-of-heap pointer for 4.x for
+  compatibility, but is boxed for OCaml 5.x or 4.x when configured with
+  `--disable-naked-pointers`. (#83)
 
 0.5.10 (2021-02-01)
 ======

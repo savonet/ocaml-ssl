@@ -238,6 +238,17 @@ type context_type =
 (** Create a context. *)
 val create_context : protocol -> context_type -> context
 
+(** Add an additional certificate to the extra chain certificates
+    associated with the [ctx]. Extra chain certificates will be 
+    sent to the peer for verification and are sent in order following the 
+    end entity certificate. The value should be contents of the 
+    certificate as string in PEM format. *)
+val add_extra_chain_cert : context -> string -> unit
+
+(** Add a certificate to the [ctx] trust storage. The value should be contents 
+    of the certificate as string in PEM format. *)
+val add_cert_to_store : context -> string -> unit
+
 (** [use_certificate ctx cert privkey] makes the context [ctx] use [cert] as
   * certificate's file name (in PEM format) and [privkey] as private key file
   * name. *)
@@ -450,6 +461,11 @@ val set_hostflags : socket -> x509_check_flag list -> unit
 
 (* Set the expected host name to be verified. *)
 val set_host : socket -> string -> unit
+
+(** Set the expected ip address to be verified. Ip address is dotted decimal quad
+    for IPv4 and colon-separated hexadecimal for IPv6.
+    The condensed "::" notation is supported for IPv6 addresses. *)
+val set_ip : socket -> string -> unit
 
 (** Get the file descriptor associated with a socket. It is primarly useful for
     [select]ing on it; you should not write or read on it. *)
