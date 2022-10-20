@@ -1,0 +1,9 @@
+{
+  "image":"ocaml/opam:ubuntu-22.04-ocaml-4.12",
+  "extensions": [
+      "ocamllabs.ocaml-platform",
+      "redhat.vscode-yaml"
+  ],
+  "runArgs": ["--net=host"],
+  "postCreateCommand": "sudo apt update && sudo apt install pkg-config libssl-dev -y && opam install . --deps-only --with-test && opam update && opam install ocaml-lsp-server ocamlformat-rpc"
+}
