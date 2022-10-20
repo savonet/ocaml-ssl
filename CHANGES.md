@@ -1,5 +1,7 @@
-Unreleased
+0.5.13 (2022-10-20)
 =====
+
+- Add `Ssl.close_notify` to perform a one-way shutdown (#63, #96).
 
 0.5.12 (2022-08-12)
 =====
@@ -12,7 +14,6 @@ Unreleased
   than just RSA).
 - Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
 - Audit the C FFI and add `CAMLparamX` and `CAMLreturn` calls (#90).
-- Add `Ssl.close_notify` to perform a one-way shutdown (#63, #96).
 
 0.5.11 (2022-07-24)
 =====
