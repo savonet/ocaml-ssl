@@ -59,7 +59,7 @@
 #endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
-#ifdef NO_NAKED_POINTERS
+#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
 static value vclient_verify_callback = Val_int(0);
 #endif
 static DH *load_dh_param(const char *dhfile);
@@ -617,7 +617,7 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert)
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit)
 {
   CAMLparam1(unit);
-#ifdef NO_NAKED_POINTERS
+#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
   if (Is_long(vclient_verify_callback)) {
     vclient_verify_callback = caml_alloc_shr(1, Abstract_tag);
     *((int(**) (int, X509_STORE_CTX*))Data_abstract_val(vclient_verify_callback)) = client_verify_callback;
@@ -676,7 +676,7 @@ CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode, value vcallb
 
   if (Is_block(vcallback))
   {
-#ifdef NO_NAKED_POINTERS
+#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
     vcallback = Field(vcallback, 0);
     if (!Is_block(vcallback) || Tag_val(vcallback) != Abstract_tag || Wosize_val(vcallback) != 1)
       caml_invalid_argument("callback");
