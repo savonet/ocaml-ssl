@@ -14,13 +14,13 @@
  (modules ssl_comm)
  (libraries ssl alcotest))
  
- (test
+(test
  (name ssl_context)
  (modules ssl_context)
  (libraries ssl alcotest util)
  (deps client.pem client.key server.key ca.pem ca.key))
 
- (test
+(test
  (name ssl_ciphers)
  (modules ssl_ciphers)
  (libraries ssl alcotest util)
@@ -32,8 +32,14 @@
  (libraries ssl alcotest util)
  (deps client.pem ca.pem ca.key))
 
- (test
+(test
  (name ssl_sock)
  (modules ssl_sock)
+ (libraries ssl alcotest util)
+ (deps ca.pem ca.key))
+
+(test
+ (name ssl_io)
+ (modules ssl_io)
  (libraries ssl alcotest util)
  (deps ca.pem ca.key))
