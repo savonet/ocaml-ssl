@@ -7,12 +7,16 @@ type server_args = {
   }
 let server_listen args =
   Mutex.lock args.mutex;
-  init ();
+  init ~thread_safe: true ();
   let socket = Unix.socket (Unix.PF_INET) Unix.SOCK_STREAM 0 in
   Unix.bind socket args.address;
   Unix.listen socket 1;
   let context = create_context TLSv1_3 Server_context in
   use_certificate context "ca.pem" "ca.key";
+  Ssl.set_context_alpn_select_callback context (fun client_protos ->
+    List.find_opt (fun opt -> opt = "http/1.1") client_protos
+  );
+  (* End server initialization *)
   Mutex.unlock args.mutex;
   Condition.signal args.condition;
   let listen = Unix.accept socket in
@@ -22,7 +26,7 @@ let server_listen args =
     try
       read ssl (Bytes.create 16000) 0 16000 |> ignore;
     with
-    | Read_error e -> 
+    | Read_error e ->
       match e with
       | Error_zero_return -> shutdown ssl;
       | _ -> Thread.exit () [@warning "-3"];
