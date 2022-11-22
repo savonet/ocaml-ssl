@@ -12,7 +12,7 @@ let server_listen args =
   Unix.bind socket args.address;
   Unix.listen socket 1;
   let context = create_context TLSv1_3 Server_context in
-  use_certificate context "ca.pem" "ca.key";
+  use_certificate context "server.pem" "server.key";
   Ssl.set_context_alpn_select_callback context (fun client_protos ->
     List.find_opt (fun opt -> opt = "http/1.1") client_protos
   );
