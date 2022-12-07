@@ -1,15 +1,11 @@
 open Alcotest
 
-let cacertfile = open_in "ca.pem"
-let cacertstring = really_input_string cacertfile (in_channel_length cacertfile)
-
 let test_verify () = 
   Ssl.init ~thread_safe:true ();
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1342) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
-  Ssl.add_cert_to_store context cacertstring;
   let ssl = Ssl.open_connection_with_context context addr in
   let verify_result =
     (
@@ -21,15 +17,14 @@ let test_verify () =
     )
   in
   Ssl.shutdown_connection ssl;
-  check string "no verify errors" "" verify_result
+  check bool "no verify errors" true ((Str.search_forward (Str.regexp_string "error:00000000:lib(0)") verify_result 0) > 0)
 
 let test_set_host () = 
   Ssl.init ~thread_safe:true ();
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1343) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
-  Ssl.add_cert_to_store context cacertstring;
   let domain = Unix.domain_of_sockaddr addr in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
   let ssl = Ssl.embed_socket sock context in
@@ -46,7 +41,22 @@ let test_set_host () =
     )
   in
   Ssl.shutdown_connection ssl;
-  check string "no verify errors" "" verify_result
+  check bool "no verify errors" true ((Str.search_forward (Str.regexp_string "error:00000000:lib(0)") verify_result 0) > 0)
+
+let test_read_write () =
+  Ssl.init ~thread_safe:true ();
+  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1344) in
+  Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
+
+  let context = Ssl.create_context TLSv1_3 Client_context in
+  let ssl = Ssl.open_connection_with_context context addr in
+  let send_msg = "send" in
+  let write_buf = Bytes.create (String.length send_msg) in
+  Ssl.write ssl write_buf 0 4 |> ignore;
+  let read_buf = Bytes.create 8 in
+  Ssl.read ssl read_buf 0 8 |> ignore;
+  Ssl.shutdown_connection ssl;
+  check string "received message" "received" (Bytes.to_string read_buf)
 
 let () = 
   run "Ssl io functions"
@@ -55,5 +65,6 @@ let () =
         [
           test_case "Verify" `Quick test_verify;
           test_case "Set host" `Quick test_set_host;
+          test_case "Read write" `Quick test_read_write;
         ] );
     ]

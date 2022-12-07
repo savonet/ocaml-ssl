@@ -17,7 +17,7 @@ let test_read_cert () =
 
 let test_cert_connection () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1338) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let set_default = Ssl.set_default_verify_paths context in

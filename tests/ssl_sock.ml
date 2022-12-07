@@ -1,19 +1,10 @@
 open Alcotest
 open Util
-let test_sockets () = 
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1339) in
-  Util.server_thread addr |> ignore;
-
-  let context = Ssl.create_context TLSv1_3 Client_context in
-  let ssl = Ssl.open_connection_with_context context addr in
-  Ssl.flush ssl;
-  Ssl.shutdown_connection ssl;
-  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error )
 
 (* This test will not work until SNI is implemented in the backend *)
 let test_sockets_sni () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1340) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let domain = Unix.domain_of_sockaddr addr in
@@ -28,7 +19,7 @@ let test_sockets_sni () =
 
 let test_sockets_alpn () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1341) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
   let context = Ssl.create_context TLSv1_3 Client_context in
   let domain = Unix.domain_of_sockaddr addr in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
@@ -48,7 +39,6 @@ let () =
     [
       ( "Sockets",
         [
-          test_case "Socket main functions" `Quick test_sockets;
           test_case "Set client SNI" `Quick test_sockets_sni;
           test_case "ALPN protocols" `Quick test_sockets_alpn;
         ] );
