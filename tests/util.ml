@@ -17,12 +17,12 @@ let server_listen args =
     try
       Ssl.read ssl (Bytes.create 16000) 0 16000 |> ignore;
     with
-    | Read_error e -> 
+    | Read_error e ->
       match e with
       | Error_zero_return -> Ssl.shutdown ssl;
-      | _ -> Thread.exit ();
+      | _ -> raise Thread.Exit;
   done
-let server_thread addr = 
+let server_thread addr =
   let mutex = Mutex.create () in
   Mutex.lock mutex;
   let condition = Condition.create () in
@@ -33,7 +33,7 @@ let server_thread addr =
 let check_ssl_no_error err = Str.string_partial_match (Str.regexp_string "error:00000000:lib(0)") err 0
 
 let pp_protocol ppf = function
-  | SSLv23 -> Format.fprintf ppf "SSLv23" 
+  | SSLv23 -> Format.fprintf ppf "SSLv23"
   | SSLv3 -> Format.fprintf ppf "SSLv3"
   | TLSv1 -> Format.fprintf ppf "TLSv1"
   | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"

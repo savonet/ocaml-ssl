@@ -248,8 +248,6 @@ external set_alpn_protos : socket -> string list -> unit = "ocaml_ssl_set_alpn_p
 
 external get_negotiated_alpn_protocol : socket -> string option = "ocaml_ssl_get_negotiated_alpn_protocol"
 
-external connect : socket -> unit = "ocaml_ssl_connect"
-
 external verify : socket -> unit = "ocaml_ssl_verify"
 
 type x509_check_flag =
@@ -265,71 +263,134 @@ external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
-external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
+module SslReleaseExt = struct
+  external connect : socket -> unit = "ocaml_ssl_connect"
 
-external write_substring : socket -> string -> int -> int -> int = "ocaml_ssl_write"
+  external accept : socket -> unit = "ocaml_ssl_accept"
 
-external write_bigarray : socket -> bigarray -> int -> int -> int = "ocaml_ssl_write_bigarray"
+  external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
+  external write_substring : socket -> string -> int -> int -> int
+    = "ocaml_ssl_write"
+  external write_bigarray : socket -> bigarray -> int -> int -> int
+    = "ocaml_ssl_write_bigarray"
 
-external write_bigarray_blocking :
-  socket -> bigarray -> int -> int -> int = "ocaml_ssl_write_bigarray_blocking"
+  external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
+  external read_into_bigarray :
+    socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray"
 
-external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
+  external flush : socket -> unit = "ocaml_ssl_flush"
 
-external read_into_bigarray :
-  socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray"
+  external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
+end
 
-external read_into_bigarray_blocking :
-  socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray_blocking"
+module SslNoReleaseExt = struct
+  external connect : socket -> unit = "ocaml_ssl_connect"
 
-external accept : socket -> unit = "ocaml_ssl_accept"
+  external accept : socket -> unit = "ocaml_ssl_accept_blocking"
 
-external flush : socket -> unit = "ocaml_ssl_flush"
+  external write : socket -> Bytes.t -> int -> int -> int
+    = "ocaml_ssl_write_blocking"
+  external write_substring : socket -> string -> int -> int -> int
+    = "ocaml_ssl_write_blocking"
+  external write_bigarray : socket -> bigarray -> int -> int -> int
+    = "ocaml_ssl_write_bigarray_blocking"
 
-external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
+  external read : socket -> Bytes.t -> int -> int -> int
+    = "ocaml_ssl_read_blocking"
 
-let open_connection_with_context context sockaddr =
-  let domain = Unix.domain_of_sockaddr sockaddr in
-  let sock =
-    Unix.socket domain Unix.SOCK_STREAM 0 in
+  external read_into_bigarray :
+    socket -> bigarray -> int -> int -> int = "ocaml_ssl_read_into_bigarray_blocking"
+
+  external flush : socket -> unit = "ocaml_ssl_flush_blocking"
+
+  external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown_blocking"
+
+end
+
+module type SslComExt = sig
+  val connect : socket -> unit
+  val accept : socket -> unit
+  val ssl_shutdown : socket -> bool
+  val flush : socket -> unit
+  val read : socket -> Bytes.t -> int -> int -> int
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
+  val write : socket -> Bytes.t -> int -> int -> int
+  val write_substring : socket -> string -> int -> int -> int
+  val write_bigarray : socket -> bigarray -> int -> int -> int
+end
+
+module type SslCom = sig
+  (* include SslComExt does not give a good ordering for the documentation
+     and OCaml complains if we change order *)
+  val connect : socket -> unit
+  val accept : socket -> unit
+  val open_connection : protocol -> Unix.sockaddr -> socket
+  val open_connection_with_context : context -> Unix.sockaddr -> socket
+  val ssl_shutdown : socket -> bool
+  val close_notify : socket -> bool
+  val shutdown_connection : socket -> unit
+  val shutdown : socket -> unit
+  val flush : socket -> unit
+  val read : socket -> Bytes.t -> int -> int -> int
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
+  val write : socket -> Bytes.t -> int -> int -> int
+  val write_substring : socket -> string -> int -> int -> int
+  val write_bigarray : socket -> bigarray -> int -> int -> int
+  val input_string : socket -> string
+  val output_string : socket -> string -> unit
+  val input_char : socket -> char
+  val output_char : socket -> char -> unit
+  val input_int : socket -> int
+  val output_int : socket -> int -> unit
+end
+
+module SslCom(C:SslComExt) = struct
+  include C
+
+  let open_connection_with_context context sockaddr =
+    let domain = Unix.domain_of_sockaddr sockaddr in
+    let sock =
+      Unix.socket domain Unix.SOCK_STREAM 0 in
     try
       Unix.connect sock sockaddr;
       let ssl = embed_socket sock context in
-        connect ssl; ssl
+      connect ssl; ssl
     with
-      | exn -> Unix.close sock; raise exn
+    | exn -> Unix.close sock; raise exn
 
-let open_connection ssl_method sockaddr =
-  open_connection_with_context (create_context ssl_method Client_context) sockaddr
+  let open_connection ssl_method sockaddr =
+    open_connection_with_context (create_context ssl_method Client_context) sockaddr
 
-let close_notify = ssl_shutdown
 
-let shutdown sock =
-  if not (close_notify sock)
-  then ignore (close_notify sock : bool)
+  let close_notify = ssl_shutdown
 
-let shutdown_connection = shutdown
+  let shutdown sock =
+    if not (close_notify sock)
+    then ignore (close_notify sock : bool)
 
-let output_string ssl s =
-  ignore (write_substring ssl s 0 (String.length s))
+  let shutdown_connection = shutdown
 
-let output_char ssl c =
-  let tmp = String.make 1 c in
+  let output_string ssl s =
+    ignore (write_substring ssl s 0 (String.length s))
+
+  let output_char ssl c =
+    let tmp = String.make 1 c in
     ignore (write_substring ssl tmp 0 1)
 
-let output_int ssl i =
-  let tmp = Bytes.create 4 in
+  let output_int ssl i =
+    let tmp = Bytes.create 4 in
     Bytes.set tmp 0 (char_of_int (i lsr 24));
     Bytes.set tmp 1 (char_of_int ((i lsr 16) land 0xff));
     Bytes.set tmp 2 (char_of_int ((i lsr 8) land 0xff));
     Bytes.set tmp 3 (char_of_int (i land 0xff));
-    if write ssl tmp 0 4 <> 4 then failwith "output_int error: all the byte were not sent"
+    if write ssl tmp 0 4 <> 4 then
+      failwith "output_int error: all the byte were not sent"
 
-let input_string ssl =
-  let bufsize = 1024 in
-  let buf = Bytes.create bufsize in
-  let ret = ref "" in
-  let r = ref 1 in
+  let input_string ssl =
+    let bufsize = 1024 in
+    let buf = Bytes.create bufsize in
+    let ret = ref "" in
+    let r = ref 1 in
     while !r <> 0
     do
       r := read ssl buf 0 bufsize;
@@ -337,19 +398,26 @@ let input_string ssl =
     done;
     !ret
 
-let input_char ssl =
-  let tmp = Bytes.create 1 in
+  let input_char ssl =
+    let tmp = Bytes.create 1 in
     if read ssl tmp 0 1 <> 1 then
       raise End_of_file
     else
       Bytes.get tmp 0
 
-let input_int ssl =
-  let i = ref 0 in
-  let tmp = Bytes.create 4 in
+  let input_int ssl =
+    let i = ref 0 in
+    let tmp = Bytes.create 4 in
     ignore (read ssl tmp 0 4);
     i := int_of_char (Bytes.get tmp 0);
     i := (!i lsl 8) + int_of_char (Bytes.get tmp 1);
     i := (!i lsl 8) + int_of_char (Bytes.get tmp 2);
     i := (!i lsl 8) + int_of_char (Bytes.get tmp 3);
     !i
+
+end
+
+module SslRelease = SslCom(SslReleaseExt)
+module SslNoRelease = SslCom(SslNoReleaseExt)
+
+include SslRelease
