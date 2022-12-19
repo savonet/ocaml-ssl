@@ -239,13 +239,13 @@ type context_type =
 val create_context : protocol -> context_type -> context
 
 (** Add an additional certificate to the extra chain certificates
-    associated with the [ctx]. Extra chain certificates will be 
-    sent to the peer for verification and are sent in order following the 
-    end entity certificate. The value should be contents of the 
+    associated with the [ctx]. Extra chain certificates will be
+    sent to the peer for verification and are sent in order following the
+    end entity certificate. The value should be contents of the
     certificate as string in PEM format. *)
 val add_extra_chain_cert : context -> string -> unit
 
-(** Add a certificate to the [ctx] trust storage. The value should be contents 
+(** Add a certificate to the [ctx] trust storage. The value should be contents
     of the certificate as string in PEM format. *)
 val add_cert_to_store : context -> string -> unit
 
@@ -399,19 +399,10 @@ val get_verify_error_string : int -> string
 (** Get the digest of the certificate as a binary string, using the SHA1, SHA256 or SHA384 hashing algorithm. *)
 val digest : [`SHA1 | `SHA256 | `SHA384] -> certificate -> string
 
-(** {2 Creating, connecting and closing sockets} *)
+(** {2 Creating, connecting, closing and configuring sockets} *)
 
 (** Embed a Unix socket into an SSL socket. *)
 val embed_socket : Unix.file_descr -> context -> socket
-
-(** Open an SSL connection. *)
-val open_connection : protocol -> Unix.sockaddr -> socket
-
-(** Open an SSL connection with the specified context. *)
-val open_connection_with_context : context -> Unix.sockaddr -> socket
-
-(** Close an SSL connection opened with [open_connection]. *)
-val shutdown_connection : socket -> unit
 
 (** Set the hostname the client is attempting to connect to using the Server
   * Name Indication (SNI) TLS extension. *)
@@ -422,27 +413,6 @@ val set_alpn_protos : socket -> string list -> unit
 
 (** Get the negotiated protocol from the connection. *)
 val get_negotiated_alpn_protocol : socket -> string option
-
-(** Connect an SSL socket. *)
-val connect : socket -> unit
-
-(** Accept an SSL connection. *)
-val accept : socket -> unit
-
-(** Flush an SSL connection. *)
-val flush : socket -> unit
-
-(** Send close notify to the peer. This is SSL_shutdown(3).
- *  returns [true] if shutdown is finished, [false] in case [close_notify]
- *  needs to be called a second time. *)
-val close_notify : socket -> bool
-
-(** Close a SSL connection.
-  * Send close notify to the peer and wait for close notify from peer. *)
-val shutdown : socket -> unit
-
-
-(** {2 I/O on SSL sockets} *)
 
 (** Check the result of the verification of the X509 certificate presented by
     the peer, if any. Raises a [verify_error] on failure. *)
@@ -471,51 +441,96 @@ val set_ip : socket -> string -> unit
     [select]ing on it; you should not write or read on it. *)
 val file_descr_of_socket : socket -> Unix.file_descr
 
-(** [read sock buf off len] receives data from a connected SSL socket. *)
-val read : socket -> Bytes.t -> int -> int -> int
+(** {2 I/O on SSL sockets} *)
 
-(** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
-    This function releases the runtime while the read takes place. *)
-val read_into_bigarray : socket -> bigarray -> int -> int -> int
+(** The main communication functions below comes with
+    - a "Acquire" version that acquire the runtime while the operation takes place.
+    - a "NoAcqure" version that acquire the runtime while the operation takes place.
 
-(** [read_into_bigarray_blocking sock ba off len] receives data from a
-    connected SSL socket.
-    This function DOES NOT release the runtime while the read takes place: it
-    must be used with nonblocking sockets. *)
-val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
+    They come in two separate module with the same interface.
 
-(** [write sock buf off len] sends data over a connected SSL socket. *)
-val write : socket -> Bytes.t -> int -> int -> int
+    The acquire version are recommanded in one case:
+    - A program using several OCaml thread, if the socket is in blocking
+      more. In this case, as the global lock is released, the other OCaml
+      threads may run.
 
-(** [write_substring sock str off len] sends data over a connected SSL socket. *)
-val write_substring : socket -> string -> int -> int -> int
+    The No-acquire version is recommanded otherwise:
+    - i.e. the program is purely sequential (one thread)
+    - the sockect is non blocking
 
-(** [write_bigarray sock ba off len] sends data over a connected SSL socket.
-    This function releases the runtime while the read takes place. *)
-val write_bigarray : socket -> bigarray -> int -> int -> int
+    Remark: whatever function you use with non-blocking socket, you must
+    capture all exception that requires you to retry later the same operation.
+*)
 
-(** [write_bigarray sock ba off len] sends data over a connected SSL socket.
-    This function DOES NOT release the runtime while the read takes place: it
-    must be used with nonblocking sockets. *)
-val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
+module type SslCom = sig
+  (** Connect an SSL socket. *)
+  val connect : socket -> unit
 
+  (** Accept an SSL connection. *)
+  val accept : socket -> unit
 
-(** {3 High-level communication functions} *)
+  (** Open an SSL connection. *)
+  val open_connection : protocol -> Unix.sockaddr -> socket
 
-(** Input a string on an SSL socket. *)
-val input_string : socket -> string
+  (** Open an SSL connection with the specified context. *)
+  val open_connection_with_context : context -> Unix.sockaddr -> socket
 
-(** Write a string on an SSL socket. *)
-val output_string : socket -> string -> unit
+  (** Send close notify to the peer. This is SSL_shutdown(3).
+   *  returns [true] if shutdown is finished, [false] in case [close_notify]
+   *  needs to be called a second time. *)
+  val ssl_shutdown : socket -> bool
+  val close_notify : socket -> bool
 
-(** Input a character on an SSL socket. *)
-val input_char : socket -> char
+  (** Close an SSL connection opened with [open_connection]. *)
+  val shutdown_connection : socket -> unit
 
-(** Write a char on an SSL socket. *)
-val output_char : socket -> char -> unit
+  (** Close a SSL connection.
+   * Send close notify to the peer and wait for close notify from peer. *)
+  val shutdown : socket -> unit
 
-(** Input an integer on an SSL socket. *)
-val input_int : socket -> int
+  (** Flush an SSL connection. *)
+  val flush : socket -> unit
 
-(** Write an integer on an SSL socket. *)
-val output_int : socket -> int -> unit
+  (** [read sock buf off len] receives data from a connected SSL socket. *)
+  val read : socket -> Bytes.t -> int -> int -> int
+
+  (** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
+      This function releases the runtime while the read takes place. *)
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
+
+  (** [write sock buf off len] sends data over a connected SSL socket. *)
+  val write : socket -> Bytes.t -> int -> int -> int
+
+  (** [write_substring sock str off len] sends data over a connected SSL socket. *)
+  val write_substring : socket -> string -> int -> int -> int
+
+  (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
+      This function releases the runtime while the read takes place. *)
+  val write_bigarray : socket -> bigarray -> int -> int -> int
+
+  (** {3 High-level communication functions} *)
+
+  (** Input a string on an SSL socket. *)
+  val input_string : socket -> string
+
+  (** Write a string on an SSL socket. *)
+  val output_string : socket -> string -> unit
+
+  (** Input a character on an SSL socket. *)
+  val input_char : socket -> char
+
+  (** Write a char on an SSL socket. *)
+  val output_char : socket -> char -> unit
+
+  (** Input an integer on an SSL socket. *)
+  val input_int : socket -> int
+
+  (** Write an integer on an SSL socket. *)
+  val output_int : socket -> int -> unit
+end
+
+module SslRelease : SslCom
+module SslNoRelease : SslCom
+
+(* Default function release the runtime lock, we include SSlRelease *)
+include SslCom
