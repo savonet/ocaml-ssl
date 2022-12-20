@@ -1842,8 +1842,11 @@ CAMLprim value ocaml_ssl_flush_blocking(value socket)
   bio = SSL_get_wbio(ssl);
   if(bio)
   {
-    /* TODO: raise an error */
-    assert(BIO_flush(bio) == 1);
+    int ret = BIO_flush(bio);
+    if (ret != 1) {
+      caml_raise_with_arg(*caml_named_value("ssl_exn_flush_error"),
+			  Val_bool(ret==-1));
+    };
   }
 
   CAMLreturn(Val_unit);
