@@ -96,6 +96,10 @@ exception Read_error of ssl_error
 (** An error occured while writing data. *)
 exception Write_error of ssl_error
 
+(** An error occured while flushing a socket.
+    [Flush_error true],  means that the operation should be retried later. *)
+exception Flush_error of bool
+
 (** Why did the certificate verification fail? *)
 type verify_error =
   | Error_v_unable_to_get_issuer_cert

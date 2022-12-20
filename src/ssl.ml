@@ -96,6 +96,7 @@ exception Accept_error of ssl_error
 exception Read_error of ssl_error
 exception Write_error of ssl_error
 exception Verify_error of verify_error
+exception Flush_error of bool (* true means retry *)
 
 let () =
   Printexc.register_printer (function
@@ -131,7 +132,8 @@ let () =
   Callback.register_exception "ssl_exn_accept_error" (Accept_error Error_none);
   Callback.register_exception "ssl_exn_read_error" (Read_error Error_none);
   Callback.register_exception "ssl_exn_write_error" (Write_error Error_none);
-  Callback.register_exception "ssl_exn_verify_error" (Verify_error Error_v_application_verification)
+  Callback.register_exception "ssl_exn_verify_error" (Verify_error Error_v_application_verification);
+  Callback.register_exception "ssl_exn_flush_error" (Flush_error true)
 
 let thread_safe = ref false
 
