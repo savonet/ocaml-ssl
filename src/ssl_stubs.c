@@ -1753,6 +1753,7 @@ CAMLprim value ocaml_ssl_flush(value socket)
   {
     int ret = BIO_flush(bio);
     if (ret != 1) {
+      caml_acquire_runtime_system();
       caml_raise_with_arg(*caml_named_value("ssl_exn_flush_error"),
 			  Val_bool(ret==-1));
     };
