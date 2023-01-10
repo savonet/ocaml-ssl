@@ -1,6 +1,7 @@
 (library
  (name util)
  (modules util)
+ (flags -w +3)
  (libraries ssl threads str alcotest))
 
 (test
