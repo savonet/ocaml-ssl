@@ -20,7 +20,7 @@ let server_listen args =
     | Read_error e -> 
       match e with
       | Error_zero_return -> Ssl.shutdown ssl;
-      | _ -> raise Thread.Exit;
+      | _ -> Thread.exit ();
   done
 let server_thread addr = 
   let mutex = Mutex.create () in
