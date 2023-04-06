@@ -1,7 +1,8 @@
 opam-version: "2.0"
 name: "ssl"
-version: "0.5.11"
-maintainer: "Samuel Mimram <samuel.mimram@ens-lyon.org>"
+version: "0.6.0"
+maintainer: ["Samuel Mimram <samuel.mimram@ens-lyon.org>"
+             "Christophe Raffalli <christophe@raffalli.eu>" ]
 homepage: "https://github.com/savonet/ocaml-ssl"
 dev-repo: "git+https://github.com/savonet/ocaml-ssl.git"
 bug-reports: "https://github.com/savonet/ocaml-ssl/issues"
