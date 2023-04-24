@@ -1,7 +1,6 @@
 open Alcotest
 
 let test_verify () = 
-  Ssl.init ~thread_safe:true ();
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1342) in
   Util.server_thread addr None |> ignore;
 
@@ -20,7 +19,6 @@ let test_verify () =
   check bool "no verify errors" true ((Str.search_forward (Str.regexp_string "error:00000000:lib(0)") verify_result 0) > 0)
 
 let test_set_host () = 
-  Ssl.init ~thread_safe:true ();
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1343) in
   Util.server_thread addr None |> ignore;
 
@@ -44,7 +42,6 @@ let test_set_host () =
   check bool "no verify errors" true ((Str.search_forward (Str.regexp_string "error:00000000:lib(0)") verify_result 0) > 0)
 
 let test_read_write () =
-  Ssl.init ~thread_safe:true ();
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1344) in
   Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
 

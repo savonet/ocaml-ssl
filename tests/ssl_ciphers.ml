@@ -36,6 +36,7 @@ let test_socket_cipher_funcs () =
   let description = Ssl.get_cipher_description cipher in
   let version = Ssl.get_cipher_version cipher in
   let socket_version = Ssl.version ssl in
+  Ssl.shutdown_connection ssl;
   check string "cipher name" "TLS_AES_256_GCM_SHA384" name;
   check bool "cipher description" true (Str.string_partial_match (Str.regexp ".*Enc=AESGCM(256).*") description 0);
   check string "cipher version" "TLSv1.3" version;
