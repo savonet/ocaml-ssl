@@ -29,7 +29,6 @@ let server_rw_loop ssl parser_func =
 let server_listen args =
   (* Server initialization *)
   Mutex.lock args.mutex;
-  init ~thread_safe: true ();
   let socket = Unix.socket (Unix.PF_INET) Unix.SOCK_STREAM 0 in
   Unix.bind socket args.address;
   let context = create_context TLSv1_3 Server_context in
