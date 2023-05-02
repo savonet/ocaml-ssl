@@ -30,6 +30,7 @@ let server_listen args =
   (* Server initialization *)
   Mutex.lock args.mutex;
   let socket = Unix.socket (Unix.PF_INET) Unix.SOCK_STREAM 0 in
+  Unix.setsockopt socket Unix.SO_REUSEADDR true;
   Unix.bind socket args.address;
   let context = create_context TLSv1_3 Server_context in
   use_certificate context "server.pem" "server.key";
