@@ -449,7 +449,7 @@ val file_descr_of_socket : socket -> Unix.file_descr
 
 (** The main communication functions below comes with
     - a "Acquire" version that acquire the runtime while the operation takes place.
-    - a "NoAcqure" version that acquire the runtime while the operation takes place.
+    - a "NoAcquire" version that does not acquire the runtime while the operation takes place.
 
     They come in two separate module with the same interface.
 
