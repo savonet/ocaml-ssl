@@ -460,7 +460,7 @@ val file_descr_of_socket : socket -> Unix.file_descr
 
     The No-acquire version is recommanded otherwise:
     - i.e. the program is purely sequential (one thread)
-    - the sockect is non blocking
+    - the socket is non blocking
 
     Remark: whatever function you use with non-blocking socket, you must
     capture all exception that requires you to retry later the same operation.
