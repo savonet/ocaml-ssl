@@ -44,7 +44,7 @@ let establish_threaded_server server_handler sockaddr nbconn =
     in
     let inet_addr = inet_addr_of_sockaddr caller in
     let ip = Unix.string_of_inet_addr inet_addr in
-    log (Printf.sprintf "openning connection for [%s]" ip);
+    log (Printf.sprintf "opening connection for [%s]" ip);
     server_handler inet_addr s;
     Ssl.shutdown s
   in
@@ -81,7 +81,7 @@ let () =
          let m = Bytes.sub buf 0 l in
          let msg = Bytes.sub m 0 ((Bytes.length m) - 1) in
          let msg = Bytes.to_string msg in
-         log (Printf.sprintf "revceived '%s'" msg);
+         log (Printf.sprintf "received '%s'" msg);
          if msg = "exit" then
            (
              log "A client has quit";
