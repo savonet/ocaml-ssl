@@ -12,7 +12,7 @@ Unreleased
 - Add a few verification functions (#71):
   - `add_extra_chain_cert` to send additional chain certificates to the peer.
   - `add_cert_to_store`: to allow verification of the peer certificate CA.
-  - `set_ip`: sets the expected IP address to be verified on a SSL socket.
+  - `set_ip`: sets the expected IP address to be verified on an SSL socket.
 - Improve `use_certificate_from_string` (#71) to read any type of key (rather
   than just RSA).
 - Fix a segmentation fault in the ALPN selection callback under OCaml 5 (#89).
@@ -140,7 +140,7 @@ Unreleased
 =====
 - file_descr_of_socket is not marked as deprecated anymore.
 - Patched the Makefile to be compatible with FreeBSD (thanks Jaap Boender).
-- Explicitely link with libcrypto since we use it. Compilation should now work
+- Explicitly link with libcrypto since we use it. Compilation should now work
   on Mac OS X too (thanks Janne Hellsten).
 
 0.4.0 (2006-09-09)
@@ -160,7 +160,7 @@ Unreleased
   address to be passed to a restarted non-blocking write operation, which is
   useful since the OCaml garbage collector may move buffers around between
   calls.
-- We do not need to store explicitely the file descriptor for SSL sockets.
+- We do not need to store explicitly the file descriptor for SSL sockets.
 - Corrected checking of errors in ocaml_ssl_read (thanks Vincent Balat and
   Nataliya Guts).
 - input_char now raises End_of_file when no byte could be read (thanks Nataliya
@@ -177,7 +177,7 @@ Unreleased
 - Put connect, accept and flush (and all other functions) in blocking_section to
   allow other threads to run in the meantime.
 - Unified the three context creation functions in create_context, the
-  certificate to use should now be sepcified with use_certificate (sorry for the
+  certificate to use should now be specified with use_certificate (sorry for the
   API-breakage).
 - Added the get_verify_result function.
 - Using Store_field instead of Field(...) = ...
@@ -188,7 +188,7 @@ Unreleased
 - Many thanks to Thomas Fischbacher for his patches:
 - Corrected int / val bugs when raising exceptions from C (those where found by
   Mike Furr too, thanks).
-- Added many fonctions (but in Caml instead of C).
+- Added many functions (but in Caml instead of C).
 - Context creation functions now take the protocol as argument.
 - Added the create_context function (for client and server connections).
 - Added functions for verifying certificates: client_verify_callback,
