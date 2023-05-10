@@ -527,3 +527,9 @@ module SslNoRelease : SslCom
 
 (* Default function release the runtime lock, we include SSlRelease *)
 include SslCom
+
+(** Deprecated functions for compatibility with older version *)
+val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  [@@@ocaml.alert deprecated "Use [SslNoRelease.read_into_bigarray] instead"]
+val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  [@@@ocaml.alert deprecated "Use [SslNoRelease.write_bigarray] instead"]

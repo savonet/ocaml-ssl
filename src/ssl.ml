@@ -433,3 +433,9 @@ module SslNoRelease = SslCom(SslNoReleaseBase)
 
 (* The releasing functions are imported as default *)
 include SslRelease
+
+(** Deprecated functions for compatibility with older version *)
+let read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  = SslNoRelease.read_into_bigarray
+let write_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  = SslNoRelease.write_bigarray
