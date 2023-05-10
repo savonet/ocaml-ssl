@@ -26,7 +26,7 @@
 
 (** {1 Exceptions and errors} *)
 
-(** An ssl error has occured (see SSL_get_error(3ssl) for details). *)
+(** An ssl error has occurred (see SSL_get_error(3ssl) for details). *)
 type ssl_error =
   | Error_none
   (** No error happened. This is never raised and should disappear in future
@@ -60,7 +60,7 @@ type ssl_error =
 
 type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-(** The SSL method could not be initalized. *)
+(** The SSL method could not be initialized. *)
 exception Method_error
 
 exception Context_error
@@ -72,7 +72,7 @@ exception Ec_curve_error
 (** The SSL server certificate could not be initialized. *)
 exception Certificate_error of string
 
-(** The SSL server private key could not be intialized. *)
+(** The SSL server private key could not be initialized. *)
 exception Private_key_error of string
 
 (** The SSL private key does not match the certificate public key. *)
@@ -90,13 +90,13 @@ exception Connection_error of ssl_error
 (** Failed to accept an SSL connection. *)
 exception Accept_error of ssl_error
 
-(** An error occured while reading data. *)
+(** An error occurred while reading data. *)
 exception Read_error of ssl_error
 
-(** An error occured while writing data. *)
+(** An error occurred while writing data. *)
 exception Write_error of ssl_error
 
-(** An error occured while flushing a socket.
+(** An error occurred while flushing a socket.
     [Flush_error true] means that the operation should be retried. *)
 exception Flush_error of bool
 
@@ -188,7 +188,7 @@ type verify_error =
   | Error_v_application_verification
   (** An application specific error. Unused. *)
 
-(** An error occured while verifying the certificate. *)
+(** An error occurred while verifying the certificate. *)
 exception Verify_error of verify_error
 
 
@@ -196,7 +196,7 @@ exception Verify_error of verify_error
 
 (** Initialize SSL functions. Should be called before calling any other
     function. The parameter [thread_safe] should be set to true if you use
-    threads in you application (the same effect can achived by calling
+    threads in you application (the same effect can achieved by calling
     [Ssl_threads.init] first. *)
 val init : ?thread_safe:bool -> unit -> unit
 
@@ -441,7 +441,7 @@ val set_host : socket -> string -> unit
     The condensed "::" notation is supported for IPv6 addresses. *)
 val set_ip : socket -> string -> unit
 
-(** Get the file descriptor associated with a socket. It is primarly useful for
+(** Get the file descriptor associated with a socket. It is primarily useful for
     [select]ing on it; you should not write or read on it. *)
 val file_descr_of_socket : socket -> Unix.file_descr
 

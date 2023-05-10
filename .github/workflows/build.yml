@@ -11,16 +11,13 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, macos-latest]
+        operating-system: [ubuntu-latest]
         ocaml-version: ['4.09.0']
     steps:
     - uses: actions/checkout@v2
     - uses: ocaml/setup-ocaml@v2
       with:
         ocaml-compiler: ${{ matrix.ocaml-version }}
-    - name: Ensure openssl
-      if: runner.os == 'macOS'
-      run: brew install openssl@3
     - name: Setup opam
       run: opam pin add -n .
     - name: Install dependencies
@@ -28,17 +25,22 @@ jobs:
     - name: Build and test
       run: opam install -t .
   nix-build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.setup.os }}
     strategy:
       matrix:
-        ocamlVersion: [4_12, 4_13, 4_14, 5_00]
+        setup:
+          - {ocamlVersion: 4_12, os: ubuntu-latest}
+          - {ocamlVersion: 4_13, os: ubuntu-latest}
+          - {ocamlVersion: 4_14, os: ubuntu-latest}
+          - {ocamlVersion: 5_0, os: ubuntu-latest}
+          - {ocamlVersion: 5_0, os: macos-latest}
     steps:
-    - uses: actions/checkout@v2
-    - uses: cachix/install-nix-action@v17
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v20
       with:
         extra_nix_config: |
           extra-substituters = https://anmonteiro.nix-cache.workers.dev
           extra-trusted-public-keys = ocaml.nix-cache.com-1:/xI2h2+56rwFfKyyFVbkJSeGqSIYMC/Je+7XXqGKDIY=
     - name: "Run nix-build"
-      run: nix-build ./nix/ci/test.nix --argstr ocamlVersion ${{ matrix.ocamlVersion }}
+      run: nix-build ./nix/ci/test.nix --argstr ocamlVersion ${{ matrix.setup.ocamlVersion }}
 

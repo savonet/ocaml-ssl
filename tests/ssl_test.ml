@@ -8,7 +8,7 @@ let hex_digest digest =
   in
   go [] (String.length digest - 1) |> String.concat ":"
 
-(* The reference hashes come from Firefox’ certificate viewer. It doesn’t show
+(* The reference hashes come from Firefox's certificate viewer. It doesn't show
  * the SHA384 hash, hence its absence from the tests. *)
 
 let test_sha1 () =

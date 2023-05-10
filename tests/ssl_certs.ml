@@ -1,7 +1,7 @@
 open Alcotest
 open Util
 
-let test_read_cert () = 
+let test_read_cert () =
   let cert = Ssl.read_certificate "client.pem" in
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error );
   let issuer = Ssl.get_issuer cert in
@@ -26,13 +26,13 @@ let test_cert_connection () =
   let cert = Ssl.get_certificate ssl in
   let subject = Ssl.get_subject cert in
   let verify_result = Ssl.get_verify_result ssl in
-  let error_string = Ssl.get_verify_error_string 0 in 
-  check bool "set default succeded" true set_default;
+  let error_string = Ssl.get_verify_error_string 0 in
+  check bool "set default succeeded" true set_default;
   check string "check certificate" "/C=US/ST=California/L=San Francisco/O=Piaf/CN=CA" subject;
   check int "check verify result" 0 verify_result;
   check string "check error string" "ok" error_string
 
-let () = 
+let () =
   Alcotest.run "Ssl certificate functions"
     [
       ( "Certificates",

@@ -49,7 +49,7 @@ let test_server proto_list =
   in
   let inet_addr = inet_addr_of_sockaddr caller in
   let ip = Unix.string_of_inet_addr inet_addr in
-  log (Printf.sprintf "openning connection for [%s]" ip);
+  log (Printf.sprintf "opening connection for [%s]" ip);
   let () =
     match Ssl.get_negotiated_alpn_protocol ssl_s with
     | None -> log "no protocol selected"
