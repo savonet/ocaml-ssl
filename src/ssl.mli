@@ -97,7 +97,7 @@ exception Read_error of ssl_error
 exception Write_error of ssl_error
 
 (** An error occured while flushing a socket.
-    [Flush_error true],  means that the operation should be retried later. *)
+    [Flush_error true] means that the operation should be retried. *)
 exception Flush_error of bool
 
 (** Why did the certificate verification fail? *)
