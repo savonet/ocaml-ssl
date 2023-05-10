@@ -447,23 +447,12 @@ val file_descr_of_socket : socket -> Unix.file_descr
 
 (** {2 I/O on SSL sockets} *)
 
-(** The main communication functions below comes with
-    - a "Acquire" version that acquire the runtime while the operation takes place.
-    - a "NoAcquire" version that does not acquire the runtime while the operation takes place.
+(** The main SSL communication functions are divided into the two following modules, which share the same interface:
+    - `SslBlocking`, which does not release the OCaml runtime lock before calling the underlying SSL primitives.
+    - `SslNonBlocking`, which releases the OCaml runtime lock while calling the underlying SSL primitives.
 
-    They come in two separate module with the same interface.
-
-    The acquire version are recommanded in one case:
-    - A program using several OCaml thread, if the socket is in blocking
-      more. In this case, as the global lock is released, the other OCaml
-      threads may run.
-
-    The No-acquire version is recommanded otherwise:
-    - i.e. the program is purely sequential (one thread)
-    - the socket is non blocking
-
-    Remark: whatever function you use with non-blocking socket, you must
-    capture all exception that requires you to retry later the same operation.
+    The usual semantics apply to sockets in non-blocking mode, i.e. handling of `EWOULDBLOCK`,
+    `EGAIN`, etc.
 *)
 
 module type SslCom = sig
