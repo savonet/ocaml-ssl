@@ -325,33 +325,6 @@ module SslNoReleaseBase = struct
 
 end
 
-(* Here is the signature of all communication functions that will be
-   implemented from the base functions as a functor *)
-module type SslCom = sig
-  (* NOTE: include SslBase does not give a good ordering for the documentation
-     and OCaml complains if we change order *)
-  val connect : socket -> unit
-  val accept : socket -> unit
-  val open_connection : protocol -> Unix.sockaddr -> socket
-  val open_connection_with_context : context -> Unix.sockaddr -> socket
-  val ssl_shutdown : socket -> bool
-  val close_notify : socket -> bool
-  val shutdown_connection : socket -> unit
-  val shutdown : socket -> unit
-  val flush : socket -> unit
-  val read : socket -> Bytes.t -> int -> int -> int
-  val read_into_bigarray : socket -> bigarray -> int -> int -> int
-  val write : socket -> Bytes.t -> int -> int -> int
-  val write_substring : socket -> string -> int -> int -> int
-  val write_bigarray : socket -> bigarray -> int -> int -> int
-  val input_string : socket -> string
-  val output_string : socket -> string -> unit
-  val input_char : socket -> char
-  val output_char : socket -> char -> unit
-  val input_int : socket -> int
-  val output_int : socket -> int -> unit
-end
-
 (* The functor implementing communication functions from a structure of type
    SslComBase *)
 module SslCom(C:SslBase) = struct
