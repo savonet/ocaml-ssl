@@ -263,7 +263,23 @@ external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
-module SslReleaseExt = struct
+(* Here is the signature of the base communication functions that are
+   implemented below in two versions *)
+module type SslBase = sig
+  val connect : socket -> unit
+  val accept : socket -> unit
+  val ssl_shutdown : socket -> bool
+  val flush : socket -> unit
+  val read : socket -> Bytes.t -> int -> int -> int
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
+  val write : socket -> Bytes.t -> int -> int -> int
+  val write_substring : socket -> string -> int -> int -> int
+  val write_bigarray : socket -> bigarray -> int -> int -> int
+end
+
+(* We now provide the implementation base communication function that release
+   the ocaml runtime lock, allowed multi-thread with blocking IO *)
+module SslReleaseBase = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 
   external accept : socket -> unit = "ocaml_ssl_accept"
@@ -283,7 +299,9 @@ module SslReleaseExt = struct
   external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
 end
 
-module SslNoReleaseExt = struct
+(* Same as above, but not releasing the lock: for non-blocking IO or
+   mono-threaded program *)
+module SslNoReleaseBase = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 
   external accept : socket -> unit = "ocaml_ssl_accept_blocking"
@@ -307,20 +325,10 @@ module SslNoReleaseExt = struct
 
 end
 
-module type SslComExt = sig
-  val connect : socket -> unit
-  val accept : socket -> unit
-  val ssl_shutdown : socket -> bool
-  val flush : socket -> unit
-  val read : socket -> Bytes.t -> int -> int -> int
-  val read_into_bigarray : socket -> bigarray -> int -> int -> int
-  val write : socket -> Bytes.t -> int -> int -> int
-  val write_substring : socket -> string -> int -> int -> int
-  val write_bigarray : socket -> bigarray -> int -> int -> int
-end
-
+(* Here is the signature of all communication functions that will be
+   implemented from the base functions as a functor *)
 module type SslCom = sig
-  (* include SslComExt does not give a good ordering for the documentation
+  (* NOTE: include SslBase does not give a good ordering for the documentation
      and OCaml complains if we change order *)
   val connect : socket -> unit
   val accept : socket -> unit
@@ -344,7 +352,9 @@ module type SslCom = sig
   val output_int : socket -> int -> unit
 end
 
-module SslCom(C:SslComExt) = struct
+(* The functor implementing communication functions from a structure of type
+   SslComBase *)
+module SslCom(C:SslBase) = struct
   include C
 
   let open_connection_with_context context sockaddr =
@@ -417,7 +427,9 @@ module SslCom(C:SslComExt) = struct
 
 end
 
-module SslRelease = SslCom(SslReleaseExt)
-module SslNoRelease = SslCom(SslNoReleaseExt)
+(* We apply the functor twice *)
+module SslRelease = SslCom(SslReleaseBase)
+module SslNoRelease = SslCom(SslNoReleaseBase)
 
+(* The releasing functions are imported as default *)
 include SslRelease
