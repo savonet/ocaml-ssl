@@ -327,7 +327,7 @@ end
 
 (* The functor implementing communication functions from a structure of type
    SslComBase *)
-module SslCom(C:SslBase) = struct
+module SslMake(C:SslBase) = struct
   include C
 
   let open_connection_with_context context sockaddr =
@@ -400,12 +400,9 @@ module SslCom(C:SslBase) = struct
 
 end
 
-(* We apply the functor twice *)
-module SslRelease = SslCom(SslReleaseBase)
-module SslNoRelease = SslCom(SslNoReleaseBase)
-
-(* The releasing functions are imported as default *)
-include SslRelease
+(* We apply the functor twice. The releasing functions are imported as default *)
+include SslMake(SslReleaseBase)
+module SslNoRelease = SslMake(SslNoReleaseBase)
 
 (** Deprecated functions for compatibility with older version *)
 let read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
