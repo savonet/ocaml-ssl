@@ -17,7 +17,7 @@ let test_read_cert () =
 
 let test_cert_connection () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1338) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let set_default = Ssl.set_default_verify_paths context in
@@ -27,8 +27,9 @@ let test_cert_connection () =
   let subject = Ssl.get_subject cert in
   let verify_result = Ssl.get_verify_result ssl in
   let error_string = Ssl.get_verify_error_string 0 in
-  check bool "set default succeeded" true set_default;
-  check string "check certificate" "/C=US/ST=California/L=San Francisco/O=Piaf/CN=CA" subject;
+  Ssl.shutdown_connection ssl;
+  check bool "set default succeded" true set_default;
+  check string "check certificate" "/C=US/ST=California/L=San Francisco/O=Ocaml-ssl-server/CN=localhost" subject;
   check int "check verify result" 0 verify_result;
   check string "check error string" "ok" error_string
 

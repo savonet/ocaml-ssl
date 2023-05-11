@@ -1,32 +1,74 @@
 open Ssl
-let server_listen args =
-  let (sockaddr, condition, mutex) = args in
-  Mutex.lock mutex;
-  Ssl.init ();
-  let socket = Unix.socket (Unix.PF_INET) Unix.SOCK_STREAM 0 in
-  Unix.bind socket sockaddr;
-  Unix.listen socket 1;
-  let context = Ssl.create_context TLSv1_3 Server_context in
-  Ssl.use_certificate context "ca.pem" "ca.key";
-  Mutex.unlock mutex;
-  Condition.signal condition;
-  let listen = Unix.accept socket in
-  let ssl = Ssl.embed_socket (fst listen) context in
-  Ssl.accept ssl;
-  while true do
+
+type server_args = {
+  address: Unix.sockaddr;
+  condition: Condition.t;
+  mutex: Mutex.t;
+  parser: (string -> string) option
+  }
+let server_rw_loop ssl parser_func =
+  let rw_loop = ref true in
+  while !rw_loop
+  do
     try
-      Ssl.read ssl (Bytes.create 16000) 0 16000 |> ignore;
+      let read_buf = Bytes.create 256 in
+      let read_bytes = read ssl read_buf 0 256 in
+      if read_bytes > 0 then
+        let input = Bytes.to_string read_buf in
+        let response = (parser_func input) in
+        Ssl.write_substring ssl response 0 (String.length response) |> ignore;
+        Ssl.close_notify ssl |> ignore;
+        rw_loop := false
     with
-    | Read_error e -> 
-      match e with
-      | Error_zero_return -> Ssl.shutdown ssl;
-      | _ -> Thread.exit () [@warning "-3"];
+    | Read_error read_error ->
+      match read_error with
+      | Error_ssl ->
+        rw_loop := false;
+      | _ -> ();
   done
-let server_thread addr = 
+
+let server_init args =
+  try
+    (* Server initialization *)
+    Mutex.lock args.mutex;
+    let socket = Unix.socket (Unix.PF_INET) Unix.SOCK_STREAM 0 in
+    Unix.setsockopt socket Unix.SO_REUSEADDR true;
+    Unix.bind socket args.address;
+    let context = create_context TLSv1_3 Server_context in
+    use_certificate context "server.pem" "server.key";
+    Ssl.set_context_alpn_select_callback context (fun client_protos ->
+      List.find_opt (fun opt -> opt = "http/1.1") client_protos
+    );
+    (* Signal ready and listen for connection *)
+    Unix.listen socket 1;
+    Some (socket, context)
+  with
+    exn -> Printexc.to_string exn |> print_endline; None
+let server_listen args =
+  match server_init args with
+  | None -> 
+    Mutex.unlock args.mutex;
+    Condition.signal args.condition;
+    Thread.exit ()
+  | Some (socket, context) ->
+    Mutex.unlock args.mutex;
+    Condition.signal args.condition;
+    let listen = Unix.accept socket in
+    let ssl = embed_socket (fst listen) context in
+    accept ssl;
+    (* Exit right away unless we need to rw *)
+    match args.parser with
+    | Some parser_func -> server_rw_loop ssl parser_func
+    | None -> ()
+    ;
+    shutdown ssl;
+    Thread.exit () [@warning "-3"]
+let server_thread addr parser =
   let mutex = Mutex.create () in
   Mutex.lock mutex;
   let condition = Condition.create () in
-  let thread = Thread.create server_listen (addr, condition, mutex) in
+  let args = { address = addr; condition = condition; mutex = mutex; parser = parser } in
+  let thread = Thread.create server_listen args in
   Condition.wait condition mutex;
   thread
 

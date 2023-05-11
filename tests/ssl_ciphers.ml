@@ -27,7 +27,7 @@ let test_init_ec_from_named_curve () =
 
 let test_socket_cipher_funcs () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
-  Util.server_thread addr |> ignore;
+  Util.server_thread addr None |> ignore;
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = open_connection_with_context context addr in
@@ -36,6 +36,7 @@ let test_socket_cipher_funcs () =
   let description = Ssl.get_cipher_description cipher in
   let version = Ssl.get_cipher_version cipher in
   let socket_version = Ssl.version ssl in
+  Ssl.shutdown_connection ssl;
   check string "cipher name" "TLS_AES_256_GCM_SHA384" name;
   check bool "cipher description" true (Str.string_partial_match (Str.regexp ".*Enc=AESGCM(256).*") description 0);
   check string "cipher version" "TLSv1.3" version;
