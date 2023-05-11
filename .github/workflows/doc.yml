@@ -11,8 +11,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Setup OCaml
-      uses: avsm/setup-ocaml@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.14.1
     - name: Pin locally
       run: opam pin -y add -n .
     - name: Install dependencies
