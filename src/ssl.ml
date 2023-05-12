@@ -265,7 +265,7 @@ external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
 (* Here is the signature of the base communication functions that are
    implemented below in two versions *)
-module type SslBase = sig
+module type Ssl_base = sig
   val connect : socket -> unit
   val accept : socket -> unit
   val ssl_shutdown : socket -> bool
@@ -279,7 +279,7 @@ end
 
 (* We now provide the implementation base communication function that release
    the ocaml runtime lock, allowed multi-thread with blocking IO *)
-module RuntimeUnlockBase = struct
+module Runtime_unlock_base = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 
   external accept : socket -> unit = "ocaml_ssl_accept"
@@ -301,7 +301,7 @@ end
 
 (* Same as above, but not releasing the lock: for non-blocking IO or
    mono-threaded program *)
-module RuntimeLockBase = struct
+module Runtime_lock_base = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 
   external accept : socket -> unit = "ocaml_ssl_accept_blocking"
@@ -327,7 +327,7 @@ end
 
 (* The functor implementing communication functions from a structure of type
    SslComBase *)
-module Make(C:SslBase) = struct
+module Make(C:Ssl_base) = struct
   include C
 
   let open_connection_with_context context sockaddr =
@@ -401,11 +401,11 @@ module Make(C:SslBase) = struct
 end
 
 (* We apply the functor twice. The releasing functions are imported as default *)
-include Make(RuntimeUnlockBase)
-module RuntimeLock = Make(RuntimeLockBase)
+include Make(Runtime_unlock_base)
+module Runtime_lock = Make(Runtime_lock_base)
 
 (** Deprecated functions for compatibility with older version *)
 let read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  = RuntimeLock.read_into_bigarray
+  = Runtime_lock.read_into_bigarray
 let write_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  = RuntimeLock.write_bigarray
+  = Runtime_lock.write_bigarray

@@ -515,14 +515,14 @@ val input_int : socket -> int
 (** Write an integer on an SSL socket. *)
 val output_int : socket -> int -> unit
 
-(** [RuntimeLock] is an equivalent, signature compatible, equivalent to the
+(** [Runtime_lock] is an equivalent, signature compatible, equivalent to the
     [Ssl] module, with one difference: the OCaml runtime lock isn't released
     before calling the underlying SSL primitives.
 
     It works well with non blocking sockets where the usual semantics apply,
     i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc.
 *)
-module RuntimeLock : sig
+module Runtime_lock : sig
   (** Connect an SSL socket. *)
   val connect : socket -> unit
 
@@ -591,6 +591,6 @@ end
 
 (** Deprecated functions for compatibility with older version *)
 val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  [@@@ocaml.alert deprecated "Use [RuntimeLock.read_into_bigarray] instead"]
+  [@@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
 val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  [@@@ocaml.alert deprecated "Use [RuntimeLock.write_bigarray] instead"]
+  [@@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]
