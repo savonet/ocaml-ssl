@@ -44,12 +44,13 @@ let server_init args =
     Some (socket, context)
   with
     exn -> Printexc.to_string exn |> print_endline; None
+
 let server_listen args =
   match server_init args with
-  | None -> 
+  | None ->
     Mutex.unlock args.mutex;
     Condition.signal args.condition;
-    Thread.exit ()
+    Thread.exit () [@warning "-3"]
   | Some (socket, context) ->
     Mutex.unlock args.mutex;
     Condition.signal args.condition;
@@ -63,7 +64,7 @@ let server_listen args =
     ;
     shutdown ssl;
     Thread.exit () [@warning "-3"]
-    
+
 let server_thread addr parser =
   let mutex = Mutex.create () in
   Mutex.lock mutex;
