@@ -515,13 +515,12 @@ val input_int : socket -> int
 (** Write an integer on an SSL socket. *)
 val output_int : socket -> int -> unit
 
-(** In `SslNoRelease`, you will find equivalent of the previous function that
-    do not release the OCaml runtime lock before calling the underlying SSL
-    primitives. This should be preferer for non blocking sockets where the
-    usual semantics apply, i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc.
-    In could also be used with blocking socket if you program has only one thread.
-
-    This saves some buffer copy and can be up to 2x faster.
+(** [Ssl_blocking] is an equivalent, signature compatible, equivalent to the
+    [Ssl] module, with one difference: the OCaml runtime lock isn't released
+    before calling the underlying SSL primitives.
+    
+    It works well with non blocking sockets where the usual semantics apply,
+    i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc.
 *)
 module SslNoRelease : sig
   val connect : socket -> unit
