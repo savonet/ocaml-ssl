@@ -326,9 +326,9 @@ module Runtime_lock_base = struct
 end
 
 (* The functor implementing communication functions from a structure of type
-   SslComBase *)
-module Make(C:Ssl_base) = struct
-  include C
+   Ssl_base *)
+module Make(Ssl_base: Ssl_base) = struct
+  include Ssl_base
 
   let open_connection_with_context context sockaddr =
     let domain = Unix.domain_of_sockaddr sockaddr in
