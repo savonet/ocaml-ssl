@@ -1882,7 +1882,6 @@ CAMLprim value ocaml_ssl_shutdown_blocking(value socket)
   switch (ret) {
     case 0:
     case 1:
-      /* close(SSL_get_fd(SSL_val(socket))); */
       CAMLreturn(Val_int(ret));
     default:
       ret = SSL_get_error(ssl, ret);
