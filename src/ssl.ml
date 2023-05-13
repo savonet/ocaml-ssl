@@ -277,8 +277,8 @@ module type Ssl_base = sig
   val write_bigarray : socket -> bigarray -> int -> int -> int
 end
 
-(* We now provide the implementation base communication function that release
-   the ocaml runtime lock, allowed multi-thread with blocking IO *)
+(* Provide the base implementation communication functions that release
+   the OCaml runtime lock, allowing multiple systhreads to execute concurrently. *)
 module Runtime_unlock_base = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 
@@ -299,8 +299,7 @@ module Runtime_unlock_base = struct
   external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
 end
 
-(* Same as above, but not releasing the lock: for non-blocking IO or
-   mono-threaded program *)
+(* Same as above, but doesn't release the lock. *)
 module Runtime_lock_base = struct
   external connect : socket -> unit = "ocaml_ssl_connect"
 

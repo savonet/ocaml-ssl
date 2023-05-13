@@ -447,8 +447,10 @@ val file_descr_of_socket : socket -> Unix.file_descr
 
 (** {2 I/O on SSL sockets} *)
 
-(** The main SSL communication functions that could block (if socket are in blocking
-    mode) do release the ocaml runtime lock, which in some case require an extra copy     of data. Alternatives are provided below *)
+(** The main SSL communication functions that can block if sockets are in blocking
+    mode. This set of functions releases the OCaml runtime lock, which can require
+    extra copying of application data. The module [Runtime_lock] provided below 
+    lifts this limitation by never releasing the OCaml runtime lock. *)
 
 (** Connect an SSL socket. *)
 val connect : socket -> unit
@@ -465,7 +467,6 @@ val open_connection_with_context : context -> Unix.sockaddr -> socket
 (** Send close notify to the peer. This is SSL_shutdown(3).
  *  returns [true] if shutdown is finished, [false] in case [close_notify]
  *  needs to be called a second time. *)
-val ssl_shutdown : socket -> bool
 val close_notify : socket -> bool
 
 (** Close an SSL connection opened with [open_connection]. *)
@@ -517,10 +518,12 @@ val output_int : socket -> int -> unit
 
 (** [Runtime_lock] is an equivalent, signature compatible, equivalent to the
     [Ssl] module, with one difference: the OCaml runtime lock isn't released
-    before calling the underlying SSL primitives.
+    before calling the underlying SSL primitives. Multiple systhreads cannot,
+    therefore, run concurrently.
 
     It works well with non blocking sockets where the usual semantics apply,
-    i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc.
+    i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc. Additionally, the functions
+    in this module don't perform a copy of application data buffers.
 *)
 module Runtime_lock : sig
   (** Connect an SSL socket. *)
@@ -538,7 +541,6 @@ module Runtime_lock : sig
   (** Send close notify to the peer. This is SSL_shutdown(3).
    *  returns [true] if shutdown is finished, [false] in case [close_notify]
    *  needs to be called a second time. *)
-  val ssl_shutdown : socket -> bool
   val close_notify : socket -> bool
 
   (** Close an SSL connection opened with [open_connection]. *)
@@ -589,8 +591,9 @@ module Runtime_lock : sig
   val output_int : socket -> int -> unit
 end
 
-(** Deprecated functions for compatibility with older version *)
+(** This function is deprecated. Use [Runtime_lock.read_into_bigarray] instead. *)
 val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
   [@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
+(** This function is deprecated. Use [Runtime_lock.write_bigarray] instead. *)
 val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
   [@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]
