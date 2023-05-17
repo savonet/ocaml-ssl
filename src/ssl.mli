@@ -594,6 +594,7 @@ end
 (** This function is deprecated. Use [Runtime_lock.read_into_bigarray] instead. *)
 val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
   [@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
+
 (** This function is deprecated. Use [Runtime_lock.write_bigarray] instead. *)
 val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
   [@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]
