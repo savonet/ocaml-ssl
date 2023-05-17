@@ -1377,12 +1377,15 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context)
 
   if (socket < 0)
     caml_raise_constant(*caml_named_value("ssl_exn_invalid_socket"));
+  caml_release_runtime_system();
   ssl = SSL_new(ctx);
   if (!ssl)
   {
+    caml_acquire_runtime_system();
     caml_raise_constant(*caml_named_value("ssl_exn_handler_error"));
   }
   SSL_set_fd(ssl, socket);
+  caml_acquire_runtime_system();
   SSL_val(block) = ssl;
 
   CAMLreturn(block);
