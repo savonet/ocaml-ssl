@@ -44,12 +44,13 @@ let server_init args =
     Some (socket, context)
   with
     exn -> Printexc.to_string exn |> print_endline; None
+
 let server_listen args =
   match server_init args with
-  | None -> 
+  | None ->
     Mutex.unlock args.mutex;
     Condition.signal args.condition;
-    Thread.exit ()
+    Thread.exit () [@warning "-3"]
   | Some (socket, context) ->
     Mutex.unlock args.mutex;
     Condition.signal args.condition;
@@ -63,6 +64,7 @@ let server_listen args =
     ;
     shutdown ssl;
     Thread.exit () [@warning "-3"]
+
 let server_thread addr parser =
   let mutex = Mutex.create () in
   Mutex.lock mutex;
@@ -75,7 +77,7 @@ let server_thread addr parser =
 let check_ssl_no_error err = Str.string_partial_match (Str.regexp_string "error:00000000:lib(0)") err 0
 
 let pp_protocol ppf = function
-  | SSLv23 -> Format.fprintf ppf "SSLv23" 
+  | SSLv23 -> Format.fprintf ppf "SSLv23"
   | SSLv3 -> Format.fprintf ppf "SSLv3"
   | TLSv1 -> Format.fprintf ppf "TLSv1"
   | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"

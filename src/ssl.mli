@@ -403,19 +403,10 @@ val get_verify_error_string : int -> string
 (** Get the digest of the certificate as a binary string, using the SHA1, SHA256 or SHA384 hashing algorithm. *)
 val digest : [`SHA1 | `SHA256 | `SHA384] -> certificate -> string
 
-(** {2 Creating, connecting and closing sockets} *)
+(** {2 Creating, connecting, closing and configuring sockets} *)
 
 (** Embed a Unix socket into an SSL socket. *)
 val embed_socket : Unix.file_descr -> context -> socket
-
-(** Open an SSL connection. *)
-val open_connection : protocol -> Unix.sockaddr -> socket
-
-(** Open an SSL connection with the specified context. *)
-val open_connection_with_context : context -> Unix.sockaddr -> socket
-
-(** Close an SSL connection opened with [open_connection]. *)
-val shutdown_connection : socket -> unit
 
 (** Set the hostname the client is attempting to connect to using the Server
   * Name Indication (SNI) TLS extension. *)
@@ -426,27 +417,6 @@ val set_alpn_protos : socket -> string list -> unit
 
 (** Get the negotiated protocol from the connection. *)
 val get_negotiated_alpn_protocol : socket -> string option
-
-(** Connect an SSL socket. *)
-val connect : socket -> unit
-
-(** Accept an SSL connection. *)
-val accept : socket -> unit
-
-(** Flush an SSL connection. *)
-val flush : socket -> unit
-
-(** Send close notify to the peer. This is SSL_shutdown(3).
- *  returns [true] if shutdown is finished, [false] in case [close_notify]
- *  needs to be called a second time. *)
-val close_notify : socket -> bool
-
-(** Close a SSL connection.
-  * Send close notify to the peer and wait for close notify from peer. *)
-val shutdown : socket -> unit
-
-
-(** {2 I/O on SSL sockets} *)
 
 (** Check the result of the verification of the X509 certificate presented by
     the peer, if any. Raises a [verify_error] on failure. *)
@@ -475,18 +445,46 @@ val set_ip : socket -> string -> unit
     [select]ing on it; you should not write or read on it. *)
 val file_descr_of_socket : socket -> Unix.file_descr
 
+(** {2 I/O on SSL sockets} *)
+
+(** The main SSL communication functions that can block if sockets are in blocking
+    mode. This set of functions releases the OCaml runtime lock, which can require
+    extra copying of application data. The module [Runtime_lock] provided below 
+    lifts this limitation by never releasing the OCaml runtime lock. *)
+
+(** Connect an SSL socket. *)
+val connect : socket -> unit
+
+(** Accept an SSL connection. *)
+val accept : socket -> unit
+
+(** Open an SSL connection. *)
+val open_connection : protocol -> Unix.sockaddr -> socket
+
+(** Open an SSL connection with the specified context. *)
+val open_connection_with_context : context -> Unix.sockaddr -> socket
+
+(** Send close notify to the peer. This is SSL_shutdown(3).
+ *  returns [true] if shutdown is finished, [false] in case [close_notify]
+ *  needs to be called a second time. *)
+val close_notify : socket -> bool
+
+(** Close an SSL connection opened with [open_connection]. *)
+val shutdown_connection : socket -> unit
+
+(** Close a SSL connection.
+ * Send close notify to the peer and wait for close notify from peer. *)
+val shutdown : socket -> unit
+
+(** Flush an SSL connection. *)
+val flush : socket -> unit
+
 (** [read sock buf off len] receives data from a connected SSL socket. *)
 val read : socket -> Bytes.t -> int -> int -> int
 
 (** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
     This function releases the runtime while the read takes place. *)
 val read_into_bigarray : socket -> bigarray -> int -> int -> int
-
-(** [read_into_bigarray_blocking sock ba off len] receives data from a
-    connected SSL socket.
-    This function DOES NOT release the runtime while the read takes place: it
-    must be used with nonblocking sockets. *)
-val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
 
 (** [write sock buf off len] sends data over a connected SSL socket. *)
 val write : socket -> Bytes.t -> int -> int -> int
@@ -497,12 +495,6 @@ val write_substring : socket -> string -> int -> int -> int
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
     This function releases the runtime while the read takes place. *)
 val write_bigarray : socket -> bigarray -> int -> int -> int
-
-(** [write_bigarray sock ba off len] sends data over a connected SSL socket.
-    This function DOES NOT release the runtime while the read takes place: it
-    must be used with nonblocking sockets. *)
-val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
-
 
 (** {3 High-level communication functions} *)
 
@@ -523,3 +515,86 @@ val input_int : socket -> int
 
 (** Write an integer on an SSL socket. *)
 val output_int : socket -> int -> unit
+
+(** [Runtime_lock] is an equivalent, signature compatible, equivalent to the
+    [Ssl] module, with one difference: the OCaml runtime lock isn't released
+    before calling the underlying SSL primitives. Multiple systhreads cannot,
+    therefore, run concurrently.
+
+    It works well with non blocking sockets where the usual semantics apply,
+    i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc. Additionally, the functions
+    in this module don't perform a copy of application data buffers.
+*)
+module Runtime_lock : sig
+  (** Connect an SSL socket. *)
+  val connect : socket -> unit
+
+  (** Accept an SSL connection. *)
+  val accept : socket -> unit
+
+  (** Open an SSL connection. *)
+  val open_connection : protocol -> Unix.sockaddr -> socket
+
+  (** Open an SSL connection with the specified context. *)
+  val open_connection_with_context : context -> Unix.sockaddr -> socket
+
+  (** Send close notify to the peer. This is SSL_shutdown(3).
+   *  returns [true] if shutdown is finished, [false] in case [close_notify]
+   *  needs to be called a second time. *)
+  val close_notify : socket -> bool
+
+  (** Close an SSL connection opened with [open_connection]. *)
+  val shutdown_connection : socket -> unit
+
+  (** Close a SSL connection.
+   * Send close notify to the peer and wait for close notify from peer. *)
+  val shutdown : socket -> unit
+
+  (** Flush an SSL connection. *)
+  val flush : socket -> unit
+
+  (** [read sock buf off len] receives data from a connected SSL socket. *)
+  val read : socket -> Bytes.t -> int -> int -> int
+
+  (** [read_into_bigarray sock ba off len] receives data from a connected SSL socket.
+      This function releases the runtime while the read takes place. *)
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
+
+  (** [write sock buf off len] sends data over a connected SSL socket. *)
+  val write : socket -> Bytes.t -> int -> int -> int
+
+  (** [write_substring sock str off len] sends data over a connected SSL socket. *)
+  val write_substring : socket -> string -> int -> int -> int
+
+  (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
+      This function releases the runtime while the read takes place. *)
+  val write_bigarray : socket -> bigarray -> int -> int -> int
+
+  (** {3 High-level communication functions} *)
+
+  (** Input a string on an SSL socket. *)
+  val input_string : socket -> string
+
+  (** Write a string on an SSL socket. *)
+  val output_string : socket -> string -> unit
+
+  (** Input a character on an SSL socket. *)
+  val input_char : socket -> char
+
+  (** Write a char on an SSL socket. *)
+  val output_char : socket -> char -> unit
+
+  (** Input an integer on an SSL socket. *)
+  val input_int : socket -> int
+
+  (** Write an integer on an SSL socket. *)
+  val output_int : socket -> int -> unit
+end
+
+(** This function is deprecated. Use [Runtime_lock.read_into_bigarray] instead. *)
+val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  [@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
+
+(** This function is deprecated. Use [Runtime_lock.write_bigarray] instead. *)
+val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
+  [@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]

@@ -1489,6 +1489,20 @@ CAMLprim value ocaml_ssl_connect(value socket)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_connect_blocking(value socket)
+{
+  CAMLparam1(socket);
+  int ret, err;
+  SSL *ssl = SSL_val(socket);
+
+  ret = SSL_connect(ssl);
+  err = SSL_get_error(ssl, ret);
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(err));
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_verify(value socket)
 {
   CAMLparam1(socket);
@@ -1599,6 +1613,27 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start, value le
   CAMLreturn(Val_int(ret));
 }
 
+CAMLprim value ocaml_ssl_write_blocking(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  int buflen = Int_val(length);
+  char *buf = (char*)String_val(buffer) + Int_val(start);
+  SSL *ssl = SSL_val(socket);
+
+  if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
+    caml_invalid_argument("Buffer too short.");
+
+  ERR_clear_error();
+  ret = SSL_write(ssl, buf, buflen);
+  err = SSL_get_error(ssl, ret);
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
 CAMLprim value ocaml_ssl_write_bigarray(value socket, value buffer, value start, value length)
 {
   CAMLparam2(socket, buffer);
@@ -1674,6 +1709,29 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start, value len
   CAMLreturn(Val_int(ret));
 }
 
+CAMLprim value ocaml_ssl_read_blocking(value socket, value buffer, value start, value length)
+{
+  CAMLparam2(socket, buffer);
+  int ret, err;
+  int buflen = Int_val(length);
+  char* buf = ((char*)String_val(buffer)) + Int_val(start);
+  SSL *ssl = SSL_val(socket);
+
+  if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
+    caml_invalid_argument("Buffer too short.");
+
+  ERR_clear_error();
+
+
+  ret = SSL_read(ssl, buf, buflen);
+  err = SSL_get_error(ssl, ret);
+
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
+
+  CAMLreturn(Val_int(ret));
+}
+
 CAMLprim value ocaml_ssl_read_into_bigarray(value socket, value buffer, value start, value length)
 {
   CAMLparam2(socket, buffer);
@@ -1741,6 +1799,21 @@ CAMLprim value ocaml_ssl_accept(value socket)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_accept_blocking(value socket)
+{
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+
+  int ret, err;
+  ERR_clear_error();
+  ret = SSL_accept(ssl);
+  err = SSL_get_error(ssl, ret);
+  if (err != SSL_ERROR_NONE)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_accept_error"), Val_int(err));
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_flush(value socket)
 {
   CAMLparam1(socket);
@@ -1763,6 +1836,25 @@ CAMLprim value ocaml_ssl_flush(value socket)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_flush_blocking(value socket)
+{
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  BIO *bio;
+
+  bio = SSL_get_wbio(ssl);
+  if(bio)
+  {
+    int ret = BIO_flush(bio);
+    if (ret != 1) {
+      caml_raise_with_arg(*caml_named_value("ssl_exn_flush_error"),
+			  Val_bool(ret==-1));
+    };
+  }
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_shutdown(value socket)
 {
   CAMLparam1(socket);
@@ -1776,6 +1868,23 @@ CAMLprim value ocaml_ssl_shutdown(value socket)
     case 0:
     case 1:
       /* close(SSL_get_fd(SSL_val(socket))); */
+      CAMLreturn(Val_int(ret));
+    default:
+      ret = SSL_get_error(ssl, ret);
+      caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(ret));
+  }
+}
+
+CAMLprim value ocaml_ssl_shutdown_blocking(value socket)
+{
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  int ret;
+
+  ret = SSL_shutdown(ssl);
+  switch (ret) {
+    case 0:
+    case 1:
       CAMLreturn(Val_int(ret));
     default:
       ret = SSL_get_error(ssl, ret);
