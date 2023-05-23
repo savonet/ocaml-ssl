@@ -227,8 +227,15 @@ type protocol =
                SSLv3, TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3) *)
   | SSLv3 (** only SSL v3 protocol *)
   | TLSv1 (** only TLS v1 protocol *)
+    [@ocaml.alert deprecated
+      "TLS 1.0 and 1.1 were formally deprecated in RFC8996 in March 2021."]
+
   | TLSv1_1 (** only TLS v1.1 protocol *)
+    [@ocaml.alert deprecated
+      "TLS 1.0 and 1.1 were formally deprecated in RFC8996 in March 2021."]
+
   | TLSv1_2 (** only TLS v1.2 protocol *)
+
   | TLSv1_3 (** only TLS v1.3 protocol *)
 
 (** An SSL abstract socket. *)

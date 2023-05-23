@@ -79,8 +79,8 @@ let check_ssl_no_error err = Str.string_partial_match (Str.regexp_string "error:
 let pp_protocol ppf = function
   | SSLv23 -> Format.fprintf ppf "SSLv23"
   | SSLv3 -> Format.fprintf ppf "SSLv3"
-  | TLSv1 -> Format.fprintf ppf "TLSv1"
-  | TLSv1_1 -> Format.fprintf ppf "TLSv1_1"
+  | TLSv1   [@warning "-3"] -> Format.fprintf ppf "TLSv1"
+  | TLSv1_1 [@warning "-3"] -> Format.fprintf ppf "TLSv1_1"
   | TLSv1_2 -> Format.fprintf ppf "TLSv1_2"
   | TLSv1_3 -> Format.fprintf ppf "TLSv1_3"
 
