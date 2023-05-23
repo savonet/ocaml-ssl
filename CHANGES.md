@@ -1,6 +1,13 @@
 Unreleased
 =====
 
+- Raise an error when `Ssl.flush` isn't successful (#104)
+- Add an API-compatible `Ssl.Runtime_lock` module. The functions in this module
+  don't release the OCaml runtime lock. While they don't allow other OCaml
+  threads to run concurrently, they don't perform any copying in the underlying
+  data, leading certain workloads to be faster than their counterparts that
+  release the lock. (#106)
+
 0.5.13 (2022-10-20)
 =====
 
