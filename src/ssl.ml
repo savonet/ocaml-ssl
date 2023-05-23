@@ -353,11 +353,20 @@ module Make(Ssl_base: Ssl_base) = struct
   let shutdown_connection = shutdown
 
   let output_string ssl s =
-    ignore (write_substring ssl s 0 (String.length s))
+    let len = String.length s in
+    let to_write = ref len in
+    let offset = ref 0 in
+    while !to_write > 0 do
+      let written = write_substring ssl s !offset !to_write in
+      if written <= 0 then failwith "output_string failed to write anything";
+      to_write := !to_write - written;
+      offset := !offset + written;
+    done
 
   let output_char ssl c =
     let tmp = String.make 1 c in
-    ignore (write_substring ssl tmp 0 1)
+    let written = write_substring ssl tmp 0 1 in
+    if written <= 0 then failwith "output_char failed to write anything"
 
   let output_int ssl i =
     let tmp = Bytes.create 4 in
@@ -390,7 +399,8 @@ module Make(Ssl_base: Ssl_base) = struct
   let input_int ssl =
     let i = ref 0 in
     let tmp = Bytes.create 4 in
-    ignore (read ssl tmp 0 4);
+    let read = read ssl tmp 0 4 in
+    if read < 4 then failwith "input_int failed to read 4 bytes";
     i := int_of_char (Bytes.get tmp 0);
     i := (!i lsl 8) + int_of_char (Bytes.get tmp 1);
     i := (!i lsl 8) + int_of_char (Bytes.get tmp 2);
