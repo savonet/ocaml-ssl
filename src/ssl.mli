@@ -55,6 +55,12 @@ type ssl_error =
   | Error_want_accept
       (** The operation did not complete; the same TLS/SSL I/O function should
           be called again later. *)
+  | Error_want_async
+  | Error_want_async_job
+  | Error_want_client_hello_cb
+  | Error_want_retry_verify
+      (** The operation did not complete; the same TLS/SSL I/O function should
+          be called again later. *)
 
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t

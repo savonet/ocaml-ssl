@@ -38,6 +38,10 @@ type ssl_error =
   | Error_zero_return
   | Error_want_connect
   | Error_want_accept
+  | Error_want_async
+  | Error_want_async_job
+  | Error_want_client_hello_cb
+  | Error_want_retry_verify
 
 type verify_error =
   | Error_v_unable_to_get_issuer_cert
@@ -467,8 +471,26 @@ end
 
 (* Same as above, but doesn't release the lock. *)
 module Runtime_lock_base = struct
-  external connect : socket -> unit = "ocaml_ssl_connect_blocking"
-  external accept : socket -> unit = "ocaml_ssl_accept_blocking"
+  external get_error : socket -> int -> ssl_error = "ocaml_ssl_get_error_code"
+    [@@noalloc]
+
+  external connect : socket -> int = "ocaml_ssl_connect_blocking" [@@noalloc]
+
+  let connect socket =
+    let ret = connect socket in
+    if ret <> 1
+    then
+      let err = get_error socket ret in
+      raise (Connection_error err)
+
+  external accept : socket -> int = "ocaml_ssl_accept_blocking" [@@noalloc]
+
+  let accept socket =
+    let ret = accept socket in
+    if ret <> 1
+    then
+      let err = get_error socket ret in
+      raise (Accept_error err)
 
   external write :
      socket
@@ -477,6 +499,19 @@ module Runtime_lock_base = struct
     -> int
     -> int
     = "ocaml_ssl_write_blocking"
+    [@@noalloc]
+
+  let write socket buffer start length =
+    if start < 0 then invalid_arg "Ssl.write: start negative";
+    if length < 0 then invalid_arg "Ssl.write: length negative";
+    if start + length > Bytes.length buffer
+    then invalid_arg "Ssl.write: Buffer too short";
+    let ret = write socket buffer start length in
+    (if ret <= 0
+     then
+       let err = get_error socket ret in
+       raise (Write_error err));
+    ret
 
   external write_substring :
      socket
@@ -485,6 +520,19 @@ module Runtime_lock_base = struct
     -> int
     -> int
     = "ocaml_ssl_write_blocking"
+    [@@noalloc]
+
+  let write_substring socket buffer start length =
+    if start < 0 then invalid_arg "Ssl.write_substring: start negative";
+    if length < 0 then invalid_arg "Ssl.write_substring: length negative";
+    if start + length > String.length buffer
+    then invalid_arg "Ssl.write_substring: Buffer too short";
+    let ret = write_substring socket buffer start length in
+    (if ret <= 0
+     then
+       let err = get_error socket ret in
+       raise (Write_error err));
+    ret
 
   external write_bigarray :
      socket
@@ -493,6 +541,19 @@ module Runtime_lock_base = struct
     -> int
     -> int
     = "ocaml_ssl_write_bigarray_blocking"
+    [@@noalloc]
+
+  let write_bigarray socket buffer start length =
+    if start < 0 then invalid_arg "Ssl.write_bigarray: start negative";
+    if length < 0 then invalid_arg "Ssl.write_bigarray: length negative";
+    if start + length > Bigarray.Array1.dim buffer
+    then invalid_arg "Ssl.write_bigarray: Buffer too short";
+    let ret = write_bigarray socket buffer start length in
+    (if ret <= 0
+     then
+       let err = get_error socket ret in
+       raise (Write_error err));
+    ret
 
   external read :
      socket
@@ -501,6 +562,18 @@ module Runtime_lock_base = struct
     -> int
     -> int
     = "ocaml_ssl_read_blocking"
+    [@@noalloc]
+
+  let read socket buffer start length =
+    if start < 0 then invalid_arg "Ssl.read: start negative";
+    if length < 0 then invalid_arg "Ssl.read: length negative";
+    if start + length > Bytes.length buffer then invalid_arg "Buffer too short";
+    let ret = read socket buffer start length in
+    (if ret <= 0
+     then
+       let err = get_error socket ret in
+       raise (Read_error err));
+    ret
 
   external read_into_bigarray :
      socket
@@ -509,9 +582,37 @@ module Runtime_lock_base = struct
     -> int
     -> int
     = "ocaml_ssl_read_into_bigarray_blocking"
+    [@@noalloc]
 
-  external flush : socket -> unit = "ocaml_ssl_flush_blocking"
-  external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown_blocking"
+  let read_into_bigarray socket buffer start length =
+    if start < 0 then invalid_arg "Ssl.read_into_big_array: start negative";
+    if length < 0 then invalid_arg "Ssl.read_into_big_array: length negative";
+    if start + length > Bigarray.Array1.dim buffer
+    then invalid_arg "Buffer too short";
+    let ret = read_into_bigarray socket buffer start length in
+    (if ret <= 0
+     then
+       let err = get_error socket ret in
+       raise (Read_error err));
+    ret
+
+  external flush : socket -> int = "ocaml_ssl_flush_blocking" [@@noalloc]
+
+  let flush socket =
+    let ret = flush socket in
+    (* We use -2 to report the need to retry, see ssl_stubs.c *)
+    if ret <> 1 then raise (Flush_error (ret = -2))
+
+  external ssl_shutdown : socket -> int = "ocaml_ssl_shutdown_blocking"
+    [@@noalloc]
+
+  let ssl_shutdown socket =
+    let ret = ssl_shutdown socket in
+    (if ret < 0
+     then
+       let err = get_error socket ret in
+       raise (Connection_error err));
+    ret = 1
 end
 
 (* The functor implementing communication functions from a structure of type
