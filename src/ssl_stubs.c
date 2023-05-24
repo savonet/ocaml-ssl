@@ -1874,6 +1874,7 @@ CAMLprim value ocaml_ssl_shutdown(value socket)
   int ret;
 
   caml_release_runtime_system();
+  ERR_clear_error();
   ret = SSL_shutdown(ssl);
   caml_acquire_runtime_system();
   switch (ret) {
@@ -1882,7 +1883,6 @@ CAMLprim value ocaml_ssl_shutdown(value socket)
       /* close(SSL_get_fd(SSL_val(socket))); */
       CAMLreturn(Val_int(ret));
     default:
-      ERR_clear_error();
       ret = SSL_get_error(ssl, ret);
       caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(ret));
   }
@@ -1894,13 +1894,13 @@ CAMLprim value ocaml_ssl_shutdown_blocking(value socket)
   SSL *ssl = SSL_val(socket);
   int ret;
 
+  ERR_clear_error();
   ret = SSL_shutdown(ssl);
   switch (ret) {
     case 0:
     case 1:
       CAMLreturn(Val_int(ret));
     default:
-      ERR_clear_error();
       ret = SSL_get_error(ssl, ret);
       caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"), Val_int(ret));
   }
