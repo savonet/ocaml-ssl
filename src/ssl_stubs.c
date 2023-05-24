@@ -232,6 +232,13 @@ CAMLprim value ocaml_ssl_init(value use_threads) {
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_get_error_code(value socket, value ret) {
+  CAMLparam1(socket);
+  int err;
+  err = SSL_get_error(SSL_val(socket), Int_val(ret));
+  CAMLreturn(Val_int(err));
+}
+
 CAMLprim value ocaml_ssl_get_error_string(value unit) {
   CAMLparam1(unit);
   char buf[256];
@@ -1412,17 +1419,12 @@ CAMLprim value ocaml_ssl_connect(value socket) {
 
 CAMLprim value ocaml_ssl_connect_blocking(value socket) {
   CAMLparam1(socket);
-  int ret, err;
+  int ret;
   SSL *ssl = SSL_val(socket);
 
   ERR_clear_error();
   ret = SSL_connect(ssl);
-  err = SSL_get_error(ssl, ret);
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"),
-                        Val_int(err));
-
-  CAMLreturn(Val_unit);
+  CAMLreturn(Val_int(ret));
 }
 
 CAMLprim value ocaml_ssl_verify(value socket) {
@@ -1537,7 +1539,7 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start,
 CAMLprim value ocaml_ssl_write_blocking(value socket, value buffer, value start,
                                         value length) {
   CAMLparam2(socket, buffer);
-  int ret, err;
+  int ret;
   int buflen = Int_val(length);
   char *buf = (char *)String_val(buffer) + Int_val(start);
   SSL *ssl = SSL_val(socket);
@@ -1551,11 +1553,6 @@ CAMLprim value ocaml_ssl_write_blocking(value socket, value buffer, value start,
 
   ERR_clear_error();
   ret = SSL_write(ssl, buf, buflen);
-  err = SSL_get_error(ssl, ret);
-
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
-
   CAMLreturn(Val_int(ret));
 }
 
@@ -1589,7 +1586,7 @@ CAMLprim value ocaml_ssl_write_bigarray(value socket, value buffer, value start,
 CAMLprim value ocaml_ssl_write_bigarray_blocking(value socket, value buffer,
                                                  value start, value length) {
   CAMLparam2(socket, buffer);
-  int ret, err;
+  int ret;
   SSL *ssl = SSL_val(socket);
   struct caml_ba_array *ba = Caml_ba_array_val(buffer);
   char *buf = ((char *)ba->data) + Int_val(start);
@@ -1603,10 +1600,6 @@ CAMLprim value ocaml_ssl_write_bigarray_blocking(value socket, value buffer,
 
   ERR_clear_error();
   ret = SSL_write(ssl, buf, Int_val(length));
-  err = SSL_get_error(ssl, ret);
-
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
 
   CAMLreturn(Val_int(ret));
 }
@@ -1643,7 +1636,7 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
 CAMLprim value ocaml_ssl_read_blocking(value socket, value buffer, value start,
                                        value length) {
   CAMLparam2(socket, buffer);
-  int ret, err;
+  int ret;
   int buflen = Int_val(length);
   char *buf = ((char *)String_val(buffer)) + Int_val(start);
   SSL *ssl = SSL_val(socket);
@@ -1657,11 +1650,6 @@ CAMLprim value ocaml_ssl_read_blocking(value socket, value buffer, value start,
 
   ERR_clear_error();
   ret = SSL_read(ssl, buf, buflen);
-  err = SSL_get_error(ssl, ret);
-
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
-
   CAMLreturn(Val_int(ret));
 }
 
@@ -1696,7 +1684,7 @@ CAMLprim value ocaml_ssl_read_into_bigarray_blocking(value socket, value buffer,
                                                      value start,
                                                      value length) {
   CAMLparam2(socket, buffer);
-  int ret, err;
+  int ret;
   struct caml_ba_array *ba = Caml_ba_array_val(buffer);
   char *buf = ((char *)ba->data) + Int_val(start);
   SSL *ssl = SSL_val(socket);
@@ -1710,10 +1698,6 @@ CAMLprim value ocaml_ssl_read_into_bigarray_blocking(value socket, value buffer,
 
   ERR_clear_error();
   ret = SSL_read(ssl, buf, Int_val(length));
-  err = SSL_get_error(ssl, ret);
-
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));
 
   CAMLreturn(Val_int(ret));
 }
@@ -1739,15 +1723,11 @@ CAMLprim value ocaml_ssl_accept_blocking(value socket) {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
 
-  int ret, err;
+  int ret;
   ERR_clear_error();
   ret = SSL_accept(ssl);
-  err = SSL_get_error(ssl, ret);
-  if (err != SSL_ERROR_NONE)
-    caml_raise_with_arg(*caml_named_value("ssl_exn_accept_error"),
-                        Val_int(err));
 
-  CAMLreturn(Val_unit);
+  CAMLreturn(Val_int(ret));
 }
 
 CAMLprim value ocaml_ssl_flush(value socket) {
@@ -1773,18 +1753,17 @@ CAMLprim value ocaml_ssl_flush(value socket) {
 CAMLprim value ocaml_ssl_flush_blocking(value socket) {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
+  int ret = 0;
   BIO *bio;
 
   bio = SSL_get_wbio(ssl);
   if (bio) {
-    int ret = BIO_flush(bio);
-    if (ret != 1) {
-      caml_raise_with_arg(*caml_named_value("ssl_exn_flush_error"),
-                          Val_bool(BIO_should_retry(bio)));
-    };
+    ret = BIO_flush(bio);
+    if (ret != 1 && BIO_should_retry(bio))
+      ret = -2;
   }
 
-  CAMLreturn(Val_unit);
+  CAMLreturn(Val_int(ret));
 }
 
 CAMLprim value ocaml_ssl_shutdown(value socket) {
@@ -1815,15 +1794,7 @@ CAMLprim value ocaml_ssl_shutdown_blocking(value socket) {
 
   ERR_clear_error();
   ret = SSL_shutdown(ssl);
-  switch (ret) {
-  case 0:
-  case 1:
-    CAMLreturn(Val_int(ret));
-  default:
-    ret = SSL_get_error(ssl, ret);
-    caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"),
-                        Val_int(ret));
-  }
+  CAMLreturn(Val_int(ret));
 }
 
 /* ======================================================== */
