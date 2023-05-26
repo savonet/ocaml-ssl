@@ -1,6 +1,6 @@
 open Alcotest
 
-let test_verify () = 
+let test_verify () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1342) in
   Util.server_thread addr None |> ignore;
 

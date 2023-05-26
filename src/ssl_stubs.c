@@ -33,6 +33,7 @@
 #include <string.h>
 #include <assert.h>
 
+#define CAML_NAME_SPACE
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/custom.h>
@@ -262,7 +263,55 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
   CAMLreturn(caml_copy_string(buf));
 }
 
+CAMLprim value ocaml_ssl_get_error_struct(value unit)
+{
+  CAMLparam1(unit);
+  unsigned long code = ERR_get_error();
+  CAMLlocal3(result, libstring, reasonstring);
+  result = caml_alloc_tuple(3);
+  const char *lib = ERR_lib_error_string(code);
+  const char *reason = ERR_reason_error_string(code);
+  if (lib != NULL) {
+    libstring = caml_copy_string(lib);
+  } else {
+    libstring = caml_copy_string("lib(0)");
+  }
+  if (reason != NULL) {
+    reasonstring = caml_copy_string(reason);
+  } else {
+    reasonstring = caml_copy_string("reason(0)");
+  }
+  Store_field(result, 0, Val_int(code));
+  Store_field(result, 1, libstring);
+  Store_field(result, 2, reasonstring);
 
+  CAMLreturn(result);
+}
+
+CAMLprim value ocaml_ssl_peek_error_last_struct(value unit)
+{
+  CAMLparam1(unit);
+  unsigned long code = ERR_peek_last_error();
+  CAMLlocal3(result, libstring, reasonstring);
+  result = caml_alloc_tuple(3);
+  const char *lib = ERR_lib_error_string(code);
+  const char *reason = ERR_reason_error_string(code);
+  if (lib != NULL) {
+    libstring = caml_copy_string(lib);
+  } else {
+    libstring = caml_copy_string("lib(0)");
+  }
+  if (reason != NULL) {
+    reasonstring = caml_copy_string(reason);
+  } else {
+    reasonstring = caml_copy_string("reason(0)");
+  }
+  Store_field(result, 0, Val_int(code));
+  Store_field(result, 1, libstring);
+  Store_field(result, 2, reasonstring);
+
+  CAMLreturn(result);
+}
 /*****************************
  * Context-related functions *
  *****************************/

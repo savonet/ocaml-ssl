@@ -204,6 +204,14 @@ val init : ?thread_safe:bool -> unit -> unit
     occurred. *)
 val get_error_string : unit -> string
 
+(** Retrieve the earliest error from the error queue then it removes the entry.
+    Returns the code and library and reason strings *)
+val get_error : unit -> int * string * string
+
+(** Retrieves the latest error code from the thread's error queue without
+    modifying it. Returns the code and library and reason strings. *)
+val peek_error_last : unit -> int * string * string
+
 (** Protocol used by SSL. *)
 type protocol =
   | SSLv23 (** accept all possible protocols (SSLv2 if supported by openssl,

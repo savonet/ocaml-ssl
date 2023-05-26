@@ -81,6 +81,15 @@ type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.A
 
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
+external get_error : unit -> int * string * string = "ocaml_ssl_get_error_struct"
+
+external peek_error_last : unit -> int * string * string = "ocaml_ssl_peek_error_last_struct"
+
+(** Reproduces the string format from ERR_error_string_n *)
+let peek_error_last_string () =
+  let code, lib, reason = peek_error_last () in
+  Printf.sprintf "error:%08lX:%s::%s" (Int32.of_int code) lib reason
+
 exception Method_error
 exception Context_error
 exception Certificate_error of string
@@ -110,13 +119,13 @@ let () =
     | Unmatching_keys -> Some ("SSL: Unmatching keys")
     | Invalid_socket -> Some ("SSL: Invalid socket")
     | Handler_error -> Some ("SSL: Handler error")
-    | Connection_error _ -> Some ("SSL connection() error: " ^ (get_error_string()))
-    | Accept_error _ -> Some ("SSL accept() error: " ^ (get_error_string()))
-    | Read_error _ -> Some ("SSL read() error: " ^ (get_error_string()))
-    | Write_error _ -> Some ("SSL write() error: " ^ (get_error_string()))
-    | Verify_error _ -> Some ("SSL verify() error: " ^ (get_error_string()))
+    | Connection_error _ -> Some ("SSL connection() error: " ^ (peek_error_last_string()))
+    | Accept_error _ -> Some ("SSL accept() error: " ^ (peek_error_last_string()))
+    | Read_error _ -> Some ("SSL read() error: " ^ (peek_error_last_string()))
+    | Write_error _ -> Some ("SSL write() error: " ^ (peek_error_last_string()))
+    | Verify_error _ -> Some ("SSL verify() error: " ^ (peek_error_last_string()))
     | Flush_error b -> Some (Printf.sprintf "SSL flush(%b) error: " b
-                             ^ (get_error_string()))
+                             ^ (peek_error_last_string()))
     | _ -> None)
 
 let () =
