@@ -266,8 +266,8 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
 CAMLprim value ocaml_ssl_get_error_struct(value unit)
 {
   CAMLparam1(unit);
-  unsigned long code = ERR_get_error();
   CAMLlocal3(result, libstring, reasonstring);
+  unsigned long code = ERR_get_error();
   result = caml_alloc_tuple(3);
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
