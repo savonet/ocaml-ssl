@@ -83,11 +83,11 @@ external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 external get_error : unit -> int * string * string = "ocaml_ssl_get_error_struct"
 
-external peek_error_last : unit -> int * string * string = "ocaml_ssl_peek_error_last_struct"
+external peek_last_error : unit -> int * string * string = "ocaml_ssl_peek_last_error_struct"
 
 (** Reproduces the string format from ERR_error_string_n *)
 let peek_error_last_string () =
-  let code, lib, reason = peek_error_last () in
+  let code, lib, reason = peek_last_error () in
   Printf.sprintf "error:%08lX:%s::%s" (Int32.of_int code) lib reason
 
 exception Method_error

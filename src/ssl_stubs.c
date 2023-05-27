@@ -288,7 +288,7 @@ CAMLprim value ocaml_ssl_get_error_struct(value unit)
   CAMLreturn(result);
 }
 
-CAMLprim value ocaml_ssl_peek_error_last_struct(value unit)
+CAMLprim value ocaml_ssl_peek_last_error_struct(value unit)
 {
   CAMLparam1(unit);
   CAMLlocal3(result, libstring, reasonstring);

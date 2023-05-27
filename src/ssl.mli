@@ -200,8 +200,8 @@ exception Verify_error of verify_error
     [Ssl_threads.init] first. *)
 val init : ?thread_safe:bool -> unit -> unit
 
-(** Retrieve a human-readable message that corresponds to the last error that
-    occurred. *)
+(** Retrieve a human-readable message that corresponds to the earliest error
+    code from the thread's error queue and removes the entry. *)
 val get_error_string : unit -> string
 
 (** Retrieve the earliest error from the error queue then it removes the entry.
@@ -210,7 +210,7 @@ val get_error : unit -> int * string * string
 
 (** Retrieves the latest error code from the thread's error queue without
     modifying it. Returns the code and library and reason strings. *)
-val peek_error_last : unit -> int * string * string
+val peek_last_error : unit -> int * string * string
 
 (** Protocol used by SSL. *)
 type protocol =
