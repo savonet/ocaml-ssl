@@ -81,16 +81,18 @@ type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.A
 
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
-external error_struct : int -> int * string * string = "ocaml_ssl_error_struct"
+type err_function = | Get_error | Peek_error | Peek_last_error
+
+external error_struct : err_function -> int * string * string = "ocaml_ssl_error_struct"
 
 let get_error () =
-  error_struct 0
+  error_struct Get_error
 
 let peek_error () =
-  error_struct 1
+  error_struct Peek_error
 
 let peek_last_error () =
-  error_struct 2
+  error_struct Peek_last_error
 
 (** Reproduces the string format from ERR_error_string_n *)
 let peek_last_error_string () =
