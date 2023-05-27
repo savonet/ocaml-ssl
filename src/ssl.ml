@@ -81,12 +81,19 @@ type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.A
 
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
-external get_error : unit -> int * string * string = "ocaml_ssl_get_error_struct"
+external error_struct : int -> int * string * string = "ocaml_ssl_error_struct"
 
-external peek_last_error : unit -> int * string * string = "ocaml_ssl_peek_last_error_struct"
+let get_error () =
+  error_struct 0
+
+let peek_error () =
+  error_struct 1
+
+let peek_last_error () =
+  error_struct 2
 
 (** Reproduces the string format from ERR_error_string_n *)
-let peek_error_last_string () =
+let peek_last_error_string () =
   let code, lib, reason = peek_last_error () in
   Printf.sprintf "error:%08lX:%s::%s" (Int32.of_int code) lib reason
 
@@ -119,13 +126,13 @@ let () =
     | Unmatching_keys -> Some ("SSL: Unmatching keys")
     | Invalid_socket -> Some ("SSL: Invalid socket")
     | Handler_error -> Some ("SSL: Handler error")
-    | Connection_error _ -> Some ("SSL connection() error: " ^ (peek_error_last_string()))
-    | Accept_error _ -> Some ("SSL accept() error: " ^ (peek_error_last_string()))
-    | Read_error _ -> Some ("SSL read() error: " ^ (peek_error_last_string()))
-    | Write_error _ -> Some ("SSL write() error: " ^ (peek_error_last_string()))
-    | Verify_error _ -> Some ("SSL verify() error: " ^ (peek_error_last_string()))
+    | Connection_error _ -> Some ("SSL connection() error: " ^ (peek_last_error_string()))
+    | Accept_error _ -> Some ("SSL accept() error: " ^ (peek_last_error_string()))
+    | Read_error _ -> Some ("SSL read() error: " ^ (peek_last_error_string()))
+    | Write_error _ -> Some ("SSL write() error: " ^ (peek_last_error_string()))
+    | Verify_error _ -> Some ("SSL verify() error: " ^ (peek_last_error_string()))
     | Flush_error b -> Some (Printf.sprintf "SSL flush(%b) error: " b
-                             ^ (peek_error_last_string()))
+                             ^ (peek_last_error_string()))
     | _ -> None)
 
 let () =

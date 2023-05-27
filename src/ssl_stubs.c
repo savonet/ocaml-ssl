@@ -263,36 +263,22 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
   CAMLreturn(caml_copy_string(buf));
 }
 
-CAMLprim value ocaml_ssl_get_error_struct(value unit)
+CAMLprim value ocaml_ssl_error_struct(value err_func)
 {
-  CAMLparam1(unit);
+  CAMLparam1(err_func);
   CAMLlocal3(result, libstring, reasonstring);
-  unsigned long code = ERR_get_error();
-  result = caml_alloc_tuple(3);
-  const char *lib = ERR_lib_error_string(code);
-  const char *reason = ERR_reason_error_string(code);
-  if (lib != NULL) {
-    libstring = caml_copy_string(lib);
-  } else {
-    libstring = caml_copy_string("lib(0)");
+  unsigned long code = 0;
+  switch(Int_val(err_func)) {
+    case 0:
+      code = ERR_get_error();
+      break;
+    case 1:
+      code = ERR_peek_error();
+      break;
+    case 2:
+      code = ERR_peek_last_error();
+      break;
   }
-  if (reason != NULL) {
-    reasonstring = caml_copy_string(reason);
-  } else {
-    reasonstring = caml_copy_string("reason(0)");
-  }
-  Store_field(result, 0, Val_int(code));
-  Store_field(result, 1, libstring);
-  Store_field(result, 2, reasonstring);
-
-  CAMLreturn(result);
-}
-
-CAMLprim value ocaml_ssl_peek_last_error_struct(value unit)
-{
-  CAMLparam1(unit);
-  CAMLlocal3(result, libstring, reasonstring);
-  unsigned long code = ERR_peek_last_error();
   result = caml_alloc_tuple(3);
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);

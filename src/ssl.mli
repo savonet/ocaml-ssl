@@ -208,6 +208,10 @@ val get_error_string : unit -> string
     Returns the code and library and reason strings *)
 val get_error : unit -> int * string * string
 
+(** Retrieve the earliest error from the error queue without modifying it.
+    Returns the code and library and reason strings *)
+val peek_error : unit -> int * string * string
+
 (** Retrieves the latest error code from the thread's error queue without
     modifying it. Returns the code and library and reason strings. *)
 val peek_last_error : unit -> int * string * string
