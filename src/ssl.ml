@@ -358,7 +358,7 @@ module Make(Ssl_base: Ssl_base) = struct
     let offset = ref 0 in
     while !to_write > 0 do
       let written = write_substring ssl s !offset !to_write in
-      if written <= 0 then failwith "output_string failed to write anything";
+      if written <= 0 then failwith "output_string failed to write";
       to_write := !to_write - written;
       offset := !offset + written;
     done
@@ -366,7 +366,7 @@ module Make(Ssl_base: Ssl_base) = struct
   let output_char ssl c =
     let tmp = String.make 1 c in
     let written = write_substring ssl tmp 0 1 in
-    if written <= 0 then failwith "output_char failed to write anything"
+    if written <= 0 then failwith "output_char failed to write"
 
   let output_int ssl i =
     let tmp = Bytes.create 4 in
