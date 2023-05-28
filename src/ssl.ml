@@ -301,7 +301,7 @@ end
 
 (* Same as above, but doesn't release the lock. *)
 module Runtime_lock_base = struct
-  external connect : socket -> unit = "ocaml_ssl_connect"
+  external connect : socket -> unit = "ocaml_ssl_connect_blocking"
 
   external accept : socket -> unit = "ocaml_ssl_accept_blocking"
 

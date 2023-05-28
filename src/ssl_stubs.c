@@ -1480,6 +1480,7 @@ CAMLprim value ocaml_ssl_connect(value socket)
   SSL *ssl = SSL_val(socket);
 
   caml_release_runtime_system();
+  ERR_clear_error();
   ret = SSL_connect(ssl);
   err = SSL_get_error(ssl, ret);
   caml_acquire_runtime_system();
@@ -1495,6 +1496,7 @@ CAMLprim value ocaml_ssl_connect_blocking(value socket)
   int ret, err;
   SSL *ssl = SSL_val(socket);
 
+  ERR_clear_error();
   ret = SSL_connect(ssl);
   err = SSL_get_error(ssl, ret);
   if (err != SSL_ERROR_NONE)
@@ -1596,8 +1598,10 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start, value le
   char *buf = malloc(buflen);
   SSL *ssl = SSL_val(socket);
 
+  if (Int_val(start) < 0) caml_invalid_argument("Ssl.write: negative offset");
+  if (Int_val(length) < 0) caml_invalid_argument("Ssl.write: negative length");
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
-    caml_invalid_argument("Buffer too short.");
+    caml_invalid_argument("Ssl.write: Buffer too short.");
 
   memmove(buf, (char*)String_val(buffer) + Int_val(start), buflen);
   caml_release_runtime_system();
@@ -1621,8 +1625,10 @@ CAMLprim value ocaml_ssl_write_blocking(value socket, value buffer, value start,
   char *buf = (char*)String_val(buffer) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
+  if (Int_val(start) < 0) caml_invalid_argument("Ssl.write: negative offset");
+  if (Int_val(length) < 0) caml_invalid_argument("Ssl.write: negative length");
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
-    caml_invalid_argument("Buffer too short.");
+    caml_invalid_argument("Ssl.write: Buffer too short.");
 
   ERR_clear_error();
   ret = SSL_write(ssl, buf, buflen);
@@ -1642,9 +1648,10 @@ CAMLprim value ocaml_ssl_write_bigarray(value socket, value buffer, value start,
   struct caml_ba_array *ba = Caml_ba_array_val(buffer);
   char *buf = ((char *)ba->data) + Int_val(start);
 
-  if(Int_val(start) < 0) caml_invalid_argument("Ssl.write_bigarray: negative offset");
-  if(Int_val(length) < 0) caml_invalid_argument("Ssl.write_bigarray: negative length");
-
+  if (Int_val(start) < 0)
+    caml_invalid_argument("Ssl.write_bigarray: negative offset");
+  if (Int_val(length) < 0)
+    caml_invalid_argument("Ssl.write_bigarray: negative length");
   if (Int_val(start) + Int_val(length) > ba->dim[0])
     caml_invalid_argument("Ssl.write_bigarray: buffer too short.");
 
@@ -1668,9 +1675,10 @@ CAMLprim value ocaml_ssl_write_bigarray_blocking(value socket, value buffer, val
   struct caml_ba_array *ba = Caml_ba_array_val(buffer);
   char *buf = ((char *)ba->data) + Int_val(start);
 
-  if(Int_val(start) < 0) caml_invalid_argument("Ssl.write_bigarray_blocking: negative offset");
-  if(Int_val(length) < 0) caml_invalid_argument("Ssl.write_bigarray_blocking: negative length");
-
+  if (Int_val(start) < 0)
+    caml_invalid_argument("Ssl.write_bigarray: negative offset");
+  if (Int_val(length) < 0)
+    caml_invalid_argument("Ssl.write_bigarray: negative length");
   if (Int_val(start) + Int_val(length) > ba->dim[0])
     caml_invalid_argument("Ssl.write_bigarray: buffer too short.");
 
@@ -1692,8 +1700,10 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start, value len
   char *buf = malloc(buflen);
   SSL *ssl = SSL_val(socket);
 
+  if (Int_val(start) < 0) caml_invalid_argument("Ssl.read: negative offset");
+  if (Int_val(length) < 0) caml_invalid_argument("Ssl.read: negative length");
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
-    caml_invalid_argument("Buffer too short.");
+    caml_invalid_argument("Ssl.read: Buffer too short.");
 
   caml_release_runtime_system();
   ERR_clear_error();
@@ -1717,12 +1727,12 @@ CAMLprim value ocaml_ssl_read_blocking(value socket, value buffer, value start, 
   char* buf = ((char*)String_val(buffer)) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
+  if (Int_val(start) < 0) caml_invalid_argument("Ssl.read: negative offset");
+  if (Int_val(length) < 0) caml_invalid_argument("Ssl.read: negative length");
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
-    caml_invalid_argument("Buffer too short.");
+    caml_invalid_argument("Ssl.read: Buffer too short.");
 
   ERR_clear_error();
-
-
   ret = SSL_read(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
 
@@ -1740,9 +1750,10 @@ CAMLprim value ocaml_ssl_read_into_bigarray(value socket, value buffer, value st
   char *buf = ((char *)ba->data) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
-  if(Int_val(start) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
-  if(Int_val(length) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative length");
-
+  if (Int_val(start) < 0)
+    caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
+  if (Int_val(length) < 0)
+    caml_invalid_argument("Ssl.read_into_bigarray: negative length");
   if (Int_val(start) + Int_val(length) > ba->dim[0])
     caml_invalid_argument("Ssl.read_into_bigarray: buffer too short.");
 
@@ -1766,9 +1777,10 @@ CAMLprim value ocaml_ssl_read_into_bigarray_blocking(value socket, value buffer,
   char *buf = ((char *)ba->data) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
-  if(Int_val(start) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
-  if(Int_val(length) < 0) caml_invalid_argument("Ssl.read_into_bigarray: negative length");
-
+  if (Int_val(start) < 0)
+    caml_invalid_argument("Ssl.read_into_bigarray: negative offset");
+  if (Int_val(length) < 0)
+    caml_invalid_argument("Ssl.read_into_bigarray: negative length");
   if (Int_val(start) + Int_val(length) > ba->dim[0])
     caml_invalid_argument("Ssl.read_into_bigarray: buffer too short.");
 
@@ -1862,6 +1874,7 @@ CAMLprim value ocaml_ssl_shutdown(value socket)
   int ret;
 
   caml_release_runtime_system();
+  ERR_clear_error();
   ret = SSL_shutdown(ssl);
   caml_acquire_runtime_system();
   switch (ret) {
@@ -1881,6 +1894,7 @@ CAMLprim value ocaml_ssl_shutdown_blocking(value socket)
   SSL *ssl = SSL_val(socket);
   int ret;
 
+  ERR_clear_error();
   ret = SSL_shutdown(ssl);
   switch (ret) {
     case 0:

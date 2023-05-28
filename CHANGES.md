@@ -9,6 +9,8 @@ Unreleased
   release the lock. (#106)
 - Guarantee `Ssl.output_string` writes the whole string by retrying the
   operation with unwritten bytes (#103, #116)
+- Fix calls in C stubs that need to call `ERR_clear_error` before the underlying
+  OpenSSL call (#118)
 
 0.5.13 (2022-10-20)
 =====
