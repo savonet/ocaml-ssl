@@ -7,6 +7,8 @@ Unreleased
   threads to run concurrently, they don't perform any copying in the underlying
   data, leading certain workloads to be faster than their counterparts that
   release the lock. (#106)
+- Fix calls in C stubs that need to call `ERR_clear_error` before the underlying
+  OpenSSL call (#118)
 
 0.5.13 (2022-10-20)
 =====
