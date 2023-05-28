@@ -1,12 +1,14 @@
 Unreleased
 =====
 
-- Raise an error when `Ssl.flush` isn't successful (#104)
+- Raise an error when `Ssl.flush` isn't successful (#104, #120)
 - Add an API-compatible `Ssl.Runtime_lock` module. The functions in this module
   don't release the OCaml runtime lock. While they don't allow other OCaml
   threads to run concurrently, they don't perform any copying in the underlying
   data, leading certain workloads to be faster than their counterparts that
   release the lock. (#106)
+- Guarantee `Ssl.output_string` writes the whole string by retrying the
+  operation with unwritten bytes (#103, #116)
 - Fix calls in C stubs that need to call `ERR_clear_error` before the underlying
   OpenSSL call (#118)
 
