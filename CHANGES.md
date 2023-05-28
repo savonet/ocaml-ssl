@@ -7,6 +7,8 @@ Unreleased
   threads to run concurrently, they don't perform any copying in the underlying
   data, leading certain workloads to be faster than their counterparts that
   release the lock. (#106)
+- Guarantee `Ssl.output_string` writes the whole string by retrying the
+  operation with unwritten bytes (#103, #116)
 
 0.5.13 (2022-10-20)
 =====
