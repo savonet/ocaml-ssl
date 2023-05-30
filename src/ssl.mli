@@ -204,17 +204,21 @@ val init : ?thread_safe:bool -> unit -> unit
     code from the thread's error queue and removes the entry. *)
 val get_error_string : unit -> string
 
-(** Retrieve the earliest error from the error queue then it removes the entry.
-    Returns the code and library and reason strings *)
-val get_error : unit -> int * string * string
+module Error: sig
+    type t = private { code: int; lib: string option; reason: string option }
 
-(** Retrieve the earliest error from the error queue without modifying it.
-    Returns the code and library and reason strings *)
-val peek_error : unit -> int * string * string
+    (** Retrieve the earliest error from the error queue then it removes the entry.
+        Returns the code and library and reason strings *)
+    val get_error : unit -> t
 
-(** Retrieves the latest error code from the thread's error queue without
-    modifying it. Returns the code and library and reason strings. *)
-val peek_last_error : unit -> int * string * string
+    (** Retrieve the earliest error from the error queue without modifying it.
+        Returns the code and library and reason strings *)
+    val peek_error : unit -> t
+
+    (** Retrieves the latest error code from the thread's error queue without
+        modifying it. Returns the code and library and reason strings. *)
+    val peek_last_error : unit -> t
+end
 
 (** Protocol used by SSL. *)
 type protocol =

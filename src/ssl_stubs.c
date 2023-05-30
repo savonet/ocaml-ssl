@@ -109,20 +109,6 @@ static struct custom_operations socket_ops =
   custom_deserialize_default
 };
 
-/* Option types */
-
-#define Val_none Val_int(0)
-
-static value Val_some(value v)
-{
-  CAMLparam1(v);
-  CAMLlocal1(some);
-  some = caml_alloc(1, 0);
-  Store_field(some, 0, v);
-  CAMLreturn(some);
-}
-
-
 /******************
  * Initialization *
  ******************/
@@ -266,7 +252,7 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
 CAMLprim value ocaml_ssl_error_struct(value err_func)
 {
   CAMLparam1(err_func);
-  CAMLlocal3(result, libstring, reasonstring);
+  CAMLlocal3(result, libval, reasonval);
   unsigned long code = 0;
   switch(Int_val(err_func)) {
     case 0:
@@ -283,18 +269,18 @@ CAMLprim value ocaml_ssl_error_struct(value err_func)
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
   if (lib != NULL) {
-    libstring = caml_copy_string(lib);
+    libval = caml_alloc_some(caml_copy_string(lib));
   } else {
-    libstring = caml_copy_string("lib(0)");
+    libval = Val_none;
   }
   if (reason != NULL) {
-    reasonstring = caml_copy_string(reason);
+    reasonval = caml_alloc_some(caml_copy_string(reason));
   } else {
-    reasonstring = caml_copy_string("reason(0)");
+    reasonval = Val_none;
   }
   Store_field(result, 0, Val_int(code));
-  Store_field(result, 1, libstring);
-  Store_field(result, 2, reasonstring);
+  Store_field(result, 1, libval);
+  Store_field(result, 2, reasonval);
 
   CAMLreturn(result);
 }
@@ -1490,7 +1476,7 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
   proto = caml_alloc_string (len);
   memcpy((char *)String_val(proto), (const char*)data, len);
 
-  CAMLreturn(Val_some(proto));
+  CAMLreturn(caml_alloc_some(proto));
 }
 #else
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
