@@ -109,6 +109,19 @@ static struct custom_operations socket_ops =
   custom_deserialize_default
 };
 
+/* Option types */
+
+#define Val_none Val_int(0)
+
+static value Val_some(value v)
+{
+  CAMLparam1(v);
+  CAMLlocal1(some);
+  some = caml_alloc(1, 0);
+  Store_field(some, 0, v);
+  CAMLreturn(some);
+}
+
 /******************
  * Initialization *
  ******************/
@@ -269,12 +282,12 @@ CAMLprim value ocaml_ssl_error_struct(value err_func)
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
   if (lib != NULL) {
-    libval = caml_alloc_some(caml_copy_string(lib));
+    libval = Val_some(caml_copy_string(lib));
   } else {
     libval = Val_none;
   }
   if (reason != NULL) {
-    reasonval = caml_alloc_some(caml_copy_string(reason));
+    reasonval = Val_some(caml_copy_string(reason));
   } else {
     reasonval = Val_none;
   }
@@ -1476,7 +1489,7 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket)
   proto = caml_alloc_string (len);
   memcpy((char *)String_val(proto), (const char*)data, len);
 
-  CAMLreturn(caml_alloc_some(proto));
+  CAMLreturn(Val_some(proto));
 }
 #else
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos)
