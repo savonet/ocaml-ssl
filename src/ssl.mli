@@ -203,6 +203,7 @@ val init : ?thread_safe:bool -> unit -> unit
 (** Retrieve a human-readable message that corresponds to the earliest error
     code from the thread's error queue and removes the entry. *)
 val get_error_string : unit -> string
+  [@@ocaml.alert deprecated "Use [Ssl.Error.get_error] instead"]
 
 module Error: sig
     type t = private { code: int; lib: string option; reason: string option }
