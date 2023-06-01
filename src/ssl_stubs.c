@@ -33,6 +33,7 @@
 #include <string.h>
 #include <assert.h>
 
+#define CAML_NAME_SPACE
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/custom.h>
@@ -120,7 +121,6 @@ static value Val_some(value v)
   Store_field(some, 0, v);
   CAMLreturn(some);
 }
-
 
 /******************
  * Initialization *
@@ -262,7 +262,41 @@ CAMLprim value ocaml_ssl_get_error_string(value unit)
   CAMLreturn(caml_copy_string(buf));
 }
 
+CAMLprim value ocaml_ssl_error_struct(value err_func)
+{
+  CAMLparam1(err_func);
+  CAMLlocal3(result, libval, reasonval);
+  unsigned long code = 0;
+  switch(Int_val(err_func)) {
+    case 0:
+      code = ERR_get_error();
+      break;
+    case 1:
+      code = ERR_peek_error();
+      break;
+    case 2:
+      code = ERR_peek_last_error();
+      break;
+  }
+  result = caml_alloc_tuple(3);
+  const char *lib = ERR_lib_error_string(code);
+  const char *reason = ERR_reason_error_string(code);
+  if (lib != NULL) {
+    libval = Val_some(caml_copy_string(lib));
+  } else {
+    libval = Val_none;
+  }
+  if (reason != NULL) {
+    reasonval = Val_some(caml_copy_string(reason));
+  } else {
+    reasonval = Val_none;
+  }
+  Store_field(result, 0, Val_int(code));
+  Store_field(result, 1, libval);
+  Store_field(result, 2, reasonval);
 
+  CAMLreturn(result);
+}
 /*****************************
  * Context-related functions *
  *****************************/

@@ -79,7 +79,31 @@ type verify_error =
 
 type bigarray = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
+(** Kept for backwards compatibility *)
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
+
+module Error = struct
+  type t = private { code: int; lib: string option; reason: string option }
+  type err_function = | Get_error | Peek_error | Peek_last_error
+
+  external error_struct : err_function -> t = "ocaml_ssl_error_struct"
+
+  let get_error () =
+    error_struct Get_error
+  
+  let peek_error () =
+    error_struct Peek_error
+  
+  let peek_last_error () =
+    error_struct Peek_last_error
+
+  (** Reproduces the string format from ERR_error_string_n *)
+  let peek_last_error_string () =
+    let err = peek_last_error () in
+    let libstring = Option.value err.lib ~default:"lib(0)" in
+    let reasonstring = Option.value err.reason ~default:"reason(0)" in
+    Printf.sprintf "error:%08lX:%s::%s" (Int32.of_int err.code) libstring reasonstring
+end
 
 exception Method_error
 exception Context_error
@@ -110,13 +134,13 @@ let () =
     | Unmatching_keys -> Some ("SSL: Unmatching keys")
     | Invalid_socket -> Some ("SSL: Invalid socket")
     | Handler_error -> Some ("SSL: Handler error")
-    | Connection_error _ -> Some ("SSL connection() error: " ^ (get_error_string()))
-    | Accept_error _ -> Some ("SSL accept() error: " ^ (get_error_string()))
-    | Read_error _ -> Some ("SSL read() error: " ^ (get_error_string()))
-    | Write_error _ -> Some ("SSL write() error: " ^ (get_error_string()))
-    | Verify_error _ -> Some ("SSL verify() error: " ^ (get_error_string()))
+    | Connection_error _ -> Some ("SSL connection() error: " ^ (Error.peek_last_error_string()))
+    | Accept_error _ -> Some ("SSL accept() error: " ^ (Error.peek_last_error_string()))
+    | Read_error _ -> Some ("SSL read() error: " ^ (Error.peek_last_error_string()))
+    | Write_error _ -> Some ("SSL write() error: " ^ (Error.peek_last_error_string()))
+    | Verify_error _ -> Some ("SSL verify() error: " ^ (Error.peek_last_error_string()))
     | Flush_error b -> Some (Printf.sprintf "SSL flush(%b) error: " b
-                             ^ (get_error_string()))
+                             ^ (Error.peek_last_error_string()))
     | _ -> None)
 
 let () =

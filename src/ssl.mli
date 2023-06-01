@@ -200,9 +200,26 @@ exception Verify_error of verify_error
     [Ssl_threads.init] first. *)
 val init : ?thread_safe:bool -> unit -> unit
 
-(** Retrieve a human-readable message that corresponds to the last error that
-    occurred. *)
+(** Retrieve a human-readable message that corresponds to the earliest error
+    code from the thread's error queue and removes the entry. *)
 val get_error_string : unit -> string
+  [@@ocaml.alert deprecated "Use [Ssl.Error.get_error] instead"]
+
+module Error: sig
+    type t = private { code: int; lib: string option; reason: string option }
+
+    (** Retrieve the earliest error from the error queue then it removes the entry.
+        Returns the code and library and reason strings *)
+    val get_error : unit -> t
+
+    (** Retrieve the earliest error from the error queue without modifying it.
+        Returns the code and library and reason strings *)
+    val peek_error : unit -> t
+
+    (** Retrieves the latest error code from the thread's error queue without
+        modifying it. Returns the code and library and reason strings. *)
+    val peek_last_error : unit -> t
+end
 
 (** Protocol used by SSL. *)
 type protocol =
