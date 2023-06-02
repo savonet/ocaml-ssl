@@ -1,4 +1,4 @@
-Unreleased
+0.6.0 (2023-06-01)
 =====
 
 - Raise an error when `Ssl.flush` isn't successful (#104, #120)
