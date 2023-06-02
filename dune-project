@@ -1,5 +1,7 @@
 (lang dune 2.7)
 
+(name ssl)
+
 (generate_opam_files true)
 
 (source
