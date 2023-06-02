@@ -13,11 +13,11 @@
       rec {
         defaultPackage = pkgs.callPackage ./nix { };
         devShells = {
-          default = pkgs.callPackage ./shell.nix {
+          default = pkgs.callPackage ./nix/shell.nix {
             packages = [ defaultPackage ];
           };
 
-          release = pkgs.callPackage ./shell.nix {
+          release = pkgs.callPackage ./nix/shell.nix {
             packages = [ defaultPackage ];
             release-mode = true;
           };
