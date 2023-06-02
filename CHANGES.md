@@ -1,3 +1,11 @@
+Unreleased
+===
+
+- Bump OpenSSL minimum requirement to 1.1.0 and stop using deprecated functions
+  (#121).
+- Make the functions in `Ssl.Runtime_lock` call non-allocating function on the
+  C stubs and mark them with `[@@noalloc]` (#117).
+
 0.6.0 (2023-06-01)
 =====
 
@@ -14,10 +22,6 @@
 - Add a module `Ssl.Error` to retrieve OpenSSL errors in a structured way (#119)
 - Deprecate Ssl.{SSLv23,SSLv3,TLSv1,TLSv1_1}, which were were formally
   deprecated in March 2021 and earlier (#115).
-- Bump OpenSSL minimum requirement to 1.1.0 and stop using deprecated functions
-  (#121).
-- Make the functions in `Ssl.Runtime_lock` call non-allocating function on the
-  C stubs and mark them with `[@@noalloc]` (#117).
 
 0.5.13 (2022-10-20)
 =====
