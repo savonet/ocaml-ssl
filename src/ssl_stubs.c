@@ -51,8 +51,6 @@
 #include <openssl/tls1.h>
 #include <openssl/x509v3.h>
 
-#include "ocaml_ssl.h"
-
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -287,18 +285,8 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
 static int protocol_flags[] = {SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3,
                                SSL_OP_NO_SSLv3,
                                SSL_OP_NO_TLSv1,
-#ifdef HAVE_TLS11
-                               SSL_OP_NO_TLSv1_1
-#else
-                               0 /* not supported, nothing to disable */
-#endif
-                               ,
-#ifdef HAVE_TLS12
-                               SSL_OP_NO_TLSv1_2
-#else
-                               0 /* not supported ,nothing to disable */
-#endif
-                               ,
+                               SSL_OP_NO_TLSv1_1,
+                               SSL_OP_NO_TLSv1_2,
                                SSL_OP_NO_TLSv1_3};
 
 static const SSL_METHOD *get_method(int type) {
@@ -845,7 +833,6 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context,
   CAMLreturn(Val_unit);
 }
 
-#ifdef HAVE_ALPN
 static int get_alpn_buffer_length(value vprotos) {
   value protos_tl = vprotos;
   int total_len = 0;
@@ -969,19 +956,6 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb) {
 
   CAMLreturn(Val_unit);
 }
-#else
-CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos) {
-  CAMLparam2(context, vprotos);
-  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
-  CAMLreturn(Val_unit);
-}
-
-CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb) {
-  CAMLparam2(context, cb);
-  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
-  CAMLreturn(Val_unit);
-}
-#endif
 
 static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
   value s;
@@ -1153,7 +1127,6 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context,
   CAMLreturn(Val_unit);
 }
 
-#ifdef HAVE_EC
 CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context,
                                                       value curve_name) {
   CAMLparam2(context, curve_name);
@@ -1186,14 +1159,7 @@ CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context,
   }
   CAMLreturn(Val_unit);
 }
-#else
-CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context,
-                                                      value curve_name) {
-  CAMLparam2(context, curve_name);
-  caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
-  CAMLreturn(Val_unit);
-}
-#endif
+
 /*********************************
  * Certificate-related functions *
  *********************************/
@@ -1325,7 +1291,6 @@ static value alloc_tm(struct tm *tm) {
   return res;
 }
 
-#ifdef HAVE_ASN1_TIME_TO_TM
 CAMLprim value ocaml_ssl_get_start_date(value certificate) {
   CAMLparam1(certificate);
   X509 *cert = Cert_val(certificate);
@@ -1349,15 +1314,6 @@ CAMLprim value ocaml_ssl_get_expiration_date(value certificate) {
 
   CAMLreturn(alloc_tm(&t));
 }
-#else
-CAMLprim value ocaml_ssl_get_start_date(value ignored) {
-  caml_invalid_argument("SSL.get_start_date not implemented");
-}
-
-CAMLprim value ocaml_ssl_get_expiration_date(value ignored) {
-  caml_invalid_argument("SSL.get_expiration_date not implemented");
-}
-#endif
 
 CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file,
                                                    value ca_path) {
@@ -1437,7 +1393,6 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context) {
   CAMLreturn(block);
 }
 
-#ifdef HAVE_SNI
 CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
                                                  value vhostname) {
   CAMLparam2(socket, vhostname);
@@ -1450,16 +1405,7 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
 
   CAMLreturn(Val_unit);
 }
-#else
-CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
-                                                 value vhostname) {
-  CAMLparam2(socket, vhostname);
-  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
-  CAMLreturn(Val_unit);
-}
-#endif
 
-#ifdef HAVE_ALPN
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos) {
   CAMLparam2(socket, vprotos);
   SSL *ssl = SSL_val(socket);
@@ -1503,19 +1449,6 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket) {
 
   CAMLreturn(Val_some(proto));
 }
-#else
-CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos) {
-  CAMLparam2(socket, vprotos);
-  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
-  CAMLreturn(Val_unit);
-}
-
-CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket) {
-  CAMLparam1(socket);
-  caml_raise_constant(*caml_named_value("ssl_exn_method_error"));
-  CAMLreturn(Val_unit);
-}
-#endif
 
 CAMLprim value ocaml_ssl_connect(value socket) {
   CAMLparam1(socket);
