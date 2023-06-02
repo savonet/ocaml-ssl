@@ -331,6 +331,154 @@ static const SSL_METHOD *get_method(int type) {
   return method;
 }
 
+static int ocaml_ssl_version_of_tls_version(int tls_version) {
+  int ret;
+
+  switch (tls_version) {
+  case SSL3_VERSION:
+    ret = 1;
+    break;
+
+  case TLS1_VERSION:
+    ret = 2;
+    break;
+
+  case TLS1_1_VERSION:
+    ret = 3;
+    break;
+
+  case TLS1_2_VERSION:
+    ret = 4;
+    break;
+
+#ifdef HAVE_TLS13
+  case TLS1_3_VERSION:
+    ret = 5;
+    break;
+#endif
+
+  default:
+    ret = -1;
+    break;
+  }
+
+  return ret;
+}
+
+static int tls_version_of_ocaml_ssl_version(int ocaml_ssl_version) {
+  int ret;
+
+  switch (ocaml_ssl_version) {
+  case 1:
+    ret = SSL3_VERSION;
+    break;
+
+  case 2:
+    ret = TLS1_VERSION;
+    break;
+
+  case 3:
+    ret = TLS1_1_VERSION;
+    break;
+
+  case 4:
+    ret = TLS1_2_VERSION;
+    break;
+
+#ifdef HAVE_TLS13
+  case 5:
+    ret = TLS1_3_VERSION;
+    break;
+#endif
+
+  default:
+    ret = -1;
+    break;
+  }
+
+  return ret;
+}
+
+value ocaml_ssl_ctx_set_min_proto_version(value context, value protocol) {
+  CAMLparam2(context, protocol);
+
+  SSL_CTX *ssl_context = Ctx_val(context);
+  int ssl_protocol = tls_version_of_ocaml_ssl_version(Int_val(protocol));
+
+  if (ssl_protocol < 0) {
+    caml_invalid_argument("Illegal protocol version, valid values are "
+                          "SSLv3, TLSv1, TLSv1_1, TLSv1_2 or TLSv1_3.");
+  }
+
+  if (!SSL_CTX_set_min_proto_version(ssl_context, ssl_protocol)) {
+    caml_raise_constant(*caml_named_value("ssl_exn_context_error"));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+value ocaml_ssl_ctx_get_min_proto_version(value context) {
+  CAMLparam1(context);
+
+  SSL_CTX *ssl_context = Ctx_val(context);
+
+  int tls_version = SSL_CTX_get_min_proto_version(ssl_context);
+
+  int ret;
+
+  if (tls_version == 0) {
+    ret = 0;
+  } else {
+    ret = ocaml_ssl_version_of_tls_version(tls_version);
+
+    if (ret == -1) {
+      caml_failwith("Ssl.version");
+    }
+  }
+
+  CAMLreturn(Val_int(ret));
+}
+
+value ocaml_ssl_ctx_set_max_proto_version(value context, value protocol) {
+  CAMLparam2(context, protocol);
+
+  SSL_CTX *ssl_context = Ctx_val(context);
+  int ssl_protocol = tls_version_of_ocaml_ssl_version(Int_val(protocol));
+
+  if (ssl_protocol < 0) {
+    caml_invalid_argument("Illegal protocol version, valid values are "
+                          "SSLv3, TLSv1, TLSv1_1, TLSv1_2 or TLSv1_3.");
+  }
+
+  if (!SSL_CTX_set_max_proto_version(ssl_context, ssl_protocol)) {
+    caml_raise_constant(*caml_named_value("ssl_exn_context_error"));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+value ocaml_ssl_ctx_get_max_proto_version(value context) {
+  CAMLparam1(context);
+
+  SSL_CTX *ssl_context = Ctx_val(context);
+
+  int tls_version = SSL_CTX_get_max_proto_version(ssl_context);
+
+  int ret;
+
+  if (tls_version == 0) {
+    ret = 0;
+  } else {
+    ret = ocaml_ssl_version_of_tls_version(tls_version);
+
+    if (ret == -1) {
+      caml_failwith("Ssl.version");
+    }
+  }
+
+  CAMLreturn(Val_int(ret));
+}
+
 /* This function assumes the runtime lock is released. In case of failure, it
  * acquires the runtime lock and then raises an OCaml exception. */
 static void set_protocol(SSL_CTX *ssl_context, int protocol) {
@@ -929,34 +1077,13 @@ CAMLprim value ocaml_ssl_version(value socket) {
   version = SSL_version(ssl);
   caml_acquire_runtime_system();
 
-  switch (version) {
-  case SSL3_VERSION:
-    ret = 1;
-    break;
+  int ocaml_version = ocaml_ssl_version_of_tls_version(version);
 
-  case TLS1_VERSION:
-    ret = 2;
-    break;
-
-  case TLS1_1_VERSION:
-    ret = 3;
-    break;
-
-  case TLS1_2_VERSION:
-    ret = 4;
-    break;
-
-#ifdef HAVE_TLS13
-  case TLS1_3_VERSION:
-    ret = 5;
-    break;
-#endif
-
-  default:
+  if (ocaml_version == -1) {
     caml_failwith("Ssl.version");
   }
 
-  CAMLreturn(Val_int(ret));
+  CAMLreturn(Val_int(ocaml_version));
 }
 
 CAMLprim value ocaml_ssl_get_current_cipher(value socket) {
