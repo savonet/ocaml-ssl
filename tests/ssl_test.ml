@@ -1,7 +1,8 @@
 (** Get the colon-separated hex representation of a binary string. *)
 let hex_digest digest =
   let rec go acc i =
-    if i < 0 then acc
+    if i < 0
+    then acc
     else
       let byte = Printf.sprintf "%02X" @@ int_of_char digest.[i] in
       go (byte :: acc) (i - 1)
@@ -13,7 +14,8 @@ let hex_digest digest =
 
 let test_sha1 () =
   Alcotest.(check string)
-    "same digest" "5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25"
+    "same digest"
+    "5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25"
     Ssl.(
       read_certificate "digicert_certificate.pem" |> digest `SHA1 |> hex_digest)
 
@@ -28,11 +30,10 @@ let test_sha256 () =
 
 let () =
   let open Alcotest in
-  run "Ssl"
-    [
-      ( "digest",
-        [
-          test_case "SHA1" `Quick test_sha1;
-          test_case "SHA256" `Quick test_sha256;
-        ] );
+  run
+    "Ssl"
+    [ ( "digest"
+      , [ test_case "SHA1" `Quick test_sha1
+        ; test_case "SHA256" `Quick test_sha256
+        ] )
     ]
