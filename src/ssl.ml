@@ -478,6 +478,17 @@ module Runtime_lock_base = struct
 
   let connect socket =
     let ret = connect socket in
+    (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_connect.html:
+
+       RETURN VALUES
+
+       0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
+       with the return value ret to find out the reason.
+
+       1 The TLS/SSL handshake was successfully completed [...].
+
+       <0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
+       with the return value ret to find out the reason. *)
     if ret <> 1
     then
       let err = get_error socket ret in
@@ -487,6 +498,17 @@ module Runtime_lock_base = struct
 
   let accept socket =
     let ret = accept socket in
+    (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_accept.html:
+
+       RETURN VALUES
+
+       0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
+       with the return value ret to find out the reason.
+
+       1 The TLS/SSL handshake was successfully completed [...].
+
+       <0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
+       with the return value ret to find out the reason. *)
     if ret <> 1
     then
       let err = get_error socket ret in
@@ -507,6 +529,15 @@ module Runtime_lock_base = struct
     if start + length > Bytes.length buffer
     then invalid_arg "Ssl.write: Buffer too short";
     let ret = write socket buffer start length in
+    (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_write.html:
+
+       RETURN VALUES
+
+       > 0 The write operation was successful, the return value is the number of
+       bytes actually written to the TLS/SSL connection.
+
+       <= 0 The write operation was not successful [...]. Call SSL_get_error()
+       with the return value ret to find out the reason. *)
     (if ret <= 0
      then
        let err = get_error socket ret in
@@ -569,6 +600,15 @@ module Runtime_lock_base = struct
     if length < 0 then invalid_arg "Ssl.read: length negative";
     if start + length > Bytes.length buffer then invalid_arg "Buffer too short";
     let ret = read socket buffer start length in
+    (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_read.html
+
+       RETURN VALUES
+
+       > 0 The read operation was successful. The return value is the number of
+       bytes actually read from the TLS/SSL connection.
+
+       <= 0 The read operation was not successful [...]. Call SSL_get_error(3)
+       with the return value ret to find out the reason. *)
     (if ret <= 0
      then
        let err = get_error socket ret in
@@ -600,7 +640,14 @@ module Runtime_lock_base = struct
 
   let flush socket =
     let ret = flush socket in
-    (* We use -2 to report the need to retry, see ssl_stubs.c *)
+    (* From https://www.openssl.org/docs/man1.1.1/man3/BIO_flush.html:
+
+       RETURN VALUES
+
+       BIO_flush() returns 1 for success and 0 or -1 for failure.
+
+       Additionally, we use -2 to signal the need to retry without allocation,
+       see [ssl_stubs.c]. *)
     if ret <> 1 then raise (Flush_error (ret = -2))
 
   external ssl_shutdown : socket -> int = "ocaml_ssl_shutdown_blocking"
