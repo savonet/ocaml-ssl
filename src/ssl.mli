@@ -29,6 +29,10 @@ type ssl_error =
       (** No error happened. This is never raised and should disappear in future
           versions. *)
   | Error_ssl
+      (** A non-recoverable, fatal error in the SSL library occurred, usually a
+          protocol error. The OpenSSL error queue contains more information on
+          the error. If this error occurs then no further I/O operations should
+          be performed on the connection and SSL_shutdown() must not be called. *)
   | Error_want_read
       (** The operation did not complete; the same TLS/SSL I/O function should
           be called again later. *)
@@ -56,11 +60,23 @@ type ssl_error =
       (** The operation did not complete; the same TLS/SSL I/O function should
           be called again later. *)
   | Error_want_async
+      (** The operation did not complete because an asynchronous engine is still
+          processing data. The TLS/SSL I/O function should be called again
+          later. The function must be called from the same thread that the
+          original call was made from. *)
   | Error_want_async_job
+      (** The asynchronous job could not be started because there were no async
+          jobs available in the pool. The application should retry the operation
+          after a currently executing asynchronous operation for the current
+          thread has completed. *)
   | Error_want_client_hello_cb
+      (** The operation did not complete because an application callback set by
+          SSL_CTX_set_client_hello_cb() has asked to be called again. The
+          TLS/SSL I/O function should be called again later. Details depend on
+          the application. *)
   | Error_want_retry_verify
-      (** The operation did not complete; the same TLS/SSL I/O function should
-          be called again later. *)
+      (** See
+          https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_verify.html *)
 
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
