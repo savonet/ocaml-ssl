@@ -1,3 +1,7 @@
+module Ssl = struct
+  include Ssl
+  let[@ocaml.alert "-deprecated"] get_error_string = get_error_string
+end
 open Ssl
 
 type server_args = {
