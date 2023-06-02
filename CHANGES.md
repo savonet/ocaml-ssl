@@ -12,7 +12,9 @@ Unreleased
 - Fix calls in C stubs that need to call `ERR_clear_error` before the underlying
   OpenSSL call (#118)
 - Add a module `Ssl.Error` to retrieve OpenSSL errors in a structured way (#119)
-  
+- Deprecate Ssl.{SSLv23,SSLv3,TLSv1,TLSv1_1}, which were were formally
+  deprecated in March 2021 and earlier (#115).
+
 0.5.13 (2022-10-20)
 =====
 
