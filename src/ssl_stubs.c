@@ -1759,7 +1759,17 @@ CAMLprim value ocaml_ssl_flush_blocking(value socket) {
   bio = SSL_get_wbio(ssl);
   if (bio) {
     ret = BIO_flush(bio);
+    /* From https://www.openssl.org/docs/man1.1.1/man3/BIO_flush.html:
+     *
+     *   RETURN VALUES
+     *
+     *   BIO_flush() returns 1 for success and 0 or -1 for failure.
+     */
     if (ret != 1 && BIO_should_retry(bio))
+      /* We return `-2` as a special return value (BIO_flush can only return
+       * -1 <= ret <= 1) to signal to OCaml, without allocating, that the
+       *  operation should be retried.
+       */
       ret = -2;
   }
 
