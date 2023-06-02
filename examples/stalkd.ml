@@ -48,7 +48,7 @@ let establish_threaded_server server_handler sockaddr nbconn =
     server_handler inet_addr s;
     Ssl.shutdown s
   in
-  let ctx = Ssl.create_context Ssl.SSLv23 Ssl.Server_context in
+  let[@ocaml.alert "-deprecated"] ctx = Ssl.create_context Ssl.SSLv23 Ssl.Server_context in
   if !password <> "" then
     Ssl.set_password_callback ctx (fun _ -> !password);
   Ssl.use_certificate ctx !certfile !privkey;

@@ -3,7 +3,7 @@ open Alcotest
 open Util
 let test_disable_protocols () =
   let context = Ssl.create_context TLSv1_3 Server_context in
-  Ssl.disable_protocols context [SSLv23];
+  Ssl.disable_protocols context [(SSLv23 [@ocaml.alert "-deprecated"])];
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error )
 
 let test_set_cipher_list () =

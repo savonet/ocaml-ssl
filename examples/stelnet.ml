@@ -55,7 +55,7 @@ let _ =
     )
   in
   let sockaddr = ADDR_INET(he.h_addr_list.(0), !port) in
-  let ssl =
+  let[@ocaml.alert "-deprecated"] ssl =
     if not !parano then
       Ssl.open_connection Ssl.SSLv23 sockaddr
     else

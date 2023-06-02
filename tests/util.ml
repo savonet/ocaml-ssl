@@ -76,7 +76,7 @@ let server_thread addr parser =
 
 let check_ssl_no_error err = Str.string_partial_match (Str.regexp_string "error:00000000:lib(0)") err 0
 
-let pp_protocol ppf = function
+let[@ocaml.alert "-deprecated"] pp_protocol ppf = function
   | SSLv23 -> Format.fprintf ppf "SSLv23"
   | SSLv3 -> Format.fprintf ppf "SSLv3"
   | TLSv1 -> Format.fprintf ppf "TLSv1"
