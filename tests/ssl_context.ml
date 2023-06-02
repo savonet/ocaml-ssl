@@ -93,6 +93,29 @@ let test_context_alpn () =
   Ssl.set_context_alpn_select_callback context (fun _ -> Some "http/1.1");
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
 
+let test_set_version () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error);
+  let[@alert "-deprecated"] tlsv1 = TLSv1 in
+  Ssl.set_min_protocol_version context tlsv1;
+  check
+    protocol_testable
+    "min version"
+    tlsv1
+    (Ssl.get_min_protocol_version context);
+  check
+    protocol_testable
+    "max version"
+    TLSv1_3
+    (Ssl.get_max_protocol_version context);
+  (* Set max *)
+  Ssl.set_max_protocol_version context TLSv1_2;
+  check
+    protocol_testable
+    "max version"
+    TLSv1_2
+    (Ssl.get_max_protocol_version context)
+
 let () =
   Alcotest.run
     "Ssl context"
@@ -115,5 +138,6 @@ let () =
             `Quick
             test_set_client_verify_callback
         ; test_case "Context alpn" `Quick test_context_alpn
+        ; test_case "Set min / max protocol version" `Quick test_set_version
         ] )
     ]

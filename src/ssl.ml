@@ -203,6 +203,28 @@ external create_context :
   -> context
   = "ocaml_ssl_create_context"
 
+external set_min_protocol_version :
+   context
+  -> protocol
+  -> unit
+  = "ocaml_ssl_ctx_set_min_proto_version"
+
+external set_max_protocol_version :
+   context
+  -> protocol
+  -> unit
+  = "ocaml_ssl_ctx_set_max_proto_version"
+
+external get_min_protocol_version :
+   context
+  -> protocol
+  = "ocaml_ssl_ctx_get_min_proto_version"
+
+external get_max_protocol_version :
+   context
+  -> protocol
+  = "ocaml_ssl_ctx_get_max_proto_version"
+
 external add_extra_chain_cert :
    context
   -> string
