@@ -223,17 +223,21 @@ end
 
 (** Protocol used by SSL. *)
 type protocol =
-  | SSLv23 (** accept all possible protocols (SSLv2 if supported by openssl,
-               SSLv3, TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3) *)
-  | SSLv3 (** only SSL v3 protocol *)
-  | TLSv1 (** only TLS v1 protocol *)
+  | SSLv23
+    [@ocaml.alert deprecated "SSL 2.0 was deprecated in 2011 by RFC 6176."]
+    (** accept all possible protocols (SSLv2 if supported by openssl,
+        SSLv3, TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3) *)
+  | SSLv3
+    [@ocaml.alert deprecated "SSL 3.0 was deprecated in June 2015 by RFC 7568."]
+    (** only SSL v3 protocol *)
+  | TLSv1
     [@ocaml.alert deprecated
       "TLS 1.0 and 1.1 were formally deprecated in RFC8996 in March 2021."]
-
-  | TLSv1_1 (** only TLS v1.1 protocol *)
+    (** only TLS v1 protocol *)
+  | TLSv1_1
     [@ocaml.alert deprecated
       "TLS 1.0 and 1.1 were formally deprecated in RFC8996 in March 2021."]
-
+    (** only TLS v1.1 protocol *)
   | TLSv1_2 (** only TLS v1.2 protocol *)
 
   | TLSv1_3 (** only TLS v1.3 protocol *)
@@ -473,7 +477,7 @@ val file_descr_of_socket : socket -> Unix.file_descr
 
 (** The main SSL communication functions that can block if sockets are in blocking
     mode. This set of functions releases the OCaml runtime lock, which can require
-    extra copying of application data. The module [Runtime_lock] provided below 
+    extra copying of application data. The module [Runtime_lock] provided below
     lifts this limitation by never releasing the OCaml runtime lock. *)
 
 (** Connect an SSL socket. *)
