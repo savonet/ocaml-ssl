@@ -87,6 +87,9 @@ type verify_error =
   | Error_v_keyusage_no_certsign
   | Error_v_application_verification
 
+(** Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
+    when just a single record has been written *)
+
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 

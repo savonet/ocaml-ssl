@@ -358,9 +358,6 @@ module Modes : sig
   val subset : t -> t -> bool
 end
 
-val create_context : ?modes:Modes.t -> protocol -> context_type -> context
-(** Create a context. Default modes is Modes.(auto_retry) *)
-
 (** Set the given modes in a context (does not clear preset modes) *)
 val set_mode   : context -> Modes.t -> unit
 
@@ -372,6 +369,9 @@ val get_mode   : context -> Modes.t
 
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+val create_context : ?modes:Modes.t -> protocol -> context_type -> context
+(** Create a context. Default modes is Modes.(auto_retry) *)
 
 val set_min_protocol_version : context -> protocol -> unit
 (** [set_min_protocol_version ctx proto] sets the minimum supported protocol
