@@ -18,4 +18,6 @@ let
   };
 
 in
-pkgs.callPackage ./.. { doCheck = true; }
+(pkgs.callPackage ./.. { doCheck = true; }).overrideAttrs (o: {
+  nativeBuildInputs = o.nativeBuildInputs ++ [ pkgs.git ];
+})
