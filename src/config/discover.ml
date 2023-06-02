@@ -31,10 +31,7 @@ let function_tests =
   ; "ASN1_TIME_to_tm", "HAVE_ASN1_TIME_TO_TM"
   ]
 
-let macro_tests =
-  [ "SSL_set_tlsext_host_name", "HAVE_SNI"
-  ; "SSL_EXT_TLS1_3_ONLY", "HAVE_TLS13"
-  ]
+let macro_tests = [ "SSL_set_tlsext_host_name", "HAVE_SNI" ]
 
 let () =
   C.main ~name:"ssl" (fun c ->

@@ -290,21 +290,16 @@ static int protocol_flags[] = {SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3,
 #ifdef HAVE_TLS11
                                SSL_OP_NO_TLSv1_1
 #else
-    0 /* not supported, nothing to disable */
+                               0 /* not supported, nothing to disable */
 #endif
                                ,
 #ifdef HAVE_TLS12
                                SSL_OP_NO_TLSv1_2
 #else
-    0 /* not supported ,nothing to disable */
+                               0 /* not supported ,nothing to disable */
 #endif
                                ,
-#ifdef HAVE_TLS13
-                               SSL_OP_NO_TLSv1_3
-#else
-    0 /* not supported, nothing to disable */
-#endif
-};
+                               SSL_OP_NO_TLSv1_3};
 
 static const SSL_METHOD *get_method(int type) {
   const SSL_METHOD *method = NULL;
@@ -351,11 +346,9 @@ static int ocaml_ssl_version_of_tls_version(int tls_version) {
     ret = 4;
     break;
 
-#ifdef HAVE_TLS13
   case TLS1_3_VERSION:
     ret = 5;
     break;
-#endif
 
   default:
     ret = -1;
@@ -385,11 +378,9 @@ static int tls_version_of_ocaml_ssl_version(int ocaml_ssl_version) {
     ret = TLS1_2_VERSION;
     break;
 
-#ifdef HAVE_TLS13
   case 5:
     ret = TLS1_3_VERSION;
     break;
-#endif
 
   default:
     ret = -1;
@@ -482,11 +473,7 @@ value ocaml_ssl_ctx_get_max_proto_version(value context) {
 /* This function assumes the runtime lock is released. In case of failure, it
  * acquires the runtime lock and then raises an OCaml exception. */
 static void set_protocol(SSL_CTX *ssl_context, int protocol) {
-#ifdef HAVE_TLS13
   int max_proto = TLS1_3_VERSION;
-#else
-  int max_proto = TLS1_2_VERSION;
-#endif
   switch (protocol) {
   case 0:
     if (!SSL_CTX_set_min_proto_version(ssl_context, SSL3_VERSION) ||
@@ -529,16 +516,11 @@ static void set_protocol(SSL_CTX *ssl_context, int protocol) {
     break;
 
   case 5:
-#ifdef HAVE_TLS13
     if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_3_VERSION) ||
         !SSL_CTX_set_max_proto_version(ssl_context, TLS1_3_VERSION)) {
       caml_acquire_runtime_system();
       caml_invalid_argument("Failed to set protocol to TLSv1_3");
     }
-#else
-    caml_acquire_runtime_system();
-    caml_invalid_argument("TLSv1_3 is unsupported");
-#endif
     break;
 
   default:
