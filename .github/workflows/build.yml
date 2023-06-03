@@ -31,11 +31,12 @@ jobs:
     - name: Install dependencies
       run: opam depext -yt mad
     - name: Build
+      if: ${{ ! matrix.setup.runtest }}
       run: opam install .
-      if: ${{ matrix.setup.runtest }} == 'false'
     - name: Build and test
+      if: ${{ matrix.setup.runtest }}
       run: opam install -t .
-      if: ${{ matrix.setup.runtest }} == 'true'
+
   nix-build:
     runs-on: ${{ matrix.setup.os }}
     strategy:
