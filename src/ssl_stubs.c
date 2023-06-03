@@ -737,7 +737,15 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert) {
                         caml_copy_string(buf));
   }
   vdigest = caml_alloc_string(digest_size);
-  memcpy(Bytes_val(vdigest), buf, digest_size);
+
+  /* TODO(anmonteiro): switch this to `Bytes_val` when we bump support to
+   * OCaml 4.06 (https://github.com/ocaml/ocaml/pull/1274)
+   *
+   * In the meantime, reproduce `Bytes_val`, which is effectively `String_val`
+   * + a cast:
+   * https://github.com/ocaml/ocaml/pull/1274/commits/6bc4f2656e435175188018830e7fe049caacebe9
+   */
+  memcpy((unsigned char *)String_val(vdigest), buf, digest_size);
   CAMLreturn(vdigest);
 }
 

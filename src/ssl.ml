@@ -104,8 +104,10 @@ module Error = struct
   (** Reproduces the string format from ERR_error_string_n *)
   let peek_last_error_string () =
     let err = peek_last_error () in
-    let libstring = Option.value err.lib ~default:"lib(0)" in
-    let reasonstring = Option.value err.reason ~default:"reason(0)" in
+    let libstring = match err.lib with Some lib -> lib | None -> "lib(0)" in
+    let reasonstring =
+      match err.reason with Some reason -> reason | None -> "reason(0)"
+    in
     Printf.sprintf
       "error:%08lX:%s::%s"
       (Int32.of_int err.code)
