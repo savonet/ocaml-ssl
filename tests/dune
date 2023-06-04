@@ -43,3 +43,14 @@
  (modules ssl_io)
  (libraries ssl alcotest util)
  (deps ca.pem ca.key server.key server.pem))
+
+(library
+ (name util_rlock)
+ (modules util_rlock)
+ (libraries ssl threads str alcotest))
+
+(test
+ (name ssl_rlock_io)
+ (modules ssl_rlock_io)
+ (libraries ssl alcotest util_rlock)
+ (deps ca.pem ca.key server.key server.pem))
