@@ -367,9 +367,6 @@ val clear_mode : context -> Modes.t -> unit
 (** Get the current mode of a context *)
 val get_mode   : context -> Modes.t
 
-type bigarray =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 val create_context : ?modes:Modes.t -> protocol -> context_type -> context
 (** Create a context. Default modes is Modes.(auto_retry) *)
 
@@ -388,6 +385,9 @@ val get_min_protocol_version : context -> protocol
 val get_max_protocol_version : context -> protocol
 (** [get_max_protocol_version ctx proto] sets the maximum supported protocol
     version for [ctx] to [proto]. *)
+
+type bigarray =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 val add_extra_chain_cert : context -> string -> unit
 (** Add an additional certificate to the extra chain certificates associated
