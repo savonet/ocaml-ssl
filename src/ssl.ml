@@ -77,29 +77,6 @@ type verify_error =
   | Error_v_keyusage_no_certsign
   | Error_v_application_verification
 
-module Modes = struct
-  type t = int
-
-  let no_mode                    = 0x000
-  let enable_partial_write       = 0x001
-  (*let accept_moving_write_buffer = 0x002: is always set because of GC*)
-  let auto_retry                 = 0x004
-  let no_auto_chain              = 0x008
-  let release_buffers            = 0x010
-  let send_clienthello_time      = 0x020
-  let send_serverhello_time      = 0x040
-  let send_fallback_scsv         = 0x080
-  let async                      = 0x100
-
-  let (lor) = (lor)
-  let (land) = (land)
-  let lnot = lnot
-  let subset a b = a land (lnot b) = no_mode
-end
-
-  (** Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
-    when just a single record has been written *)
-
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
@@ -219,6 +196,30 @@ type context_type =
   | Client_context
   | Server_context
   | Both_context
+
+module Modes = struct
+  type t = int
+
+  let no_mode                    = 0x000
+  let enable_partial_write       = 0x001
+  (*let accept_moving_write_buffer = 0x002: is always set because of GC*)
+  let auto_retry                 = 0x004
+  let no_auto_chain              = 0x008
+  let release_buffers            = 0x010
+  let send_clienthello_time      = 0x020
+  let send_serverhello_time      = 0x040
+  let send_fallback_scsv         = 0x080
+  let async                      = 0x100
+
+  let (lor) = (lor)
+  let (land) = (land)
+  let lnot = lnot
+  let subset a b = a land (lnot b) = no_mode
+end
+
+external set_mode : context -> Modes.t -> unit = "ocaml_ssl_set_mode"
+external clear_mode : context -> Modes.t -> unit = "ocaml_ssl_clear_mode"
+external get_mode : context -> Modes.t = "ocaml_ssl_get_mode"
 
 external raw_create_context :
    protocol
