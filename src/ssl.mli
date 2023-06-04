@@ -115,8 +115,17 @@ module Modes : sig
   (** Support Asynchronous operation *)
   val async                      : t
 
-  (** put togther two sets of options *)
+  (** put togther two sets of modes *)
   val ( lor ) : t -> t -> t
+
+  (** conjunction of modes *)
+  val ( land ) : t -> t -> t
+
+  (** negation of modes *)
+  val lnot : t -> t
+
+  (** subset on modes*)
+  val subset : t -> t -> bool
 end
 
 

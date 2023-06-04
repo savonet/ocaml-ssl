@@ -92,6 +92,9 @@ module Modes = struct
   let async                      = 0x100
 
   let (lor) = (lor)
+  let (land) = (land)
+  let lnot = lnot
+  let subset a b = a land (lnot b) = no_mode
 end
 
   (** Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
