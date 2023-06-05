@@ -63,7 +63,7 @@ static value vclient_verify_callback = Val_int(0);
 #endif
 static DH *load_dh_param(const char *dhfile);
 
-CAMLprim value ocaml_ssl_version() {
+CAMLprim value ocaml_ssl_get_version() {
   CAMLparam0();
   CAMLlocal1(result);
   result = caml_alloc_tuple(3);

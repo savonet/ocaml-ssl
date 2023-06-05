@@ -21,6 +21,16 @@
 
     @author Samuel Mimram *)
 
+(** {1 OpenSSL version} *)
+
+type version =
+  { major : int
+  ; minor : int
+  ; patch : int
+  }
+
+val version : version
+
 (** {1 Exceptions and errors} *)
 
 (** An ssl error has occurred (see SSL_get_error(3ssl) for details). *)

@@ -16,6 +16,16 @@
    along with this library; if not, write to the Free Software Foundation, Inc.,
    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA *)
 
+type version =
+  { major : int
+  ; minor : int
+  ; patch : int
+  }
+
+external get_version : unit -> version = "ocaml_ssl_get_version"
+
+let version = get_version()
+
 type protocol =
   | SSLv23
   | SSLv3
