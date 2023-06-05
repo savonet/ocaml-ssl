@@ -74,7 +74,7 @@ CAMLprim value ocaml_ssl_get_version() {
 #else
   Store_field(result, 0, Val_int((OPENSSL_VERSION_NUMBER >> 28) & 0xF));
   Store_field(result, 1, Val_int((OPENSSL_VERSION_NUMBER >> 20) & 0xFF));
-  Store_field(result, 2, Val_int((OPENSSL_VERSION_NUMBER >> 04) & 0xFFFF));
+  Store_field(result, 2, Val_int((OPENSSL_VERSION_NUMBER >> 12) & 0xFF));
 #endif
   CAMLreturn(result);
 }
