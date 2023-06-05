@@ -200,16 +200,17 @@ type context_type =
 module Modes = struct
   type t = int
 
+  (* value taken from openssl/ssl.h *)
   let no_mode                    = 0x000
-  let enable_partial_write       = 0x001
+  let enable_partial_write       = 0x001 (* SSL_MODE_ENABLE_PARTIAL_WRITE *)
   (*let accept_moving_write_buffer = 0x002: is always set because of GC*)
-  let auto_retry                 = 0x004
-  let no_auto_chain              = 0x008
-  let release_buffers            = 0x010
-  let send_clienthello_time      = 0x020
-  let send_serverhello_time      = 0x040
-  let send_fallback_scsv         = 0x080
-  let async                      = 0x100
+  let auto_retry                 = 0x004 (* SSL_MODE_AUTO_RETRY *)
+  let no_auto_chain              = 0x008 (* SSL_MODE_RELEASE_BUFFERS *)
+  let release_buffers            = 0x010 (* SSL_MODE_RELEASE_BUFFERS *)
+  let send_clienthello_time      = 0x020 (* SSL_MODE_SEND_CLIENTHELLO_TIME *)
+  let send_serverhello_time      = 0x040 (* SSL_MODE_SEND_SERVERHELLO_TIME *)
+  let send_fallback_scsv         = 0x080 (* SSL_MODE_SEND_FALLBACK_SCSV *)
+  let async                      = 0x100 (* SSL_MODE_ASYNC *)
 
   let (lor) = (lor)
   let (land) = (land)
