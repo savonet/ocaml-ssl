@@ -411,14 +411,14 @@ CAMLprim void ocaml_ssl_set_mode(value ctx, value modes) {
 CAMLprim void ocaml_ssl_clear_mode(value ctx, value modes) {
   CAMLparam1(ctx);
   SSL_CTX_clear_mode(Ctx_val(ctx),
-                   !SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & Int_val(modes));
+                   ~SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & Int_val(modes));
   CAMLreturn0;
 }
 
 CAMLprim value ocaml_ssl_get_mode(value ctx, value modes) {
   CAMLparam1(ctx);
   long r = SSL_CTX_get_mode(Ctx_val(ctx));
-  CAMLreturn(Val_int(!SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & r));
+  CAMLreturn(Val_int(~SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & r));
 }
 
 CAMLprim value ocaml_ssl_create_context(value protocol, value type, value modes) {
