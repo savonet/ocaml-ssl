@@ -14,6 +14,6 @@
   (backend bisect_ppx)))
 
 (rule
- (targets c_flags.sexp c_library_flags.sexp ocaml_ssl.h)
+ (targets c_flags.sexp c_library_flags.sexp)
  (action
   (run ./config/discover.exe)))
