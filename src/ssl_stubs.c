@@ -261,7 +261,7 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
     code = ERR_peek_last_error();
     break;
   }
-  result = caml_alloc_tuple(3);
+  result = caml_alloc_tuple(4);
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
   if (lib != NULL) {
