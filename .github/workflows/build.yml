@@ -27,7 +27,9 @@ jobs:
       run: opam pin add -n .
     - name: Install dependencies
       run: opam depext -yt mad
-    - name: Build and test
+    - name: build and test
+      run: dune runtest
+    - name: Build, test and install
       run: opam install -t .
   nix-build:
     runs-on: ${{ matrix.setup.os }}
