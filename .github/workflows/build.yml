@@ -30,11 +30,9 @@ jobs:
       run: opam pin add -n .
     - name: Install dependencies
       run: opam depext -yt mad
-    - name: Build
-      if: ${{ ! matrix.setup.runtest }}
-      run: opam install .
-    - name: Build and test
-      if: ${{ matrix.setup.runtest }}
+    - name: build and test
+      run: dune runtest
+    - name: Build, test and install
       run: opam install -t .
 
   nix-build:
