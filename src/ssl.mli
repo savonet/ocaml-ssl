@@ -26,8 +26,8 @@
 type version =
   { major : int (** major version *)
   ; minor : int (** minor version *)
-  ; patch : int (** patch number (fix + patch in version < 3.0) *)
-  }
+  ; patch : int (** patch number  *)
+  } (** in version prior to 3.0, details are dropped: 1.1.1n = 1.1.1f *)
 
 val ssl_version : version
 
