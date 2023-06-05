@@ -30,11 +30,9 @@ jobs:
       run: opam pin add -n .
     - name: Install dependencies
       run: opam depext -yt mad
-    - name: Build
-      if: ${{ ! matrix.setup.runtest }}
-      run: opam install .
-    - name: Build and test
-      if: ${{ matrix.setup.runtest }}
+    - name: build and test
+      run: dune runtest
+    - name: Build, test and install
       run: opam install -t .
 
   nix-build:
@@ -56,4 +54,3 @@ jobs:
           extra-trusted-public-keys = ocaml.nix-cache.com-1:/xI2h2+56rwFfKyyFVbkJSeGqSIYMC/Je+7XXqGKDIY=
     - name: "Run nix-build"
       run: nix-build ./nix/ci/test.nix --argstr ocamlVersion ${{ matrix.setup.ocamlVersion }}
-
