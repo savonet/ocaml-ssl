@@ -25,6 +25,14 @@ let test_error_queue () =
     check string "Library string" "SSL routines" (Option.get err.lib);
     check string "Reason string" "system lib" (Option.get err.reason)
 
+let test_version () =
+  let ch = Unix.open_process_in "openssl version" in
+  let (m,n,p) = Scanf.scanf "OpenSSL %d.%d.%d" (fun x -> x) in
+  Unix.close_process_in ch;
+  check int m Ssl.ssl_version.major;
+  check int n Ssl.ssl_version.minor;
+  check int p Ssl.ssl_version.patch
+
 let () =
   Alcotest.run
     "Ssl communication"

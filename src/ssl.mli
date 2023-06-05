@@ -24,12 +24,12 @@
 (** {1 OpenSSL version} *)
 
 type version =
-  { major : int
-  ; minor : int
-  ; patch : int
+  { major : int (** major version *)
+  ; minor : int (** minor version *)
+  ; patch : int (** patch number (fix + patch in version < 3.0) *)
   }
 
-val version : version
+val ssl_version : version
 
 (** {1 Exceptions and errors} *)
 
