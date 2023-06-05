@@ -223,7 +223,8 @@ val get_error_string : unit -> string
 
 module Error : sig
   type t = private
-    { code : int
+    { lib_code : int
+    ; reason_code : int
     ; lib : string option
     ; reason : string option
     }

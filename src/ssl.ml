@@ -85,7 +85,8 @@ external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 module Error = struct
   type t = private
-    { code : int
+    { lib_code : int
+    ; reason_code : int
     ; lib : string option
     ; reason : string option
     }
@@ -107,8 +108,9 @@ module Error = struct
     let libstring = Option.value err.lib ~default:"lib(0)" in
     let reasonstring = Option.value err.reason ~default:"reason(0)" in
     Printf.sprintf
-      "error:%08lX:%s::%s"
-      (Int32.of_int err.code)
+      "error:%02lX:%06lX:%s::%s"
+      (Int32.of_int err.lib_code)
+      (Int32.of_int err.reason_code)
       libstring
       reasonstring
 end

@@ -274,9 +274,14 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
   } else {
     reasonval = Val_none;
   }
-  Store_field(result, 0, Val_int(code));
-  Store_field(result, 1, libval);
-  Store_field(result, 2, reasonval);
+  Store_field(result, 0, Val_int(ERR_GET_LIB(code)));
+#if OPENSSL_VERSION_MAJOR < 3
+  Store_field(result, 1, Val_int(ERR_GET_REASON(code) | ERR_GET_FUNC(code)));
+#else
+  Store_field(result, 1, Val_int(ERR_GET_REASON(code)));
+#endif
+  Store_field(result, 2, libval);
+  Store_field(result, 3, reasonval);
 
   CAMLreturn(result);
 }
