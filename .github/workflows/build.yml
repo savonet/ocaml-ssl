@@ -29,7 +29,7 @@ jobs:
     - name: Setup opam
       run: opam pin add -n .
     - name: Install dependencies
-      run: opam depext -yt mad
+      run: opam depext -yt mad ssl
     - name: Build
       if: ${{ ! matrix.setup.runtest }}
       run: opam install .
