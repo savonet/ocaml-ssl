@@ -259,7 +259,7 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
     code = ERR_peek_last_error();
     break;
   }
-  result = caml_alloc_tuple(3);
+  result = caml_alloc_tuple(4);
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
   if (lib != NULL) {
@@ -272,9 +272,14 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
   } else {
     reasonval = Val_none;
   }
-  Store_field(result, 0, Val_int(code));
-  Store_field(result, 1, libval);
-  Store_field(result, 2, reasonval);
+  Store_field(result, 0, Val_int(ERR_GET_LIB(code)));
+#ifdef OPENSSL_VERSION_MAJOR
+  Store_field(result, 1, Val_int(ERR_GET_REASON(code)));
+#else
+  Store_field(result, 1, Val_int(ERR_GET_REASON(code) | ERR_GET_FUNC(code)));
+#endif
+  Store_field(result, 2, libval);
+  Store_field(result, 3, reasonval);
 
   CAMLreturn(result);
 }
