@@ -17,14 +17,14 @@
    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA *)
 
 type version =
-  { major : int (** major version *)
-  ; minor : int (** minor version *)
-  ; patch : int (** patch number (fix + patch in version < 3.0) *)
+  { major : int  (** major version *)
+  ; minor : int  (** minor version *)
+  ; patch : int  (** patch number (fix + patch in version < 3.0) *)
   }
 
 external get_version : unit -> version = "ocaml_ssl_get_version"
 
-let ssl_version : version = get_version()
+let native_library_version : version = get_version ()
 
 type protocol =
   | SSLv23
