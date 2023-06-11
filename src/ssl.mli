@@ -223,11 +223,22 @@ val get_error_string : unit -> string
 
 module Error : sig
   type t = private
-    { lib_code : int
+    { library_number : int
+          (** Identifies the OpenSSL sub-library that generated this error.
+              Library values are defined in
+              https://github.com/openssl/openssl/blob/openssl-3.0.0/include/openssl/err.h.in#L72 *)
     ; reason_code : int
-    ; lib : string option
-    ; reason : string option
+          (** The reason code is the information about what went wrong. *)
+    ; lib : string option  (** The library name that generated the error. *)
+    ; reason : string option  (** The reason string for the error message. *)
     }
+  (** The error code returned by ERR_get_error() consists of a library number,
+      function code and reason code.
+
+      Each sub-library of OpenSSL has a unique library number; function and
+      reason codes are unique within each sub-library. Note that different
+      libraries may use the same value to signal different functions and
+      reasons. *)
 
   val get_error : unit -> t
   (** Retrieve the earliest error from the error queue then it removes the
