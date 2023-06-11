@@ -21,6 +21,17 @@
 
     @author Samuel Mimram *)
 
+(** {1 OpenSSL version} *)
+
+type version =
+  { major : int  (** major version *)
+  ; minor : int  (** minor version *)
+  ; patch : int  (** patch number *)
+  }
+(** in version prior to 3.0, details are dropped: 1.1.1n = 1.1.1f *)
+
+val native_library_version : version
+
 (** {1 Exceptions and errors} *)
 
 (** An ssl error has occurred (see SSL_get_error(3ssl) for details). *)

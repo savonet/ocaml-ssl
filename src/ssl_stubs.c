@@ -63,6 +63,22 @@ static value vclient_verify_callback = Val_int(0);
 #endif
 static DH *load_dh_param(const char *dhfile);
 
+CAMLprim value ocaml_ssl_get_version() {
+  CAMLparam0();
+  CAMLlocal1(result);
+  result = caml_alloc_tuple(3);
+#ifdef OPENSSL_VERSION_MAJOR
+  Store_field(result, 0, Val_int(OPENSSL_VERSION_MAJOR));
+  Store_field(result, 1, Val_int(OPENSSL_VERSION_MINOR));
+  Store_field(result, 2, Val_int(OPENSSL_VERSION_PATCH));
+#else
+  Store_field(result, 0, Val_int((OPENSSL_VERSION_NUMBER >> 28) & 0xF));
+  Store_field(result, 1, Val_int((OPENSSL_VERSION_NUMBER >> 20) & 0xFF));
+  Store_field(result, 2, Val_int((OPENSSL_VERSION_NUMBER >> 12) & 0xFF));
+#endif
+  CAMLreturn(result);
+}
+
 /*******************
  * Data structures *
  *******************/
