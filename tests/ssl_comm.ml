@@ -9,19 +9,19 @@ let test_error_queue () =
   | _ ->
     ();
     let err = Error.peek_error () in
-    check int "Error code" 32 err.lib_code;
+    check int "Error code" 32 err.library_number;
     check string "Library string" "BIO routines" (Option.get err.lib);
     check string "Reason string" "system lib" (Option.get err.reason);
     let err = Error.peek_last_error () in
-    check int "Error code" 20 err.lib_code;
+    check int "Error code" 20 err.library_number;
     check string "Library string" "SSL routines" (Option.get err.lib);
     check string "Reason string" "system lib" (Option.get err.reason);
     let err = Error.get_error () in
-    check int "Error code" 32 err.lib_code;
+    check int "Error code" 32 err.library_number;
     check string "Library string" "BIO routines" (Option.get err.lib);
     check string "Reason string" "system lib" (Option.get err.reason);
     let err = Error.get_error () in
-    check int "Error code" 20 err.lib_code;
+    check int "Error code" 20 err.library_number;
     check string "Library string" "SSL routines" (Option.get err.lib);
     check string "Reason string" "system lib" (Option.get err.reason)
 
