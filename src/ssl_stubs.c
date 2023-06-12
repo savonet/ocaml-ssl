@@ -1074,14 +1074,18 @@ CAMLprim value ocaml_ssl_version(value socket) {
 CAMLprim value ocaml_ssl_get_current_cipher(value socket) {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
-
   caml_release_runtime_system();
   SSL_CIPHER *cipher = (SSL_CIPHER *)SSL_get_current_cipher(ssl);
   caml_acquire_runtime_system();
   if (!cipher)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
-
+#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
+  value vcipher = caml_alloc_shr(1, Abstract_tag);
+  *((SSL_CIPHER *) Data_abstract_val(vcipher) = cipher);
+  CAMLreturn(vcipher);
+#else
   CAMLreturn((value)cipher);
+#endif
 }
 
 CAMLprim value ocaml_ssl_get_cipher_description(value vcipher) {
