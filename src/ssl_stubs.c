@@ -1080,8 +1080,8 @@ CAMLprim value ocaml_ssl_get_current_cipher(value socket) {
   if (!cipher)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
 #if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
-  value vcipher = caml_alloc_small(sizeof(SSL_CIPHER), Abstract_tag);
-  *((SSL_CIPHER *) Data_abstract_val(vcipher) = cipher);
+  value vcipher = caml_alloc(1, Abstract_tag);
+  *((SSL_CIPHER **) Data_abstract_val(vcipher)) = cipher;
   CAMLreturn(vcipher);
 #else
   CAMLreturn((value)cipher);
