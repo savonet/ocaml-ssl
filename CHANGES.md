@@ -5,6 +5,11 @@ Unreleased
   (#121).
 - Make the functions in `Ssl.Runtime_lock` call non-allocating function on the
   C stubs and mark them with `[@@noalloc]` (#117).
+- Add Ssl.{get,set}_{min,max}_protocol_version to specify the desired TLS
+  version ranges for a `Ssl.context` (#132)
+- Add `Ssl.native_library_version` to query the underlying SSL library verion
+  (#140)
+- `Ssl.Error`: separate library number from reason code (#139, #142)
 
 0.6.0 (2023-06-01)
 =====

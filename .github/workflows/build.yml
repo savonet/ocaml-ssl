@@ -13,24 +13,30 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ matrix.operating-system }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        operating-system: [ubuntu-latest]
-        ocaml-version: ['4.09.0', '4.14.1', '5.0.0']
+        setup:
+          - {ocaml-version: '4.03', runtest: false}
+          - {ocaml-version: '4.09', runtest: true}
+          - {ocaml-version: '4.14', runtest: true}
+          - {ocaml-version: '5.0', runtest: true}
     steps:
     - uses: actions/checkout@v2
     - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-compiler: ${{ matrix.ocaml-version }}
+        ocaml-compiler:  ${{ matrix.setup.ocaml-version }}
     - name: Setup opam
       run: opam pin add -n .
     - name: Install dependencies
       run: opam depext -yt mad
-    - name: build and test
-      run: dune runtest
-    - name: Build, test and install
+    - name: Build
+      if: ${{ ! matrix.setup.runtest }}
+      run: opam install .
+    - name: Build and test
+      if: ${{ matrix.setup.runtest }}
       run: opam install -t .
+
   nix-build:
     runs-on: ${{ matrix.setup.os }}
     strategy:
