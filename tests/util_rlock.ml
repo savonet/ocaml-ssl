@@ -9,6 +9,7 @@ open Ssl.Runtime_lock
 
 type server_args =
   { address : Unix.sockaddr
+  ; mutex : Mutex.t
   ; parser : (string -> string) option
   }
 
@@ -26,15 +27,14 @@ let server_rw_loop ssl parser_func =
         Ssl.close_notify ssl |> ignore;
         rw_loop := false)
     with
-    | Read_error(Error_want_read|Error_want_accept|
-                 Error_want_connect|Error_want_write|Error_zero_return) ->
-       ()
-    | Read_error _ -> rw_loop := false
+    | Read_error read_error ->
+      (match read_error with Error_ssl -> rw_loop := false | _ -> ())
   done
 
 let server_init args =
   try
     (* Server initialization *)
+    Mutex.lock args.mutex;
     let socket = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
     Unix.setsockopt socket Unix.SO_REUSEADDR true;
     Unix.bind socket args.address;
@@ -53,36 +53,33 @@ let server_init args =
 let server_listen args =
   match server_init args with
   | None ->
-    exit 0
+    Mutex.unlock args.mutex;
+    Thread.exit () [@warning "-3"]
   | Some (socket, context) ->
-    let _ = Unix.select [socket] [] [] (-1.0) in
+    Mutex.unlock args.mutex;
     let listen = Unix.accept socket in
-    Unix.set_nonblock (fst listen);
     let ssl = embed_socket (fst listen) context in
     let rec fn () =
       try
         accept ssl;
-        (* Exit right away unless we need to rw *)
-        (match args.parser with
-         | Some parser_func -> server_rw_loop ssl parser_func
-         | None ->
-            ();
-            shutdown ssl;
-            exit 0)
       with
-        Accept_error(Error_want_read|Error_want_write
-                    |Error_want_connect|Error_want_accept|Error_zero_return) ->
-        fn ()
-    in
-    fn ()
+      | Ssl.(Connection_error(Error_want_write|Error_want_read|
+                              Error_want_accept|Error_want_connect|Error_zero_return)) ->
+         fn ()
+    (* Exit right away unless we need to rw *)
+    (match args.parser with
+    | Some parser_func -> server_rw_loop ssl parser_func
+    | None ->
+      ();
+      shutdown ssl;
+      Thread.exit () [@warning "-3"])
 
 let server_thread addr parser =
-  let args = { address = addr; parser } in
-  let pid = Unix.fork () in
-  if pid = 0 then
-    server_listen args
-  else
-    Unix.sleep 1; pid
+  let mutex = Mutex.create () in
+  let args = { address = addr; mutex; parser } in
+  let thread = Thread.create server_listen args in
+  Mutex.lock mutex;
+  thread
 
 let check_ssl_no_error err =
   Str.string_partial_match (Str.regexp_string "error:00000000:lib(0)") err 0
