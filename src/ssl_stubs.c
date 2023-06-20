@@ -540,8 +540,20 @@ static void set_protocol(SSL_CTX *ssl_context, int protocol) {
   }
 }
 
-CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
-  CAMLparam2(protocol, type);
+CAMLprim value caml_ssl_ktls_send_available(value out_fd) {
+  CAMLparam1(out_fd);
+  int r = BIO_get_ktls_send(SSL_get_wbio(SSL_val(out_fd)));
+  CAMLreturn(Val_int(r));
+}
+
+CAMLprim value caml_ssl_ktls_recv_available(value out_fd) {
+  CAMLparam1(out_fd);
+  int r = BIO_get_ktls_recv(SSL_get_wbio(SSL_val(out_fd)));
+  CAMLreturn(Val_int(r));
+}
+
+CAMLprim value ocaml_ssl_create_context(value protocol, value type, value ktls) {
+  CAMLparam3(protocol, type, ktls);
   CAMLlocal1(block);
   SSL_CTX *ctx;
   const SSL_METHOD *method = get_method(Int_val(type));
@@ -559,6 +571,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
      mode, hide SSL_ERROR_WANT_(READ|WRITE) from us. */
   SSL_CTX_set_mode(ctx,
                    SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY);
+  if Int_val(ktls) SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);
   caml_acquire_runtime_system();
 
   block = caml_alloc_custom(&ctx_ops, sizeof(SSL_CTX *), 0, 1);

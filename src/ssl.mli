@@ -311,8 +311,24 @@ type context_type =
   | Server_context  (** Server connections. *)
   | Both_context  (** Client and server connections. *)
 
-val create_context : protocol -> context_type -> context
-(** Create a context. *)
+val create_context : ?ktls:bool -> protocol -> context_type -> context
+(** Create a context.
+
+    The ktls optional parameter ([false] by default) allows for using kernel
+    TLS function. You must use [ktls_send_available] and [ktls_recv_available]
+    to check that ktls is enabled before you can use [Unix.read] and
+    [Unix.single_write] directly to write to the SSL buffer *)
+
+val ktls_send_available : socket -> bool
+(** Checks if ktls is available to write. This allows for using
+    [Unix.single_write] on the file descriptor underlying the ssl socket. *)
+
+val ktls_recv_available : socket -> bool
+(** Checks if ktls is available to read. This allows for using [Unix.read] on
+    the file descriptor underlying the ssl socket.
+
+    NOTE: recv is supported for TLS1_3 only with recent version of openssl, requiring the recent commit: https://github.com/openssl/openssl/commit/7c78932b9a4330fb7c8db72b3fb37cbff1401f8b
+ *)
 
 val set_min_protocol_version : context -> protocol -> unit
 (** [set_min_protocol_version ctx proto] sets the minimum supported protocol
@@ -547,7 +563,7 @@ val connect : socket -> unit
 val accept : socket -> unit
 (** Accept an SSL connection. *)
 
-val open_connection : protocol -> Unix.sockaddr -> socket
+val open_connection : ?ktls:bool -> protocol -> Unix.sockaddr -> socket
 (** Open an SSL connection. *)
 
 val open_connection_with_context : context -> Unix.sockaddr -> socket
@@ -620,7 +636,7 @@ module Runtime_lock : sig
   val accept : socket -> unit
   (** Accept an SSL connection. *)
 
-  val open_connection : protocol -> Unix.sockaddr -> socket
+  val open_connection : ?ktls:bool -> protocol -> Unix.sockaddr -> socket
   (** Open an SSL connection. *)
 
   val open_connection_with_context : context -> Unix.sockaddr -> socket
