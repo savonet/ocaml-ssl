@@ -49,7 +49,7 @@ jobs:
           - {ocamlVersion: 5_0, os: macos-latest}
     steps:
     - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v20
+    - uses: cachix/install-nix-action@v22
       with:
         extra_nix_config: |
           extra-substituters = https://anmonteiro.nix-cache.workers.dev
