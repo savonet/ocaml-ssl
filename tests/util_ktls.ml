@@ -13,18 +13,32 @@ type server_args =
   ; parser : (string -> string) option
   }
 
+let write ssl =
+  if Ssl.ktls_send_available ssl
+  then Unix.single_write (Ssl.file_descr_of_socket ssl)
+  else Ssl.write ssl
+
+let write_substring ssl =
+  if Ssl.ktls_send_available ssl
+  then Unix.write_substring (Ssl.file_descr_of_socket ssl)
+  else Ssl.write_substring ssl
+
+let read ssl =
+  if Ssl.ktls_recv_available ssl
+  then Unix.read (Ssl.file_descr_of_socket ssl)
+  else Ssl.read ssl
+
 let server_rw_loop ssl parser_func =
-  let fd = Ssl.file_descr_of_socket ssl in
   let rw_loop = ref true in
   while !rw_loop do
     try
       let read_buf = Bytes.create 256 in
-      let read_bytes = Unix.read fd read_buf 0 256 in
+      let read_bytes = read ssl read_buf 0 256 in
       if read_bytes > 0
       then (
         let input = Bytes.to_string read_buf in
         let response = parser_func input in
-        Unix.write_substring fd response 0 (String.length response) |> ignore;
+        write_substring ssl response 0 (String.length response) |> ignore;
         Ssl.close_notify ssl |> ignore;
         rw_loop := false)
     with
@@ -63,8 +77,6 @@ let server_listen args =
     let listen = Unix.accept socket in
     let ssl = embed_socket (fst listen) context in
     accept ssl;
-    assert(ktls_send_available ssl);
-    assert(ktls_recv_available ssl);
     (* Exit right away unless we need to rw *)
     (match args.parser with
     | Some parser_func -> server_rw_loop ssl parser_func

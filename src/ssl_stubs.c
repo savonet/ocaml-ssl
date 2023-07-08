@@ -548,7 +548,7 @@ CAMLprim value caml_ssl_ktls_send_available(value out_fd) {
 
 CAMLprim value caml_ssl_ktls_recv_available(value out_fd) {
   CAMLparam1(out_fd);
-  int r = BIO_get_ktls_recv(SSL_get_wbio(SSL_val(out_fd)));
+  int r = BIO_get_ktls_recv(SSL_get_rbio(SSL_val(out_fd)));
   CAMLreturn(Val_int(r));
 }
 
