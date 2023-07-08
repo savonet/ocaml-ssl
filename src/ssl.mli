@@ -317,7 +317,11 @@ val create_context : ?ktls:bool -> protocol -> context_type -> context
     The ktls optional parameter ([false] by default) allows for using kernel
     TLS function. You must use [ktls_send_available] and [ktls_recv_available]
     to check that ktls is enabled before you can use [Unix.read] and
-    [Unix.single_write] directly to write to the SSL buffer *)
+    [Unix.single_write] directly to write to the SSL buffer.
+
+    For ktls to work you need its support to be compiled in openssl (it is the
+    case on recent ubuntu and debian) and you need to make sure the kernel tls
+    module is loaded (modprobe tls).  *)
 
 val ktls_send_available : socket -> bool
 (** Checks if ktls is available to write. This allows for using
