@@ -21,6 +21,7 @@ buildDunePackage {
   propagatedBuildInputs = [
     openssl-oc.dev
   ];
+  nativeCheckInputs = [ openssl-oc ];
   checkInputs = [ alcotest ];
 
   inherit doCheck;

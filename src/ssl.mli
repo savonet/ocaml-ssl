@@ -21,6 +21,17 @@
 
     @author Samuel Mimram *)
 
+(** {1 OpenSSL version} *)
+
+type version =
+  { major : int  (** major version *)
+  ; minor : int  (** minor version *)
+  ; patch : int  (** patch number *)
+  }
+(** in version prior to 3.0, details are dropped: 1.1.1n = 1.1.1f *)
+
+val native_library_version : version
+
 (** {1 Exceptions and errors} *)
 
 (** An ssl error has occurred (see SSL_get_error(3ssl) for details). *)
@@ -220,10 +231,22 @@ val get_error_string : unit -> string
 
 module Error : sig
   type t = private
-    { code : int
-    ; lib : string option
-    ; reason : string option
+    { library_number : int
+          (** Identifies the OpenSSL sub-library that generated this error.
+              Library values are defined in
+              https://github.com/openssl/openssl/blob/openssl-3.0.0/include/openssl/err.h.in#L72 *)
+    ; reason_code : int
+          (** The reason code is the information about what went wrong. *)
+    ; lib : string option  (** The library name that generated the error. *)
+    ; reason : string option  (** The reason string for the error message. *)
     }
+  (** The error code returned by ERR_get_error() consists of a library number,
+      function code and reason code.
+
+      Each sub-library of OpenSSL has a unique library number; function and
+      reason codes are unique within each sub-library. Note that different
+      libraries may use the same value to signal different functions and
+      reasons. *)
 
   val get_error : unit -> t
   (** Retrieve the earliest error from the error queue then it removes the
@@ -349,6 +372,22 @@ val get_mode   : context -> Modes.t
 
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+val set_min_protocol_version : context -> protocol -> unit
+(** [set_min_protocol_version ctx proto] sets the minimum supported protocol
+    version for [ctx] to [proto]. *)
+
+val set_max_protocol_version : context -> protocol -> unit
+(** [set_max_protocol_version ctx proto] sets the maximum supported protocol
+    version for [ctx] to [proto]. *)
+
+val get_min_protocol_version : context -> protocol
+(** [get_min_protocol_version ctx] sets the minimum supported protocol version
+    for [ctx] to [proto]. *)
+
+val get_max_protocol_version : context -> protocol
+(** [get_max_protocol_version ctx proto] sets the maximum supported protocol
+    version for [ctx] to [proto]. *)
 
 val add_extra_chain_cert : context -> string -> unit
 (** Add an additional certificate to the extra chain certificates associated

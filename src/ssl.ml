@@ -16,6 +16,16 @@
    along with this library; if not, write to the Free Software Foundation, Inc.,
    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA *)
 
+type version =
+  { major : int  (** major version *)
+  ; minor : int  (** minor version *)
+  ; patch : int  (** patch number (fix + patch in version < 3.0) *)
+  }
+
+external get_version : unit -> version = "ocaml_ssl_get_version"
+
+let native_library_version : version = get_version ()
+
 type protocol =
   | SSLv23
   | SSLv3
@@ -85,7 +95,8 @@ external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 module Error = struct
   type t = private
-    { code : int
+    { library_number : int
+    ; reason_code : int
     ; lib : string option
     ; reason : string option
     }
@@ -104,11 +115,14 @@ module Error = struct
   (** Reproduces the string format from ERR_error_string_n *)
   let peek_last_error_string () =
     let err = peek_last_error () in
-    let libstring = Option.value err.lib ~default:"lib(0)" in
-    let reasonstring = Option.value err.reason ~default:"reason(0)" in
+    let libstring = match err.lib with Some lib -> lib | None -> "lib(0)" in
+    let reasonstring =
+      match err.reason with Some reason -> reason | None -> "reason(0)"
+    in
     Printf.sprintf
-      "error:%08lX:%s::%s"
-      (Int32.of_int err.code)
+      "error:%02lX:%06lX:%s::%s"
+      (Int32.of_int err.library_number)
+      (Int32.of_int err.reason_code)
       libstring
       reasonstring
 end
@@ -228,6 +242,28 @@ external raw_create_context :
   -> Modes.t
   -> context
   = "ocaml_ssl_create_context"
+
+external set_min_protocol_version :
+   context
+  -> protocol
+  -> unit
+  = "ocaml_ssl_ctx_set_min_proto_version"
+
+external set_max_protocol_version :
+   context
+  -> protocol
+  -> unit
+  = "ocaml_ssl_ctx_set_max_proto_version"
+
+external get_min_protocol_version :
+   context
+  -> protocol
+  = "ocaml_ssl_ctx_get_min_proto_version"
+
+external get_max_protocol_version :
+   context
+  -> protocol
+  = "ocaml_ssl_ctx_get_max_proto_version"
 
 external add_extra_chain_cert :
    context

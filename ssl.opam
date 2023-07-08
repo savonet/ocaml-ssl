@@ -8,7 +8,7 @@ homepage: "https://github.com/savonet/ocaml-ssl"
 bug-reports: "https://github.com/savonet/ocaml-ssl/issues"
 depends: [
   "dune" {>= "2.7"}
-  "ocaml" {>= "4.08.0"}
+  "ocaml" {>= "4.03.0"}
   "dune-configurator"
   "conf-libssl"
   "alcotest" {with-test}
@@ -30,3 +30,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/melange-re/melange.git"
+depexts: [ "openssl" { with-test } ]
