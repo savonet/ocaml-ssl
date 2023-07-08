@@ -34,7 +34,7 @@ let test_verify () =
     "no verify errors"
     true
     (Str.search_forward
-       (Str.regexp_string "error:00000000:lib(0)")
+       (Str.regexp_string "error:00:000000:lib(0)")
        verify_result
        0
     > 0)
@@ -80,7 +80,7 @@ let test_set_host () =
     "no verify errors"
     true
     (Str.search_forward
-       (Str.regexp_string "error:00000000:lib(0)")
+       (Str.regexp_string "error:00:000000:lib(0)")
        verify_result
        0
      > 0);

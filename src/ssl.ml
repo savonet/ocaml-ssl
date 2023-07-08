@@ -87,9 +87,6 @@ type verify_error =
   | Error_v_keyusage_no_certsign
   | Error_v_application_verification
 
-type bigarray =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 (** Kept for backwards compatibility *)
 
@@ -479,6 +476,9 @@ external set_hostflags :
 
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
+
+type bigarray =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 (* Here is the signature of the base communication functions that are
    implemented below in two versions *)

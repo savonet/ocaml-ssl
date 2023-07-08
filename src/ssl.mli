@@ -386,9 +386,6 @@ val get_max_protocol_version : context -> protocol
 (** [get_max_protocol_version ctx proto] sets the maximum supported protocol
     version for [ctx] to [proto]. *)
 
-type bigarray =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 val add_extra_chain_cert : context -> string -> unit
 (** Add an additional certificate to the extra chain certificates associated
     with the [ctx]. Extra chain certificates will be sent to the peer for
@@ -629,6 +626,9 @@ val flush : socket -> unit
 
 val read : socket -> Bytes.t -> int -> int -> int
 (** [read sock buf off len] receives data from a connected SSL socket. *)
+
+type bigarray =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 val read_into_bigarray : socket -> bigarray -> int -> int -> int
 (** [read_into_bigarray sock ba off len] receives data from a connected SSL
