@@ -1,5 +1,5 @@
-Unreleased
-===
+0.7.0 (2023-07-12)
+=====
 
 - Bump OpenSSL minimum requirement to 1.1.0 and stop using deprecated functions
   (#121).
