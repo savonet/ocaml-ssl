@@ -31,4 +31,3 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/melange-re/melange.git"
-depexts: [ "openssl" { with-test } ]
