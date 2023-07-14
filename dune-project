@@ -1,6 +1,7 @@
 (lang dune 2.7)
 
 (name ssl)
+(version 0.7.0)
 
 (generate_opam_files true)
 
@@ -23,6 +24,7 @@
  (depends
   (ocaml
    (>= "4.03.0"))
+  (ocaml (and :with_test (>= "4.08.0")))
   dune-configurator
   conf-libssl
   (alcotest :with-test)
