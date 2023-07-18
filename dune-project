@@ -6,7 +6,7 @@
 (generate_opam_files true)
 
 (source
- (github melange-re/melange))
+ (github savonet/ocaml-ssl))
 
 (maintainers "Antonio Monteiro <anmonteiro@gmail.com>")
 

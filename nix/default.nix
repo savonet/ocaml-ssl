@@ -25,4 +25,7 @@ buildDunePackage {
   checkInputs = [ alcotest ];
 
   inherit doCheck;
+  checkPhase = ''
+    dune build -p ssl @runtest @github_action_tests ''${enableParallelBuilding:+-j $NIX_BUILD_CORES}
+  '';
 }
