@@ -1,3 +1,8 @@
+Unreleased
+=====
+
+-  Fix naked pointer in cipher function (#144)
+
 0.7.0 (2023-07-12)
 =====
 
@@ -10,7 +15,6 @@
 - Add `Ssl.native_library_version` to query the underlying SSL library verion
   (#140)
 - `Ssl.Error`: separate library number from reason code (#139, #142)
--  Fix naked pointer in cipher function (#144)
 
 0.6.0 (2023-06-01)
 =====
