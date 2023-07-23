@@ -1,11 +1,12 @@
 (lang dune 2.7)
 
 (name ssl)
+(version 0.7.0)
 
 (generate_opam_files true)
 
 (source
- (github melange-re/melange))
+ (github savonet/ocaml-ssl))
 
 (maintainers "Antonio Monteiro <anmonteiro@gmail.com>")
 
@@ -23,6 +24,7 @@
  (depends
   (ocaml
    (>= "4.03.0"))
+  (ocaml (and :with_test (>= "4.08.0")))
   dune-configurator
   conf-libssl
   (alcotest :with-test)

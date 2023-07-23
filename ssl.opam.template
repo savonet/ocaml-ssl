@@ -1,1 +1,0 @@
-depexts: [ "openssl" { with-test } ]
