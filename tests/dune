@@ -1,3 +1,8 @@
+(alias
+ (name github_action_tests)
+ (deps
+  (alias_rec runtest)))
+
 (library
  (name util)
  (modules util)
@@ -13,6 +18,16 @@
  (name ssl_comm)
  (modules ssl_comm)
  (libraries ssl alcotest))
+
+(executable
+ (name ssl_version)
+ (modules ssl_version)
+ (libraries ssl alcotest))
+
+(rule
+ (alias github_action_tests)
+ (action
+  (run ./ssl_version.exe)))
 
 (test
  (name ssl_context)

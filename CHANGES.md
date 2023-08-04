@@ -1,3 +1,8 @@
+Unreleased
+=====
+
+-  Fix naked pointer in cipher function (#144)
+
 0.7.0 (2023-07-12)
 =====
 
