@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         setup:
-          - {ocaml-version: '4.03', runtest: false}
+          - {ocaml-version: '4.05', runtest: false}
           - {ocaml-version: '4.09', runtest: true}
           - {ocaml-version: '4.14', runtest: true}
           - {ocaml-version: '5.0', runtest: true}
