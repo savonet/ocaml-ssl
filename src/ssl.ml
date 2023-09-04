@@ -212,10 +212,19 @@ type context_type =
   | Both_context
 
 external create_context :
-   protocol
-  -> context_type
+  protocol
+  -> context_type -> bool
   -> context
   = "ocaml_ssl_create_context"
+
+external ktls_send_available : socket -> bool = "caml_ssl_ktls_send_available"
+    [@@noalloc]
+
+external ktls_recv_available : socket -> bool = "caml_ssl_ktls_recv_available"
+    [@@noalloc]
+
+let create_context ?(ktls=false) protocol typ =
+  create_context protocol typ ktls
 
 external set_min_protocol_version :
    context
@@ -716,9 +725,9 @@ module Make (Ssl_base : Ssl_base) = struct
       Unix.close sock;
       raise exn
 
-  let open_connection ssl_method sockaddr =
+  let open_connection ?(ktls=false) ssl_method sockaddr =
     open_connection_with_context
-      (create_context ssl_method Client_context)
+      (create_context ~ktls ssl_method Client_context)
       sockaddr
 
   let close_notify = ssl_shutdown
