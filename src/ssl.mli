@@ -89,9 +89,6 @@ type ssl_error =
       (** See
           https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_verify.html *)
 
-type bigarray =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 exception Method_error
 (** The SSL method could not be initialized. *)
 
@@ -311,8 +308,67 @@ type context_type =
   | Server_context  (** Server connections. *)
   | Both_context  (** Client and server connections. *)
 
-val create_context : protocol -> context_type -> context
-(** Create a context. *)
+module Modes : sig
+  (** set of mode *)
+  type t = int
+
+  val no_mode                    : t
+
+  (** Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
+      when just a single record has been written *)
+  val enable_partial_write       : t
+
+  (** Never bother the application with retries if the transport is blocking *)
+  val auto_retry                 : t
+
+  (** Don't attempt to automatically build certificate chain *)
+  val no_auto_chain              : t
+
+  (** Save RAM by releasing read and write buffers when they're empty. (SSL3 and
+  TLS only.) Released buffers are freed. *)
+  val release_buffers            : t
+
+  (** Send the current time in the Random fields of the ClientHello and
+      ServerHello records for compatibility with hypothetical implementations
+      that require it. *)
+  val send_clienthello_time      : t
+  val send_serverhello_time      : t
+
+  (** Send TLS_FALLBACK_SCSV in the ClientHello. To be set only by
+      applications that reconnect with a downgraded protocol version; see
+      draft-ietf-tls-downgrade-scsv-00 for details. DO NOT ENABLE THIS if your
+      application attempts a normal handshake. Only use this in explicit
+      fallback retries, following the guidance in
+      draft-ietf-tls-downgrade-scsv-00. *)
+  val send_fallback_scsv         : t
+
+  (** Support Asynchronous operation *)
+  val async                      : t
+
+  (** put togther two sets of modes *)
+  val ( lor ) : t -> t -> t
+
+  (** conjunction of modes *)
+  val ( land ) : t -> t -> t
+
+  (** negation of modes *)
+  val lnot : t -> t
+
+  (** subset on modes*)
+  val subset : t -> t -> bool
+end
+
+(** Set the given modes in a context (does not clear preset modes) *)
+val set_mode   : context -> Modes.t -> unit
+
+(** Clear the given modes in a context *)
+val clear_mode : context -> Modes.t -> unit
+
+(** Get the current mode of a context *)
+val get_mode   : context -> Modes.t
+
+val create_context : ?modes:Modes.t -> protocol -> context_type -> context
+(** Create a context. Default modes is Modes.(auto_retry) *)
 
 val set_min_protocol_version : context -> protocol -> unit
 (** [set_min_protocol_version ctx proto] sets the minimum supported protocol
@@ -571,6 +627,9 @@ val flush : socket -> unit
 val read : socket -> Bytes.t -> int -> int -> int
 (** [read sock buf off len] receives data from a connected SSL socket. *)
 
+type bigarray =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
 val read_into_bigarray : socket -> bigarray -> int -> int -> int
 (** [read_into_bigarray sock ba off len] receives data from a connected SSL
     socket. This function releases the runtime while the read takes place. *)
@@ -614,6 +673,10 @@ val output_int : socket -> int -> unit
     i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc. Additionally, the functions in
     this module don't perform a copy of application data buffers. *)
 module Runtime_lock : sig
+  val create_context : ?modes:Modes.t -> protocol -> context_type -> context
+  (** same as create_context above, but the default modes are
+      [Modes.(async lor enable_partial_write] *)
+
   val connect : socket -> unit
   (** Connect an SSL socket. *)
 
