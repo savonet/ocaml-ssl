@@ -130,6 +130,7 @@ end
 exception Method_error
 exception Context_error
 exception Certificate_error of string
+exception Crl_error of string
 exception Cipher_error
 exception Diffie_hellman_error
 exception Ec_curve_error
@@ -149,6 +150,7 @@ let () =
       | Method_error -> Some "SSL: Method error"
       | Context_error -> Some "SSL: Context error"
       | Certificate_error s -> Some ("SSL: Certificate error: " ^ s)
+      | Crl_error s -> Some ("SSL: CRL error: " ^ s)
       | Cipher_error -> Some "SSL: Cipher error"
       | Diffie_hellman_error -> Some "SSL: Diffie-Hellman error"
       | Ec_curve_error -> Some "SSL: EC curve error"
@@ -176,6 +178,7 @@ let () =
   Callback.register_exception "ssl_exn_method_error" Method_error;
   Callback.register_exception "ssl_exn_context_error" Context_error;
   Callback.register_exception "ssl_exn_certificate_error" (Certificate_error "");
+  Callback.register_exception "ssl_exn_crl_error" (Crl_error "");
   Callback.register_exception "ssl_exn_cipher_error" Cipher_error;
   Callback.register_exception
     "ssl_exn_diffie_hellman_error"
@@ -250,6 +253,12 @@ external add_cert_to_store :
   -> string
   -> unit
   = "ocaml_ssl_ctx_add_cert_to_store"
+
+external add_crl_to_store :
+  context
+  -> string
+  -> unit
+  = "ocaml_ssl_ctx_add_crl_to_store"
 
 external use_certificate :
    context
@@ -453,6 +462,17 @@ external set_hostflags :
 
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
+
+type x509_check_v_flag =
+  | X509_v_flag_crl_check
+  | X509_v_flag_crl_check_all
+
+external set_flags :
+   context
+  -> x509_check_v_flag list
+  -> unit
+  = "ocaml_ssl_set_flags"
+
 
 (* Here is the signature of the base communication functions that are
    implemented below in two versions *)

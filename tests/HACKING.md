@@ -6,6 +6,17 @@
 #### Configuration (ca.conf)
 
 ```
+[ ca ]
+default_ca      = CA_default
+
+[ CA_default ]
+serial = serial
+database = index.txt
+certificate = ca.pem
+crlnumber = crlnumber
+private_key = ca.key
+default_md  = sha256
+
 [ req ]
 encrypt_key = no
 default_md = sha256
@@ -103,4 +114,14 @@ keyUsage=critical, digitalSignature, keyEncipherment
 basicConstraints=critical,CA:FALSE
 extendedKeyUsage=critical,clientAuth
 subjectKeyIdentifier = hash
+```
+
+## Certificates for CRL testing
+```shell
+touch index.txt
+echo 01 > crlnumber
+openssl ca -config ca.conf -gencrl -crldays 3650 -out ca.crl
+openssl ca -config ca.conf -gencrl -crlsec 60 -out ca_expired.crl
+openssl ca -config ca.conf -revoke server.pem
+openssl ca -config ca.conf -gencrl -crldays 3650 -out ca_after_revoke.crl
 ```
