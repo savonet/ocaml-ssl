@@ -615,6 +615,32 @@ CAMLprim value ocaml_ssl_ctx_add_cert_to_store(value context, value cert) {
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ocaml_ssl_ctx_add_crl_to_store(value context, value crl) {
+  CAMLparam2(context,crl);
+  SSL_CTX *ctx = Ctx_val(context);
+  const char *crl_data = String_val(crl);
+  int crl_data_length = caml_string_length(crl);
+  char buf[256];
+  X509_CRL *x509_crl = NULL;
+  BIO *cbio;
+
+  caml_release_runtime_system();
+  cbio = BIO_new_mem_buf((void*)crl_data, crl_data_length);
+  x509_crl = PEM_read_bio_X509_CRL(cbio, NULL, 0, NULL);
+
+  X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+
+  if (NULL == x509_crl || X509_STORE_add_crl(store, x509_crl) <= 0) {
+    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    caml_acquire_runtime_system();
+    caml_raise_with_arg(*caml_named_value("ssl_exn_crl_error"), caml_copy_string(buf));
+  }
+
+  caml_acquire_runtime_system();
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert,
                                              value privkey) {
   CAMLparam3(context, cert, privkey);
@@ -1592,6 +1618,37 @@ CAMLprim value ocaml_ssl_set1_ip(value socket, value ip) {
 
   caml_release_runtime_system();
   X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), ipval);
+  caml_acquire_runtime_system();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_set_flags(value context, value flag_lst) {
+  CAMLparam2(context, flag_lst);
+  SSL_CTX *ctx = Ctx_val(context);
+  unsigned int flags = 0;
+
+  while (Is_block(flag_lst)) {
+    switch (Int_val(Field(flag_lst, 0))) {
+    case 0:
+      flags |= X509_V_FLAG_CRL_CHECK;
+      break;
+    case 1:
+      flags |= X509_V_FLAG_CRL_CHECK_ALL;
+      break;
+    default:
+      caml_invalid_argument("flags");
+    }
+    flag_lst = Field(flag_lst, 1);
+  }
+
+  caml_release_runtime_system();
+
+  X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+  X509_VERIFY_PARAM_set_flags(param, flags);
+  SSL_CTX_set1_param(ctx, param);
+  X509_VERIFY_PARAM_free(param);
+
   caml_acquire_runtime_system();
 
   CAMLreturn(Val_unit);

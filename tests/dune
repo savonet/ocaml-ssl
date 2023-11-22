@@ -58,3 +58,9 @@
  (modules ssl_io)
  (libraries ssl alcotest util)
  (deps ca.pem ca.key server.key server.pem))
+
+(test
+ (name ssl_crls)
+ (modules ssl_crls)
+ (libraries ssl alcotest util)
+ (deps client.pem ca.pem ca.key ca.crl ca_expired.crl ca_after_revoke.crl server.key server.pem))
