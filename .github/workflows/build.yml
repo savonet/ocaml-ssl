@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build:
+    runs-on: ${{matrix.setup.os}}
     strategy:
       matrix:
         os:
