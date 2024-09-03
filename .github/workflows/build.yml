@@ -13,17 +13,16 @@ concurrency:
 
 jobs:
   build:
+    runs-on: ${{ matrix.setup.os }}
     strategy:
       matrix:
-        os:
-        - ubuntu-latest
-        - windows-latest
         setup:
-          - {ocaml-version: '4.05', runtest: false}
-          - {ocaml-version: '4.09', runtest: true}
-          - {ocaml-version: '4.14', runtest: true}
-          - {ocaml-version: '5.1', runtest: true}
-          - {ocaml-version: '5.2', runtest: true}
+          - {ocaml-version: '4.05', os: ubuntu-latest, runtest: false}
+          - {ocaml-version: '4.09', os: ubuntu-latest, runtest: true}
+          - {ocaml-version: '4.14', os: ubuntu-latest, runtest: true}
+          - {ocaml-version: '5.1', os: ubuntu-latest, runtest: true}
+          - {ocaml-version: '5.2', os: ubuntu-latest, runtest: true}
+          - {ocaml-version: '5.2', os: windows-latest, runtest: true}
     steps:
     - uses: actions/checkout@v4
     - uses: ocaml/setup-ocaml@v3
@@ -31,8 +30,6 @@ jobs:
         ocaml-compiler:  ${{ matrix.setup.ocaml-version }}
     - name: Setup opam
       run: opam pin add -n .
-    - name: Install dependencies
-      run: opam depext -yt mad
     - name: Build
       if: ${{ ! matrix.setup.runtest }}
       run: opam install .
@@ -49,7 +46,6 @@ jobs:
       matrix:
         setup:
           - {ocamlVersion: 4_12, os: ubuntu-latest}
-          - {ocamlVersion: 4_13, os: ubuntu-latest}
           - {ocamlVersion: 4_14, os: ubuntu-latest}
           - {ocamlVersion: 5_1, os: ubuntu-latest}
           - {ocamlVersion: 5_2, os: ubuntu-latest}
