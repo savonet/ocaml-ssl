@@ -13,9 +13,11 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os:
+        - ubuntu-latest
+        - windows-latest
         setup:
           - {ocaml-version: '4.05', runtest: false}
           - {ocaml-version: '4.09', runtest: true}
