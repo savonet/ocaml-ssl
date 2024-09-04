@@ -23,7 +23,7 @@ jobs:
           - {ocaml-version: '5.0', runtest: true}
     steps:
     - uses: actions/checkout@v2
-    - uses: ocaml/setup-ocaml@v2
+    - uses: ocaml/setup-ocaml@v3
       with:
         ocaml-compiler:  ${{ matrix.setup.ocaml-version }}
     - name: Setup opam
