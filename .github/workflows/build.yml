@@ -33,13 +33,12 @@ jobs:
     - name: Build
       if: ${{ ! matrix.setup.runtest }}
       run: opam install .
-    - name: Build and test
+    - name: Build for testing
       if: ${{ matrix.setup.runtest }}
-      shell: bash
-      run: |
-        opam install -t .
-        eval $(opam env)
-        dune build @github_action_tests
+      run: opam install -t .
+    - name: Test
+      if: ${{ matrix.setup.runtest }}
+      run: opam exec -- dune build @github_action_tests
 
   nix-build:
     runs-on: ${{ matrix.setup.os }}
