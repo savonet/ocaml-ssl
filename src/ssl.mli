@@ -103,6 +103,9 @@ exception Ec_curve_error
 exception Certificate_error of string
 (** The SSL server certificate could not be initialized. *)
 
+exception Crl_error of string
+(** The CRL could not be initialized. *)
+
 exception Private_key_error of string
 (** The SSL server private key could not be initialized. *)
 
@@ -340,6 +343,10 @@ val add_cert_to_store : context -> string -> unit
 (** Add a certificate to the [ctx] trust storage. The value should be contents
     of the certificate as string in PEM format. *)
 
+val add_crl_to_store : context -> string -> unit
+(** Add a CRL to the [ctx] trust storage. The value should be contents 
+    of the CRL as string in PEM format. *)
+
 val use_certificate : context -> string -> string -> unit
 (** [use_certificate ctx cert privkey] makes the context [ctx] use [cert] as *
     certificate's file name (in PEM format) and [privkey] as private key file *
@@ -520,6 +527,20 @@ type x509_check_flag =
 
 (* Specify how a certificate should be matched against the host name *)
 val set_hostflags : socket -> x509_check_flag list -> unit
+
+
+(** Flags to specify certificate verification operation*)
+type x509_check_v_flag =
+  | X509_v_flag_crl_check
+  | X509_v_flag_crl_check_all
+
+
+(* Specify how certificate verification operation should be done*)
+val set_flags :
+   context
+  -> x509_check_v_flag list
+  -> unit
+
 
 (* Set the expected host name to be verified. *)
 val set_host : socket -> string -> unit
