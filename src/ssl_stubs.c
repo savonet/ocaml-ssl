@@ -540,8 +540,28 @@ static void set_protocol(SSL_CTX *ssl_context, int protocol) {
   }
 }
 
-CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
-  CAMLparam2(protocol, type);
+CAMLprim void ocaml_ssl_set_mode(value ctx, value modes) {
+  CAMLparam1(ctx);
+  SSL_CTX_set_mode(Ctx_val(ctx),
+                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | Int_val(modes));
+  CAMLreturn0;
+}
+
+CAMLprim void ocaml_ssl_clear_mode(value ctx, value modes) {
+  CAMLparam1(ctx);
+  SSL_CTX_clear_mode(Ctx_val(ctx),
+                   ~SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & Int_val(modes));
+  CAMLreturn0;
+}
+
+CAMLprim value ocaml_ssl_get_mode(value ctx, value modes) {
+  CAMLparam1(ctx);
+  long r = SSL_CTX_get_mode(Ctx_val(ctx));
+  CAMLreturn(Val_int(~SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER & r));
+}
+
+CAMLprim value ocaml_ssl_create_context(value protocol, value type, value modes) {
+  CAMLparam3(protocol, type, modes);
   CAMLlocal1(block);
   SSL_CTX *ctx;
   const SSL_METHOD *method = get_method(Int_val(type));
@@ -558,7 +578,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
      a write retry (since the GC may need to move it). In blocking
      mode, hide SSL_ERROR_WANT_(READ|WRITE) from us. */
   SSL_CTX_set_mode(ctx,
-                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY);
+                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | Int_val(modes));
   caml_acquire_runtime_system();
 
   block = caml_alloc_custom(&ctx_ops, sizeof(SSL_CTX *), 0, 1);

@@ -87,9 +87,6 @@ type verify_error =
   | Error_v_keyusage_no_certsign
   | Error_v_application_verification
 
-type bigarray =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 (** Kept for backwards compatibility *)
 
@@ -211,9 +208,35 @@ type context_type =
   | Server_context
   | Both_context
 
-external create_context :
+module Modes = struct
+  type t = int
+
+  (* value taken from openssl/ssl.h *)
+  let no_mode                    = 0x000
+  let enable_partial_write       = 0x001 (* SSL_MODE_ENABLE_PARTIAL_WRITE *)
+  (*let accept_moving_write_buffer = 0x002: is always set because of GC*)
+  let auto_retry                 = 0x004 (* SSL_MODE_AUTO_RETRY *)
+  let no_auto_chain              = 0x008 (* SSL_MODE_RELEASE_BUFFERS *)
+  let release_buffers            = 0x010 (* SSL_MODE_RELEASE_BUFFERS *)
+  let send_clienthello_time      = 0x020 (* SSL_MODE_SEND_CLIENTHELLO_TIME *)
+  let send_serverhello_time      = 0x040 (* SSL_MODE_SEND_SERVERHELLO_TIME *)
+  let send_fallback_scsv         = 0x080 (* SSL_MODE_SEND_FALLBACK_SCSV *)
+  let async                      = 0x100 (* SSL_MODE_ASYNC *)
+
+  let (lor) = (lor)
+  let (land) = (land)
+  let lnot = lnot
+  let subset a b = a land (lnot b) = no_mode
+end
+
+external set_mode : context -> Modes.t -> unit = "ocaml_ssl_set_mode"
+external clear_mode : context -> Modes.t -> unit = "ocaml_ssl_clear_mode"
+external get_mode : context -> Modes.t = "ocaml_ssl_get_mode"
+
+external raw_create_context :
    protocol
   -> context_type
+  -> Modes.t
   -> context
   = "ocaml_ssl_create_context"
 
@@ -454,9 +477,13 @@ external set_hostflags :
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
+type bigarray =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
 (* Here is the signature of the base communication functions that are
    implemented below in two versions *)
 module type Ssl_base = sig
+  val create_context : ?modes:Modes.t -> protocol -> context_type -> context
   val connect : socket -> unit
   val accept : socket -> unit
   val ssl_shutdown : socket -> bool
@@ -471,6 +498,9 @@ end
 (* Provide the base implementation communication functions that release the
    OCaml runtime lock, allowing multiple systhreads to execute concurrently. *)
 module Runtime_unlock_base = struct
+  let create_context ?(modes = Modes.auto_retry) protocol ctype =
+    raw_create_context protocol ctype modes
+
   external connect : socket -> unit = "ocaml_ssl_connect"
   external accept : socket -> unit = "ocaml_ssl_accept"
   external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
@@ -507,6 +537,10 @@ end
 
 (* Same as above, but doesn't release the lock. *)
 module Runtime_lock_base = struct
+  let create_context ?(modes = Modes.(async lor enable_partial_write))
+        protocol ctype =
+    raw_create_context protocol ctype modes
+
   external get_error : socket -> int -> ssl_error = "ocaml_ssl_get_error_code"
     [@@noalloc]
 
@@ -558,6 +592,9 @@ module Runtime_lock_base = struct
     -> int
     = "ocaml_ssl_write_blocking"
     [@@noalloc]
+
+  (** Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
+    when just a single record has been written *)
 
   let write socket buffer start length =
     if start < 0 then invalid_arg "Ssl.write: start negative";
