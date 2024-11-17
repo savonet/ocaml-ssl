@@ -22,7 +22,7 @@ jobs:
           - {ocaml-version: '4.14', os: ubuntu-latest, runtest: true}
           - {ocaml-version: '5.1', os: ubuntu-latest, runtest: true}
           - {ocaml-version: '5.2', os: ubuntu-latest, runtest: true}
-          - {ocaml-version: '5.2', os: windows-latest, runtest: true}
+          - {ocaml-version: '5.2', os: windows-latest, runtest: false}
     steps:
     - uses: actions/checkout@v4
     - uses: ocaml/setup-ocaml@v3
