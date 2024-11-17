@@ -16,15 +16,22 @@
  (libraries ssl threads str alcotest))
 
 (tests
- (names ssl_test ssl_comm ssl_context ssl_ciphers ssl_certs ssl_sock ssl_io)
- (modules
-  ssl_test
-  ssl_comm
-  ssl_context
-  ssl_ciphers
-  ssl_certs
-  ssl_sock
-  ssl_io)
+ (names ssl_test)
+ (modules ssl_test)
+ (libraries ssl alcotest util)
+ (deps
+  digicert_certificate.pem
+  client.pem
+  client.key
+  dh4096.pem
+  server.key
+  server.pem
+  ca.pem
+  ca.key))
+
+(tests
+ (names ssl_comm ssl_context ssl_ciphers ssl_certs ssl_sock ssl_io)
+ (modules ssl_comm ssl_context ssl_ciphers ssl_certs ssl_sock ssl_io)
  (libraries ssl alcotest util)
  (deps
   digicert_certificate.pem
