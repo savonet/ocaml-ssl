@@ -16,8 +16,8 @@
  (libraries ssl threads str alcotest))
 
 (tests
- (names ssl_test)
- (modules ssl_test)
+ (names ssl_test ssl_certs)
+ (modules ssl_test ssl_certs)
  (libraries ssl alcotest util)
  (deps
   digicert_certificate.pem
@@ -32,8 +32,8 @@
   (<> %{os_type} "Win32")))
 
 (tests
- (names ssl_comm ssl_context ssl_ciphers ssl_certs ssl_sock ssl_io)
- (modules ssl_comm ssl_context ssl_ciphers ssl_certs ssl_sock ssl_io)
+ (names ssl_comm ssl_context ssl_ciphers ssl_sock ssl_io)
+ (modules ssl_comm ssl_context ssl_ciphers ssl_sock ssl_io)
  (libraries ssl alcotest util)
  (deps
   digicert_certificate.pem
