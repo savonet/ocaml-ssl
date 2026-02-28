@@ -122,6 +122,14 @@ static value Val_some(value v) {
   CAMLreturn(some);
 }
 
+/* Strings */
+
+#define Local_string(c_varname, c_len_varname, ml_varname)              \
+  int c_len_varname = caml_string_length(ml_varname);                   \
+  char c_varname##_buf[c_len_varname + 1];                              \
+  const char *c_varname = c_varname##_buf;                              \
+  memcpy(c_varname##_buf, String_val(ml_varname), c_len_varname + 1);
+
 /******************
  * Initialization *
  ******************/
@@ -569,8 +577,7 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
 CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
   CAMLparam2(context, cert);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *cert_data = String_val(cert);
-  int cert_data_length = caml_string_length(cert);
+  Local_string(cert_data, cert_data_length, cert);
   char buf[256];
   X509 *x509_cert = NULL;
   BIO *cbio;
@@ -592,8 +599,7 @@ CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
 CAMLprim value ocaml_ssl_ctx_add_cert_to_store(value context, value cert) {
   CAMLparam2(context, cert);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *cert_data = String_val(cert);
-  int cert_data_length = caml_string_length(cert);
+  Local_string(cert_data, cert_data_length, cert);
   char buf[256];
   X509 *x509_cert = NULL;
   BIO *cbio;
@@ -619,8 +625,8 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert,
                                              value privkey) {
   CAMLparam3(context, cert, privkey);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *cert_name = String_val(cert);
-  const char *privkey_name = String_val(privkey);
+  Local_string(cert_name, cert_name_length, cert);
+  Local_string(privkey_name, privkey_name_length, privkey);
   char buf[256];
 
   caml_release_runtime_system();
@@ -835,7 +841,7 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context,
                                                           value vfilename) {
   CAMLparam2(context, vfilename);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *filename = String_val(vfilename);
+  Local_string(filename, filename_length, vfilename);
   STACK_OF(X509_NAME) * cert_names;
   char buf[256];
 
@@ -1026,7 +1032,7 @@ CAMLprim value ocaml_ssl_ctx_set_cipher_list(value context,
                                              value ciphers_string) {
   CAMLparam2(context, ciphers_string);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *ciphers = String_val(ciphers_string);
+  Local_string(ciphers, ciphers_length, ciphers_string);
 
   if (*ciphers == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
@@ -1359,8 +1365,8 @@ CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file,
                                                    value ca_path) {
   CAMLparam3(context, ca_file, ca_path);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *CAfile = String_val(ca_file);
-  const char *CApath = String_val(ca_path);
+  Local_string(CAfile, CAfile_length, ca_file);
+  Local_string(CApath, CApath_length, ca_path);
 
   if (*CAfile == 0)
     CAfile = NULL;
@@ -1437,7 +1443,7 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
                                                  value vhostname) {
   CAMLparam2(socket, vhostname);
   SSL *ssl = SSL_val(socket);
-  const char *hostname = String_val(vhostname);
+  Local_string(hostname, hostname_length, vhostname);
 
   caml_release_runtime_system();
   SSL_set_tlsext_host_name(ssl, hostname);
@@ -1576,7 +1582,7 @@ CAMLprim value ocaml_ssl_set_hostflags(value socket, value flag_lst) {
 CAMLprim value ocaml_ssl_set1_host(value socket, value host) {
   CAMLparam2(socket, host);
   SSL *ssl = SSL_val(socket);
-  const char *hostname = String_val(host);
+  Local_string(hostname, hostname_length, host);
 
   caml_release_runtime_system();
   X509_VERIFY_PARAM_set1_host(SSL_get0_param(ssl), hostname, 0);
@@ -1588,7 +1594,7 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host) {
 CAMLprim value ocaml_ssl_set1_ip(value socket, value ip) {
   CAMLparam2(socket, ip);
   SSL *ssl = SSL_val(socket);
-  const char *ipval = String_val(ip);
+  Local_string(ipval, ipval_length, ip);
 
   caml_release_runtime_system();
   X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), ipval);
