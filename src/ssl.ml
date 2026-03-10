@@ -37,6 +37,11 @@ type protocol =
 type context
 type certificate
 type socket
+type quic_step_result =
+  | Quic_ok
+  | Quic_want_read
+  | Quic_want_write
+  | Quic_zero_return
 
 type ssl_error =
   | Error_none
@@ -277,6 +282,11 @@ external embed_socket :
   -> socket
   = "ocaml_ssl_embed_socket"
 
+external create_socket : context -> socket = "ocaml_ssl_create_socket"
+
+external set_connect_state : socket -> unit = "ocaml_ssl_set_connect_state"
+external set_accept_state : socket -> unit = "ocaml_ssl_set_accept_state"
+
 external disable_protocols :
    context
   -> protocol list
@@ -435,6 +445,50 @@ external get_negotiated_alpn_protocol :
    socket
   -> string option
   = "ocaml_ssl_get_negotiated_alpn_protocol"
+
+external quic_configure : socket -> unit = "ocaml_ssl_quic_configure"
+
+external quic_set_transport_params :
+   socket
+  -> string
+  -> unit
+  = "ocaml_ssl_quic_set_transport_params"
+
+external quic_provide_crypto_data :
+   socket
+  -> string
+  -> unit
+  = "ocaml_ssl_quic_provide_crypto_data"
+
+external quic_do_handshake :
+   socket
+  -> quic_step_result
+  = "ocaml_ssl_quic_do_handshake"
+
+external quic_process_post_handshake :
+   socket
+  -> quic_step_result
+  = "ocaml_ssl_quic_process_post_handshake"
+
+external quic_drain_events :
+   socket
+  -> (int * int * bool * string) list
+  = "ocaml_ssl_quic_drain_events"
+
+external quic_get_peer_transport_params :
+   socket
+  -> string option
+  = "ocaml_ssl_quic_get_peer_transport_params"
+
+external quic_take_alert :
+   socket
+  -> int option
+  = "ocaml_ssl_quic_take_alert"
+
+external quic_handshake_in_progress :
+   socket
+  -> bool
+  = "ocaml_ssl_quic_handshake_in_progress"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
 
