@@ -1714,7 +1714,8 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
   ret = SSL_read(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
   caml_acquire_runtime_system();
-  memmove(((char *)String_val(buffer)) + Int_val(start), buf, buflen);
+  if (ret > 0)
+    memmove(((char *)Bytes_val(buffer)) + Int_val(start), buf, ret);
   free(buf);
 
   if (err != SSL_ERROR_NONE)
