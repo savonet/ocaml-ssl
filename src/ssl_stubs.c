@@ -123,6 +123,8 @@ typedef struct quic_state_st {
   quic_buf *recv_tail;
   quic_event *event_head;
   quic_event *event_tail;
+  unsigned char *local_transport_params;
+  size_t local_transport_params_len;
   unsigned char *peer_transport_params;
   size_t peer_transport_params_len;
   int has_alert;
@@ -167,6 +169,7 @@ static void quic_state_free(quic_state *st) {
     return;
   quic_free_recv_queue(st);
   quic_free_event_queue(st);
+  free(st->local_transport_params);
   free(st->peer_transport_params);
   free(st);
 }
@@ -1757,12 +1760,21 @@ CAMLprim value ocaml_ssl_quic_configure(value socket) {
 CAMLprim value ocaml_ssl_quic_set_transport_params(value socket, value params) {
   CAMLparam2(socket, params);
   SSL *ssl = SSL_val(socket);
-  const unsigned char *buf = (const unsigned char *)String_val(params);
-  size_t len = caml_string_length(params);
+  quic_state *st = quic_state_of_ssl(ssl);
+  unsigned char *buf = NULL;
+  size_t len;
   int ok;
 
+  if (st == NULL)
+    caml_invalid_argument("Ssl.quic_set_transport_params: socket not configured");
+
+  buf = copy_ocaml_bytes(params, &len);
+  free(st->local_transport_params);
+  st->local_transport_params = buf;
+  st->local_transport_params_len = len;
   caml_release_runtime_system();
-  ok = SSL_set_quic_tls_transport_params(ssl, buf, len);
+  ok = SSL_set_quic_tls_transport_params(ssl, st->local_transport_params,
+                                         st->local_transport_params_len);
   caml_acquire_runtime_system();
   if (ok != 1)
     caml_raise_constant(*caml_named_value("ssl_exn_handler_error"));
