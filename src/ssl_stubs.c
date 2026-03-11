@@ -221,6 +221,20 @@ static int quic_enqueue_event(quic_state *st, int kind, uint32_t level,
   return 1;
 }
 
+static unsigned char *copy_ocaml_bytes(value v, size_t *len_out) {
+  size_t len = caml_string_length(v);
+  unsigned char *buf = NULL;
+  if (len > 0) {
+    buf = malloc(len);
+    if (buf == NULL)
+      caml_raise_out_of_memory();
+    memcpy(buf, String_val(v), len);
+  }
+  if (len_out != NULL)
+    *len_out = len;
+  return buf;
+}
+
 static int ocaml_ssl_quic_crypto_send(SSL *s, const unsigned char *buf,
                                       size_t buf_len, size_t *consumed,
                                       void *arg) {
