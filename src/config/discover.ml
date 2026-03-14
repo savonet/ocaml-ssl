@@ -10,7 +10,7 @@ let default c : C.Pkg_config.package_conf =
       { libs = [ "-L/usr/local/opt/openssl/lib" ]
       ; cflags = [ "-I/usr/local/opt/openssl/include" ]
       }
-    else { libs = [ "-L/opt/local/lib" ]; cflags = [ "-I/opt/local/include" ] }
+    else { libs = [ "-lssl"; "-lcrypto" ]; cflags = [] }
   else { libs = [ "-lssl"; "-lcrypto" ]; cflags = [] }
 
 let () =

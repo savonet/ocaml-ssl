@@ -290,6 +290,12 @@ type protocol =
 type socket
 (** An SSL abstract socket. *)
 
+type quic_step_result =
+  | Quic_ok
+  | Quic_want_read
+  | Quic_want_write
+  | Quic_zero_return
+
 (** {2 Threads} *)
 
 (** You should not have to use those functions. They are only here for internal
@@ -496,6 +502,12 @@ val digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
 val embed_socket : Unix.file_descr -> context -> socket
 (** Embed a Unix socket into an SSL socket. *)
 
+val create_socket : context -> socket
+(** Create an unattached SSL socket. *)
+
+val set_connect_state : socket -> unit
+val set_accept_state : socket -> unit
+
 val set_client_SNI_hostname : socket -> string -> unit
 (** Set the hostname the client is attempting to connect to using the Server *
     Name Indication (SNI) TLS extension. *)
@@ -505,6 +517,16 @@ val set_alpn_protos : socket -> string list -> unit
 
 val get_negotiated_alpn_protocol : socket -> string option
 (** Get the negotiated protocol from the connection. *)
+
+val quic_configure : socket -> unit
+val quic_set_transport_params : socket -> string -> unit
+val quic_provide_crypto_data : socket -> string -> unit
+val quic_do_handshake : socket -> quic_step_result
+val quic_process_post_handshake : socket -> quic_step_result
+val quic_drain_events : socket -> (int * int * bool * string) list
+val quic_get_peer_transport_params : socket -> string option
+val quic_take_alert : socket -> int option
+val quic_handshake_in_progress : socket -> bool
 
 val verify : socket -> unit
 (** Check the result of the verification of the X509 certificate presented by

@@ -45,6 +45,7 @@
 #include <caml/unixsupport.h>
 
 #include <openssl/crypto.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
@@ -101,14 +102,231 @@ static struct custom_operations ctx_ops = {
 
 #define SSL_val(v) (*((SSL **)Data_custom_val(v)))
 
+typedef struct quic_buf_st {
+  unsigned char *data;
+  size_t len;
+  size_t off;
+  struct quic_buf_st *next;
+} quic_buf;
+
+typedef struct quic_event_st {
+  int kind; /* 0 = crypto record, 1 = secret */
+  uint32_t level;
+  int direction;
+  unsigned char *data;
+  size_t len;
+  struct quic_event_st *next;
+} quic_event;
+
+typedef struct quic_state_st {
+  quic_buf *recv_head;
+  quic_buf *recv_tail;
+  quic_event *event_head;
+  quic_event *event_tail;
+  unsigned char *local_transport_params;
+  size_t local_transport_params_len;
+  unsigned char *peer_transport_params;
+  size_t peer_transport_params_len;
+  int has_alert;
+  unsigned char alert;
+  uint32_t current_tx_level;
+} quic_state;
+
+static quic_state *quic_state_new(void) {
+  quic_state *st = calloc(1, sizeof(*st));
+  if (st == NULL)
+    return NULL;
+  st->current_tx_level = OSSL_RECORD_PROTECTION_LEVEL_NONE;
+  return st;
+}
+
+static void quic_free_recv_queue(quic_state *st) {
+  quic_buf *cur = st->recv_head;
+  while (cur != NULL) {
+    quic_buf *next = cur->next;
+    free(cur->data);
+    free(cur);
+    cur = next;
+  }
+  st->recv_head = NULL;
+  st->recv_tail = NULL;
+}
+
+static void quic_free_event_queue(quic_state *st) {
+  quic_event *cur = st->event_head;
+  while (cur != NULL) {
+    quic_event *next = cur->next;
+    free(cur->data);
+    free(cur);
+    cur = next;
+  }
+  st->event_head = NULL;
+  st->event_tail = NULL;
+}
+
+static void quic_state_free(quic_state *st) {
+  if (st == NULL)
+    return;
+  quic_free_recv_queue(st);
+  quic_free_event_queue(st);
+  free(st->local_transport_params);
+  free(st->peer_transport_params);
+  free(st);
+}
+
 static void finalize_ssl_socket(value block) {
   SSL *ssl = SSL_val(block);
+  quic_state *st = NULL;
+  if (ssl != NULL)
+    st = SSL_get_app_data(ssl);
   SSL_free(ssl);
+  quic_state_free(st);
 }
 
 static struct custom_operations socket_ops = {
     "ocaml_ssl_socket",  finalize_ssl_socket,      custom_compare_default,
     custom_hash_default, custom_serialize_default, custom_deserialize_default};
+
+static quic_state *quic_state_of_ssl(SSL *ssl) {
+  return (quic_state *)SSL_get_app_data(ssl);
+}
+
+static int quic_enqueue_event(quic_state *st, int kind, uint32_t level,
+                              int direction, const unsigned char *data,
+                              size_t len) {
+  quic_event *ev = malloc(sizeof(*ev));
+  if (ev == NULL)
+    return 0;
+  ev->data = NULL;
+  ev->len = len;
+  ev->kind = kind;
+  ev->level = level;
+  ev->direction = direction;
+  ev->next = NULL;
+  if (len > 0) {
+    ev->data = malloc(len);
+    if (ev->data == NULL) {
+      free(ev);
+      return 0;
+    }
+    memcpy(ev->data, data, len);
+  }
+  if (st->event_tail != NULL)
+    st->event_tail->next = ev;
+  else
+    st->event_head = ev;
+  st->event_tail = ev;
+  return 1;
+}
+
+static unsigned char *copy_ocaml_bytes(value v, size_t *len_out) {
+  size_t len = caml_string_length(v);
+  unsigned char *buf = NULL;
+  if (len > 0) {
+    buf = malloc(len);
+    if (buf == NULL)
+      caml_raise_out_of_memory();
+    memcpy(buf, String_val(v), len);
+  }
+  if (len_out != NULL)
+    *len_out = len;
+  return buf;
+}
+
+static int ocaml_ssl_quic_crypto_send(SSL *s, const unsigned char *buf,
+                                      size_t buf_len, size_t *consumed,
+                                      void *arg) {
+  quic_state *st = arg;
+  (void)s;
+  if (!quic_enqueue_event(st, 0, st->current_tx_level, 1, buf, buf_len))
+    return 0;
+  *consumed = buf_len;
+  return 1;
+}
+
+static int ocaml_ssl_quic_crypto_recv_rcd(SSL *s, const unsigned char **buf,
+                                          size_t *bytes_read, void *arg) {
+  quic_state *st = arg;
+  quic_buf *cur = st->recv_head;
+  (void)s;
+  if (cur == NULL) {
+    *buf = NULL;
+    *bytes_read = 0;
+    return 1;
+  }
+  *buf = cur->data + cur->off;
+  *bytes_read = cur->len - cur->off;
+  return 1;
+}
+
+static int ocaml_ssl_quic_crypto_release_rcd(SSL *s, size_t bytes_read,
+                                             void *arg) {
+  quic_state *st = arg;
+  quic_buf *cur = st->recv_head;
+  (void)s;
+  if (cur == NULL || bytes_read > cur->len - cur->off)
+    return 0;
+  cur->off += bytes_read;
+  if (cur->off == cur->len) {
+    st->recv_head = cur->next;
+    if (st->recv_head == NULL)
+      st->recv_tail = NULL;
+    free(cur->data);
+    free(cur);
+  }
+  return 1;
+}
+
+static int ocaml_ssl_quic_yield_secret(SSL *s, uint32_t prot_level,
+                                       int direction,
+                                       const unsigned char *secret,
+                                       size_t secret_len, void *arg) {
+  quic_state *st = arg;
+  (void)s;
+  if (direction)
+    st->current_tx_level = prot_level;
+  return quic_enqueue_event(st, 1, prot_level, direction, secret, secret_len);
+}
+
+static int ocaml_ssl_quic_got_transport_params(SSL *s,
+                                               const unsigned char *params,
+                                               size_t params_len, void *arg) {
+  quic_state *st = arg;
+  unsigned char *copy = NULL;
+  (void)s;
+  if (params_len > 0) {
+    copy = malloc(params_len);
+    if (copy == NULL)
+      return 0;
+    memcpy(copy, params, params_len);
+  }
+  free(st->peer_transport_params);
+  st->peer_transport_params = copy;
+  st->peer_transport_params_len = params_len;
+  return 1;
+}
+
+static int ocaml_ssl_quic_alert(SSL *s, unsigned char alert_code, void *arg) {
+  quic_state *st = arg;
+  (void)s;
+  st->has_alert = 1;
+  st->alert = alert_code;
+  return 1;
+}
+
+static const OSSL_DISPATCH ocaml_ssl_quic_dispatch[] = {
+    {OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_SEND,
+     (void (*)(void))ocaml_ssl_quic_crypto_send},
+    {OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RECV_RCD,
+     (void (*)(void))ocaml_ssl_quic_crypto_recv_rcd},
+    {OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RELEASE_RCD,
+     (void (*)(void))ocaml_ssl_quic_crypto_release_rcd},
+    {OSSL_FUNC_SSL_QUIC_TLS_YIELD_SECRET,
+     (void (*)(void))ocaml_ssl_quic_yield_secret},
+    {OSSL_FUNC_SSL_QUIC_TLS_GOT_TRANSPORT_PARAMS,
+     (void (*)(void))ocaml_ssl_quic_got_transport_params},
+    {OSSL_FUNC_SSL_QUIC_TLS_ALERT, (void (*)(void))ocaml_ssl_quic_alert},
+    {0, NULL}};
 
 /* Option types */
 
@@ -1405,9 +1623,16 @@ CAMLprim value ocaml_ssl_get_file_descr(value socket) {
   CAMLreturn(Val_int(fd));
 }
 
+static value ocaml_ssl_alloc_socket(SSL *ssl) {
+  CAMLparam0();
+  CAMLlocal1(block);
+  block = caml_alloc_custom(&socket_ops, sizeof(SSL *), 0, 1);
+  SSL_val(block) = ssl;
+  CAMLreturn(block);
+}
+
 CAMLprim value ocaml_ssl_embed_socket(value socket_, value context) {
   CAMLparam2(socket_, context);
-  CAMLlocal1(block);
 #ifdef Socket_val
   SOCKET socket = Socket_val(socket_);
 #else
@@ -1415,8 +1640,6 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context) {
 #endif
   SSL_CTX *ctx = Ctx_val(context);
   SSL *ssl;
-
-  block = caml_alloc_custom(&socket_ops, sizeof(SSL *), 0, 1);
 
   if (socket < 0)
     caml_raise_constant(*caml_named_value("ssl_exn_invalid_socket"));
@@ -1428,9 +1651,43 @@ CAMLprim value ocaml_ssl_embed_socket(value socket_, value context) {
   }
   SSL_set_fd(ssl, socket);
   caml_acquire_runtime_system();
-  SSL_val(block) = ssl;
+  CAMLreturn(ocaml_ssl_alloc_socket(ssl));
+}
 
-  CAMLreturn(block);
+CAMLprim value ocaml_ssl_create_socket(value context) {
+  CAMLparam1(context);
+  SSL_CTX *ctx = Ctx_val(context);
+  SSL *ssl;
+
+  caml_release_runtime_system();
+  ssl = SSL_new(ctx);
+  caml_acquire_runtime_system();
+  if (ssl == NULL)
+    caml_raise_constant(*caml_named_value("ssl_exn_handler_error"));
+
+  CAMLreturn(ocaml_ssl_alloc_socket(ssl));
+}
+
+CAMLprim value ocaml_ssl_set_connect_state(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+
+  caml_release_runtime_system();
+  SSL_set_connect_state(ssl);
+  caml_acquire_runtime_system();
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_set_accept_state(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+
+  caml_release_runtime_system();
+  SSL_set_accept_state(ssl);
+  caml_acquire_runtime_system();
+
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
@@ -1488,6 +1745,214 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket) {
   memcpy((char *)String_val(proto), (const char *)data, len);
 
   CAMLreturn(Val_some(proto));
+}
+
+CAMLprim value ocaml_ssl_quic_configure(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+  int ok;
+
+  if (st == NULL) {
+    st = quic_state_new();
+    if (st == NULL)
+      caml_raise_out_of_memory();
+    SSL_set_app_data(ssl, st);
+  }
+
+  caml_release_runtime_system();
+  ok = SSL_set_quic_tls_cbs(ssl, ocaml_ssl_quic_dispatch, st);
+  caml_acquire_runtime_system();
+  if (ok != 1)
+    caml_raise_constant(*caml_named_value("ssl_exn_handler_error"));
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_quic_set_transport_params(value socket, value params) {
+  CAMLparam2(socket, params);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+  unsigned char *buf = NULL;
+  size_t len;
+  int ok;
+
+  if (st == NULL)
+    caml_invalid_argument("Ssl.quic_set_transport_params: socket not configured");
+
+  buf = copy_ocaml_bytes(params, &len);
+  free(st->local_transport_params);
+  st->local_transport_params = buf;
+  st->local_transport_params_len = len;
+  caml_release_runtime_system();
+  ok = SSL_set_quic_tls_transport_params(ssl, st->local_transport_params,
+                                         st->local_transport_params_len);
+  caml_acquire_runtime_system();
+  if (ok != 1)
+    caml_raise_constant(*caml_named_value("ssl_exn_handler_error"));
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_ssl_quic_provide_crypto_data(value socket, value data) {
+  CAMLparam2(socket, data);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+  quic_buf *buf;
+  size_t len;
+
+  if (st == NULL)
+    caml_invalid_argument("Ssl.quic_provide_crypto_data: socket not configured");
+
+  len = caml_string_length(data);
+  buf = malloc(sizeof(*buf));
+  if (buf == NULL)
+    caml_raise_out_of_memory();
+  buf->data = NULL;
+  buf->len = len;
+  buf->off = 0;
+  buf->next = NULL;
+  if (len > 0) {
+    buf->data = malloc(len);
+    if (buf->data == NULL) {
+      free(buf);
+      caml_raise_out_of_memory();
+    }
+    memcpy(buf->data, String_val(data), len);
+  }
+
+  if (st->recv_tail != NULL)
+    st->recv_tail->next = buf;
+  else
+    st->recv_head = buf;
+  st->recv_tail = buf;
+
+  CAMLreturn(Val_unit);
+}
+
+static value ocaml_ssl_val_quic_step_result(int err) {
+  switch (err) {
+  case SSL_ERROR_NONE:
+    return Val_int(0);
+  case SSL_ERROR_WANT_READ:
+    return Val_int(1);
+  case SSL_ERROR_WANT_WRITE:
+    return Val_int(2);
+  case SSL_ERROR_ZERO_RETURN:
+    return Val_int(3);
+  default:
+    caml_raise_with_arg(*caml_named_value("ssl_exn_connection_error"),
+                        Val_int(err));
+  }
+}
+
+static value ocaml_ssl_quic_step(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  int ret, err;
+
+  ERR_clear_error();
+  caml_release_runtime_system();
+  ret = SSL_do_handshake(ssl);
+  err = SSL_get_error(ssl, ret);
+  caml_acquire_runtime_system();
+
+  CAMLreturn(ocaml_ssl_val_quic_step_result(err));
+}
+
+CAMLprim value ocaml_ssl_quic_do_handshake(value socket) {
+  return ocaml_ssl_quic_step(socket);
+}
+
+CAMLprim value ocaml_ssl_quic_process_post_handshake(value socket) {
+  return ocaml_ssl_quic_step(socket);
+}
+
+CAMLprim value ocaml_ssl_quic_drain_events(value socket) {
+  CAMLparam1(socket);
+  CAMLlocal5(list, cons, tuple, payload, tail);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+  quic_event *cur;
+
+  if (st == NULL)
+    CAMLreturn(Val_emptylist);
+
+  list = Val_emptylist;
+  cur = st->event_head;
+  while (cur != NULL) {
+    quic_event *next = cur->next;
+    tuple = caml_alloc_tuple(4);
+    payload = caml_alloc_string(cur->len);
+    if (cur->len > 0)
+      memcpy(String_val(payload), cur->data, cur->len);
+    Store_field(tuple, 0, Val_int(cur->kind));
+    Store_field(tuple, 1, Val_int(cur->level));
+    Store_field(tuple, 2, Val_bool(cur->direction));
+    Store_field(tuple, 3, payload);
+    cons = caml_alloc(2, 0);
+    Store_field(cons, 0, tuple);
+    Store_field(cons, 1, list);
+    list = cons;
+    free(cur->data);
+    free(cur);
+    cur = next;
+  }
+
+  st->event_head = NULL;
+  st->event_tail = NULL;
+
+  tail = Val_emptylist;
+  while (list != Val_emptylist) {
+    cons = caml_alloc(2, 0);
+    Store_field(cons, 0, Field(list, 0));
+    Store_field(cons, 1, tail);
+    tail = cons;
+    list = Field(list, 1);
+  }
+
+  CAMLreturn(tail);
+}
+
+CAMLprim value ocaml_ssl_quic_get_peer_transport_params(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+  CAMLlocal1(params);
+
+  if (st == NULL || st->peer_transport_params == NULL)
+    CAMLreturn(Val_none);
+
+  params = caml_alloc_string(st->peer_transport_params_len);
+  if (st->peer_transport_params_len > 0)
+    memcpy(String_val(params), st->peer_transport_params,
+           st->peer_transport_params_len);
+
+  CAMLreturn(Val_some(params));
+}
+
+CAMLprim value ocaml_ssl_quic_take_alert(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  quic_state *st = quic_state_of_ssl(ssl);
+
+  if (st == NULL || !st->has_alert)
+    CAMLreturn(Val_none);
+
+  st->has_alert = 0;
+  CAMLreturn(Val_some(Val_int(st->alert)));
+}
+
+CAMLprim value ocaml_ssl_quic_handshake_in_progress(value socket) {
+  CAMLparam1(socket);
+  SSL *ssl = SSL_val(socket);
+  int in_progress;
+
+  caml_release_runtime_system();
+  in_progress = SSL_is_init_finished(ssl) == 0;
+  caml_acquire_runtime_system();
+
+  CAMLreturn(Val_bool(in_progress));
 }
 
 CAMLprim value ocaml_ssl_connect(value socket) {
