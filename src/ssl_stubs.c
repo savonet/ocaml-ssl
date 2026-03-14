@@ -176,13 +176,11 @@ static void quic_state_free(quic_state *st) {
 
 static void finalize_ssl_socket(value block) {
   SSL *ssl = SSL_val(block);
-  quic_state *st;
-  if (ssl != NULL) {
+  quic_state *st = NULL;
+  if (ssl != NULL)
     st = SSL_get_app_data(ssl);
-    quic_state_free(st);
-    SSL_set_app_data(ssl, NULL);
-  }
   SSL_free(ssl);
+  quic_state_free(st);
 }
 
 static struct custom_operations socket_ops = {
