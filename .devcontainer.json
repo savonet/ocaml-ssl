@@ -1,5 +1,5 @@
 {
-  "image":"ocaml/opam:ubuntu-22.04-ocaml-4.12",
+  "image":"ocaml/opam:ubuntu-22.04-ocaml-4.14",
   "extensions": [
       "ocamllabs.ocaml-platform",
       "redhat.vscode-yaml"
