@@ -465,71 +465,45 @@ value ocaml_ssl_ctx_get_max_proto_version(value context) {
   CAMLreturn(Val_int(ret));
 }
 
-/* This function assumes the runtime lock is released. In case of failure, it
- * acquires the runtime lock and then raises an OCaml exception. */
-static void set_protocol(SSL_CTX *ssl_context, int protocol) {
-  int max_proto = TLS1_3_VERSION;
+/* Returns an error message on failure, NULL on success. */
+static const char *set_protocol(SSL_CTX *ssl_context, int protocol) {
+  int min_proto, max_proto;
   switch (protocol) {
   case 0:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, SSL3_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, max_proto)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to SSLv3");
-    }
+    min_proto = SSL3_VERSION;
+    max_proto = TLS1_3_VERSION;
     break;
-
   case 1:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, SSL3_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, SSL3_VERSION)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to SSLv3");
-    }
+    min_proto = max_proto = SSL3_VERSION;
     break;
-
   case 2:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, TLS1_VERSION)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to TLSv1");
-    }
+    min_proto = max_proto = TLS1_VERSION;
     break;
-
   case 3:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_1_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, TLS1_1_VERSION)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to TLSv1_1");
-    }
+    min_proto = max_proto = TLS1_1_VERSION;
     break;
-
   case 4:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_2_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, TLS1_2_VERSION)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to TLSv1_2");
-    }
+    min_proto = max_proto = TLS1_2_VERSION;
     break;
-
   case 5:
-    if (!SSL_CTX_set_min_proto_version(ssl_context, TLS1_3_VERSION) ||
-        !SSL_CTX_set_max_proto_version(ssl_context, TLS1_3_VERSION)) {
-      caml_acquire_runtime_system();
-      caml_invalid_argument("Failed to set protocol to TLSv1_3");
-    }
+    min_proto = max_proto = TLS1_3_VERSION;
     break;
-
   default:
-    caml_acquire_runtime_system();
-    caml_invalid_argument(
-        "Unknown method (this should not have happened, please report).");
-    break;
+    return "Unknown method (this should not have happened, please report).";
   }
+
+  if (!SSL_CTX_set_min_proto_version(ssl_context, min_proto) ||
+      !SSL_CTX_set_max_proto_version(ssl_context, max_proto))
+    return "Failed to set protocol version";
+
+  return NULL;
 }
 
 CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
   CAMLparam2(protocol, type);
   CAMLlocal1(block);
   SSL_CTX *ctx;
+  const char *protocol_error;
   const SSL_METHOD *method = get_method(Int_val(type));
 
   caml_release_runtime_system();
@@ -539,7 +513,12 @@ CAMLprim value ocaml_ssl_create_context(value protocol, value type) {
     caml_acquire_runtime_system();
     caml_raise_constant(*caml_named_value("ssl_exn_context_error"));
   }
-  set_protocol(ctx, Int_val(protocol));
+  protocol_error = set_protocol(ctx, Int_val(protocol));
+  if (protocol_error != NULL) {
+    SSL_CTX_free(ctx);
+    caml_acquire_runtime_system();
+    caml_invalid_argument(protocol_error);
+  }
   /* In non-blocking mode, accept a buffer with a different address on
      a write retry (since the GC may need to move it). In blocking
      mode, hide SSL_ERROR_WANT_(READ|WRITE) from us. */
@@ -565,8 +544,11 @@ CAMLprim value ocaml_ssl_ctx_add_extra_chain_cert(value context, value cert) {
   caml_release_runtime_system();
   cbio = BIO_new_mem_buf((void *)cert_data, cert_data_length);
   x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  BIO_free(cbio);
+  /* On success, the context takes ownership of the certificate. */
   if (NULL == x509_cert || SSL_CTX_add_extra_chain_cert(ctx, x509_cert) <= 0) {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    X509_free(x509_cert);
     caml_acquire_runtime_system();
     caml_stat_free(cert_data);
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
@@ -591,16 +573,20 @@ CAMLprim value ocaml_ssl_ctx_add_cert_to_store(value context, value cert) {
   caml_release_runtime_system();
   cbio = BIO_new_mem_buf((void *)cert_data, cert_data_length);
   x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  BIO_free(cbio);
 
   X509_STORE *store = SSL_CTX_get_cert_store(ctx);
 
+  /* The store takes its own reference to the certificate. */
   if (NULL == x509_cert || X509_STORE_add_cert(store, x509_cert) <= 0) {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    X509_free(x509_cert);
     caml_acquire_runtime_system();
     caml_stat_free(cert_data);
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
                         caml_copy_string(buf));
   }
+  X509_free(x509_cert);
   caml_acquire_runtime_system();
   caml_stat_free(cert_data);
 
@@ -659,21 +645,28 @@ CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context,
   EVP_PKEY *pkey = NULL;
   BIO *cbio, *kbio;
 
+  /* The context takes its own references to the certificate and key. */
   cbio = BIO_new_mem_buf((void *)cert_data, cert_data_length);
   x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  BIO_free(cbio);
   if (NULL == x509_cert || SSL_CTX_use_certificate(ctx, x509_cert) <= 0) {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    X509_free(x509_cert);
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
                         caml_copy_string(buf));
   }
+  X509_free(x509_cert);
 
   kbio = BIO_new_mem_buf((void *)privkey_data, privkey_data_length);
   pkey = PEM_read_bio_PrivateKey(kbio, NULL, 0, NULL);
+  BIO_free(kbio);
   if (NULL == pkey || SSL_CTX_use_PrivateKey(ctx, pkey) <= 0) {
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+    EVP_PKEY_free(pkey);
     caml_raise_with_arg(*caml_named_value("ssl_exn_private_key_error"),
                         caml_copy_string(buf));
   }
+  EVP_PKEY_free(pkey);
   if (!SSL_CTX_check_private_key(ctx)) {
     caml_raise_constant(*caml_named_value("ssl_exn_unmatching_keys"));
   }
@@ -1301,6 +1294,7 @@ CAMLprim value ocaml_ssl_get_certificate(value socket) {
 
 CAMLprim value ocaml_ssl_get_issuer(value certificate) {
   CAMLparam1(certificate);
+  CAMLlocal1(result);
   X509 *cert = Cert_val(certificate);
 
   caml_release_runtime_system();
@@ -1309,11 +1303,14 @@ CAMLprim value ocaml_ssl_get_issuer(value certificate) {
   if (!issuer)
     caml_raise_not_found();
 
-  CAMLreturn(caml_copy_string(issuer));
+  result = caml_copy_string(issuer);
+  OPENSSL_free(issuer);
+  CAMLreturn(result);
 }
 
 CAMLprim value ocaml_ssl_get_subject(value certificate) {
   CAMLparam1(certificate);
+  CAMLlocal1(result);
   X509 *cert = Cert_val(certificate);
 
   caml_release_runtime_system();
@@ -1322,7 +1319,9 @@ CAMLprim value ocaml_ssl_get_subject(value certificate) {
   if (subject == NULL)
     caml_raise_not_found();
 
-  CAMLreturn(caml_copy_string(subject));
+  result = caml_copy_string(subject);
+  OPENSSL_free(subject);
+  CAMLreturn(result);
 }
 
 static value alloc_tm(struct tm *tm) {
@@ -1637,7 +1636,7 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start,
   CAMLparam2(socket, buffer);
   int ret, err;
   int buflen = Int_val(length);
-  char *buf = malloc(buflen);
+  char *buf;
   SSL *ssl = SSL_val(socket);
 
   if (Int_val(start) < 0)
@@ -1647,13 +1646,14 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start,
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
     caml_invalid_argument("Ssl.write: Buffer too short.");
 
+  buf = caml_stat_alloc(buflen);
   memmove(buf, (char *)Bytes_val(buffer) + Int_val(start), buflen);
   caml_release_runtime_system();
   ERR_clear_error();
   ret = SSL_write(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
   caml_acquire_runtime_system();
-  free(buf);
+  caml_stat_free(buf);
 
   if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_write_error"), Val_int(err));
@@ -1734,7 +1734,7 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
   CAMLparam2(socket, buffer);
   int ret, err;
   int buflen = Int_val(length);
-  char *buf = malloc(buflen);
+  char *buf;
   SSL *ssl = SSL_val(socket);
 
   if (Int_val(start) < 0)
@@ -1744,6 +1744,7 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
     caml_invalid_argument("Ssl.read: Buffer too short.");
 
+  buf = caml_stat_alloc(buflen);
   caml_release_runtime_system();
   ERR_clear_error();
   ret = SSL_read(ssl, buf, buflen);
@@ -1751,7 +1752,7 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
   caml_acquire_runtime_system();
   if (ret > 0)
     memmove(((char *)Bytes_val(buffer)) + Int_val(start), buf, ret);
-  free(buf);
+  caml_stat_free(buf);
 
   if (err != SSL_ERROR_NONE)
     caml_raise_with_arg(*caml_named_value("ssl_exn_read_error"), Val_int(err));

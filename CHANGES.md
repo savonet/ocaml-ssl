@@ -15,6 +15,9 @@ Unreleased
 -  `Ssl.set_password_callback`: an exception from the callback, or a password
    longer than OpenSSL's buffer, makes loading the key fail with
    `Private_key_error` instead of unwinding through OpenSSL or aborting.
+-  Fix memory leaks in `add_extra_chain_cert`, `add_cert_to_store`,
+   `use_certificate_from_string`, `get_issuer`, `get_subject`, and in `read`
+   and `write` when given invalid arguments.
 
 0.7.0 (2023-07-12)
 =====
