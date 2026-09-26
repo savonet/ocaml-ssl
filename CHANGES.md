@@ -18,6 +18,8 @@ Unreleased
 -  Fix memory leaks in `add_extra_chain_cert`, `add_cert_to_store`,
    `use_certificate_from_string`, `get_issuer`, `get_subject`, and in `read`
    and `write` when given invalid arguments.
+-  `Ssl.use_certificate_from_string` decrypts the key with the context's password
+   callback, like `Ssl.use_certificate`, instead of prompting on the terminal.
 
 0.7.0 (2023-07-12)
 =====
