@@ -20,6 +20,8 @@ Unreleased
    and `write` when given invalid arguments.
 -  `Ssl.use_certificate_from_string` decrypts the key with the context's password
    callback, like `Ssl.use_certificate`, instead of prompting on the terminal.
+-  Password and ALPN selection callbacks are released with their context, and
+   setting one again replaces it, instead of leaking a GC root on every call.
 
 0.7.0 (2023-07-12)
 =====
