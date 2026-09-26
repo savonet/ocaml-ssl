@@ -631,43 +631,84 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert,
   CAMLreturn(Val_unit);
 }
 
+enum certificate_error {
+  CERTIFICATE_OK,
+  CERTIFICATE_ERROR,
+  PRIVATE_KEY_ERROR,
+  UNMATCHING_KEYS
+};
+
+/* Runs with the runtime lock released, so that an encrypted key can be
+ * decrypted by the context's password callback, which reacquires it. */
+static enum certificate_error
+use_certificate_from_buffers(SSL_CTX *ctx, const char *cert_data,
+                             int cert_data_length, const char *privkey_data,
+                             int privkey_data_length) {
+  enum certificate_error error = CERTIFICATE_OK;
+  X509 *x509_cert = NULL;
+  EVP_PKEY *pkey = NULL;
+  BIO *bio;
+
+  bio = BIO_new_mem_buf((void *)cert_data, cert_data_length);
+  x509_cert = PEM_read_bio_X509(bio, NULL, 0, NULL);
+  BIO_free(bio);
+  if (NULL == x509_cert || SSL_CTX_use_certificate(ctx, x509_cert) <= 0) {
+    error = CERTIFICATE_ERROR;
+    goto end;
+  }
+
+  bio = BIO_new_mem_buf((void *)privkey_data, privkey_data_length);
+  pkey = PEM_read_bio_PrivateKey(bio, NULL, SSL_CTX_get_default_passwd_cb(ctx),
+                                 SSL_CTX_get_default_passwd_cb_userdata(ctx));
+  BIO_free(bio);
+  if (NULL == pkey || SSL_CTX_use_PrivateKey(ctx, pkey) <= 0) {
+    error = PRIVATE_KEY_ERROR;
+    goto end;
+  }
+
+  if (!SSL_CTX_check_private_key(ctx))
+    error = UNMATCHING_KEYS;
+
+end:
+  /* The context takes its own references to the certificate and key. */
+  X509_free(x509_cert);
+  EVP_PKEY_free(pkey);
+  return error;
+}
+
 CAMLprim value ocaml_ssl_ctx_use_certificate_from_string(value context,
                                                          value cert,
                                                          value privkey) {
   CAMLparam3(context, cert, privkey);
   SSL_CTX *ctx = Ctx_val(context);
-  const char *cert_data = String_val(cert);
   int cert_data_length = caml_string_length(cert);
-  const char *privkey_data = String_val(privkey);
   int privkey_data_length = caml_string_length(privkey);
+  char *cert_data = caml_stat_alloc(cert_data_length);
+  char *privkey_data = caml_stat_alloc(privkey_data_length);
+  enum certificate_error error;
   char buf[256];
-  X509 *x509_cert = NULL;
-  EVP_PKEY *pkey = NULL;
-  BIO *cbio, *kbio;
 
-  /* The context takes its own references to the certificate and key. */
-  cbio = BIO_new_mem_buf((void *)cert_data, cert_data_length);
-  x509_cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
-  BIO_free(cbio);
-  if (NULL == x509_cert || SSL_CTX_use_certificate(ctx, x509_cert) <= 0) {
+  memcpy(cert_data, String_val(cert), cert_data_length);
+  memcpy(privkey_data, String_val(privkey), privkey_data_length);
+  caml_release_runtime_system();
+  error = use_certificate_from_buffers(ctx, cert_data, cert_data_length,
+                                       privkey_data, privkey_data_length);
+  if (error != CERTIFICATE_OK)
     ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
-    X509_free(x509_cert);
+  caml_acquire_runtime_system();
+  caml_stat_free(cert_data);
+  caml_stat_free(privkey_data);
+
+  switch (error) {
+  case CERTIFICATE_OK:
+    break;
+  case CERTIFICATE_ERROR:
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
                         caml_copy_string(buf));
-  }
-  X509_free(x509_cert);
-
-  kbio = BIO_new_mem_buf((void *)privkey_data, privkey_data_length);
-  pkey = PEM_read_bio_PrivateKey(kbio, NULL, 0, NULL);
-  BIO_free(kbio);
-  if (NULL == pkey || SSL_CTX_use_PrivateKey(ctx, pkey) <= 0) {
-    ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
-    EVP_PKEY_free(pkey);
+  case PRIVATE_KEY_ERROR:
     caml_raise_with_arg(*caml_named_value("ssl_exn_private_key_error"),
                         caml_copy_string(buf));
-  }
-  EVP_PKEY_free(pkey);
-  if (!SSL_CTX_check_private_key(ctx)) {
+  case UNMATCHING_KEYS:
     caml_raise_constant(*caml_named_value("ssl_exn_unmatching_keys"));
   }
 

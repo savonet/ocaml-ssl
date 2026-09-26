@@ -54,26 +54,45 @@ let rec clear_error_queue () =
     clear_error_queue ()
 
 let test_password_callback () =
-  let use_encrypted_key password =
-    let context = Ssl.create_context TLSv1_3 Server_context in
-    Ssl.set_password_callback context password;
-    let result =
-      match Ssl.use_certificate context "client.pem" "client-encrypted.key" with
-        | () -> "loaded"
-        | exception Private_key_error _ -> "private key error"
-        | exception exn -> Printexc.to_string exn
-    in
-    clear_error_queue ();
-    result
+  let encrypted_key =
+    In_channel.with_open_bin "client-encrypted.key" In_channel.input_all
   in
-  check string "right password" "loaded"
-    (use_encrypted_key (fun _ -> "password"));
-  check string "wrong password" "private key error"
-    (use_encrypted_key (fun _ -> "wrong"));
-  check string "callback raises" "private key error"
-    (use_encrypted_key (fun _ -> raise Exit));
-  check string "password too long" "private key error"
-    (use_encrypted_key (fun _ -> String.make 100_000 'a'))
+  let loaders =
+    [
+      ( "file",
+        fun context ->
+          Ssl.use_certificate context "client.pem" "client-encrypted.key" );
+      ( "string",
+        fun context ->
+          Ssl.use_certificate_from_string context certstring encrypted_key );
+    ]
+  in
+  List.iter
+    (fun (loader_name, load) ->
+      let use_encrypted_key password =
+        let context = Ssl.create_context TLSv1_3 Server_context in
+        Ssl.set_password_callback context password;
+        let result =
+          match load context with
+            | () -> "loaded"
+            | exception Private_key_error _ -> "private key error"
+            | exception exn -> Printexc.to_string exn
+        in
+        clear_error_queue ();
+        result
+      in
+      let check_loader name expected password =
+        check string
+          (loader_name ^ ": " ^ name)
+          expected
+          (use_encrypted_key password)
+      in
+      check_loader "right password" "loaded" (fun _ -> "password");
+      check_loader "wrong password" "private key error" (fun _ -> "wrong");
+      check_loader "callback raises" "private key error" (fun _ -> raise Exit);
+      check_loader "password too long" "private key error" (fun _ ->
+          String.make 100_000 'a'))
+    loaders
 
 let test_use_certificate_from_string () =
   let context = Ssl.create_context TLSv1_3 Server_context in
