@@ -224,10 +224,9 @@ exception Verify_error of verify_error
 
 (** {1 Communication} *)
 
-(** Initialize SSL functions. Should be called before calling any other
-    function. The parameter [thread_safe] should be set to true if you use
-    threads in you application (the same effect can achieved by calling
-    [Ssl_threads.init] first. *)
+(** Initialize SSL functions. OpenSSL initializes itself on first use, so
+    calling this is optional. [thread_safe] is ignored: OpenSSL is thread-safe
+    on its own, and the parameter is kept for compatibility. *)
 val init : ?thread_safe:bool -> unit -> unit
 
 (** Retrieve a human-readable message that corresponds to the earliest error
@@ -296,9 +295,7 @@ type socket
 
 (** {2 Threads} *)
 
-(** You should not have to use those functions. They are only here for internal
-    use (they are needed to make the openssl library thread-safe, see the
-    [Ssl_threads] module). *)
+(** Ignored, kept for compatibility: OpenSSL is thread-safe on its own. *)
 
 val thread_safe : bool ref
 
