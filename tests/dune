@@ -39,6 +39,7 @@
   digicert_certificate.pem
   client.pem
   client.key
+  client-encrypted.key
   dh4096.pem
   server.key
   server.pem
