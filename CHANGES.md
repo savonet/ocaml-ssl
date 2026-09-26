@@ -27,6 +27,10 @@ Unreleased
 -  When pkg-config cannot find OpenSSL, the build warns and the fallback flags
    always link `-lssl -lcrypto`; on macOS they used to only add a search path,
    failing at link time (#55).
+-  Read and write functions check their offset and length in one place, without
+   overflowing. A huge offset used to be truncated to 32 bits, silently reading
+   at another position, and on `Runtime_lock` functions raised an exception
+   that could not be caught.
 
 0.7.0 (2023-07-12)
 =====
