@@ -1,4 +1,4 @@
-(lang dune 2.7)
+(lang dune 3.23)
 
 (name ssl)
 (version 0.7.0)
@@ -23,8 +23,11 @@
  (synopsis "Bindings for OpenSSL")
  (depends
   (ocaml
-   (>= "4.03.0"))
-  (ocaml (and :with_test (>= "4.08.0")))
+   (and
+    (>= "4.03.0")
+    (or
+     (not :with-test)
+     (>= "4.08.0"))))
   dune-configurator
   conf-libssl
   (alcotest :with-test)

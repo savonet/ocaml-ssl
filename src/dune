@@ -7,6 +7,7 @@
   (language c)
   (names ssl_stubs)
   (flags
+   :standard
    (:include c_flags.sexp)))
  (c_library_flags
   (:include c_library_flags.sexp))
