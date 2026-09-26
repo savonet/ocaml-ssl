@@ -104,3 +104,11 @@ basicConstraints=critical,CA:FALSE
 extendedKeyUsage=critical,clientAuth
 subjectKeyIdentifier = hash
 ```
+
+### Encrypted client key
+
+`client-encrypted.key` is `client.key` encrypted with the password `password`:
+
+```
+openssl pkey -in client.key -aes256 -passout pass:password -out client-encrypted.key
+```

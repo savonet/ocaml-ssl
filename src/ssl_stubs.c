@@ -994,18 +994,22 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb) {
   CAMLreturn(Val_unit);
 }
 
+/* A password that does not fit in `buf`, like an exception from the callback,
+ * is reported to OpenSSL as a failure. */
 static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
-  value s;
-  int len;
+  value password;
+  int length = -1;
 
   caml_acquire_runtime_system();
-  s = caml_callback(*((value *)userdata), Val_int(rwflag));
-  len = caml_string_length(s);
-  assert(len <= size);
-  memcpy(buf, String_val(s), len);
+  password = caml_callback_exn(*((value *)userdata), Val_bool(rwflag));
+  if (!Is_exception_result(password) &&
+      caml_string_length(password) <= (mlsize_t)size) {
+    length = caml_string_length(password);
+    memcpy(buf, String_val(password), length);
+  }
   caml_release_runtime_system();
 
-  return len;
+  return length;
 }
 
 CAMLprim value ocaml_ssl_ctx_set_default_passwd_cb(value context, value cb) {

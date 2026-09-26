@@ -12,6 +12,9 @@ Unreleased
    did not offer, fails the handshake instead of unwinding through OpenSSL. The
    selected protocol no longer points into the OCaml heap after the runtime
    lock is released. Protocol names must be 1 to 255 bytes long.
+-  `Ssl.set_password_callback`: an exception from the callback, or a password
+   longer than OpenSSL's buffer, makes loading the key fail with
+   `Private_key_error` instead of unwinding through OpenSSL or aborting.
 
 0.7.0 (2023-07-12)
 =====
