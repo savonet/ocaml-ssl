@@ -387,11 +387,18 @@ val set_verify : context -> verify_mode list -> verify_callback option -> unit
     allowed. *)
 val set_verify_depth : context -> int -> unit
 
-(** Set the list of supported ALPN protocols for negotiation to the context. *)
+(** Set the list of supported ALPN protocols for negotiation to the context.
+
+    @raise Invalid_argument
+      if a protocol name is empty or longer than 255 bytes, or if the encoded
+      list is longer than 65535 bytes. *)
 val set_context_alpn_protos : context -> string list -> unit
 
 (** Set the callback to allow server to select the preferred protocol from
-    client's available protocols. *)
+    client's available protocols.
+
+    The handshake fails if the callback raises or returns a protocol the client
+    did not offer. *)
 val set_context_alpn_select_callback :
   context -> (string list -> string option) -> unit
 
@@ -507,7 +514,10 @@ val embed_socket : Unix.file_descr -> context -> socket
 val set_client_SNI_hostname : socket -> string -> unit
 
 (** Set the list of supported ALPN protocols for negotiation to the connection.
-*)
+
+    @raise Invalid_argument
+      if a protocol name is empty or longer than 255 bytes, or if the encoded
+      list is longer than 65535 bytes. *)
 val set_alpn_protos : socket -> string list -> unit
 
 (** Get the negotiated protocol from the connection. *)
