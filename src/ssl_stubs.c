@@ -875,6 +875,54 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context,
   CAMLreturn(Val_unit);
 }
 
+/* Callbacks are stored in their context, which unregisters them when freed. */
+static int alpn_select_callback_index = -1;
+static int password_callback_index = -1;
+static CRYPTO_ONCE callback_indexes_once = CRYPTO_ONCE_STATIC_INIT;
+
+static void free_callback_root(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+                               int idx, long argl, void *argp) {
+  value *callback = ptr;
+
+  if (callback == NULL)
+    return;
+  caml_remove_generational_global_root(callback);
+  caml_stat_free(callback);
+}
+
+static void init_callback_indexes(void) {
+  alpn_select_callback_index =
+      SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, free_callback_root);
+  password_callback_index =
+      SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, free_callback_root);
+}
+
+/* Returns a root holding the callback, reused if one is already stored. */
+static value *set_context_callback(SSL_CTX *ctx, const int *index,
+                                   value callback) {
+  value *root;
+
+  if (!CRYPTO_THREAD_run_once(&callback_indexes_once, init_callback_indexes) ||
+      *index < 0)
+    caml_failwith("Ssl: could not allocate callback storage");
+
+  root = SSL_CTX_get_ex_data(ctx, *index);
+  if (root != NULL) {
+    caml_modify_generational_global_root(root, callback);
+    return root;
+  }
+
+  root = caml_stat_alloc(sizeof(value));
+  *root = callback;
+  caml_register_generational_global_root(root);
+  if (!SSL_CTX_set_ex_data(ctx, *index, root)) {
+    caml_remove_generational_global_root(root);
+    caml_stat_free(root);
+    caml_failwith("Ssl: could not store callback");
+  }
+  return root;
+}
+
 /* Encodes the protocols in the ALPN wire format, each prefixed by its length.
  *
  * The result must be freed with caml_stat_free. */
@@ -1015,11 +1063,7 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_select_callback(value context, value cb) {
   CAMLparam2(context, cb);
   SSL_CTX *ctx = Ctx_val(context);
 
-  value *select_cb;
-
-  select_cb = malloc(sizeof(value));
-  *select_cb = cb;
-  caml_register_global_root(select_cb);
+  value *select_cb = set_context_callback(ctx, &alpn_select_callback_index, cb);
 
   caml_release_runtime_system();
   SSL_CTX_set_alpn_select_cb(ctx, alpn_select_cb, select_cb);
@@ -1049,12 +1093,7 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
 CAMLprim value ocaml_ssl_ctx_set_default_passwd_cb(value context, value cb) {
   CAMLparam2(context, cb);
   SSL_CTX *ctx = Ctx_val(context);
-  value *pcb;
-
-  /* TODO: this never gets freed or even unregistered */
-  pcb = malloc(sizeof(value));
-  *pcb = cb;
-  caml_register_global_root(pcb);
+  value *pcb = set_context_callback(ctx, &password_callback_index, cb);
 
   caml_release_runtime_system();
   SSL_CTX_set_default_passwd_cb(ctx, pem_passwd_cb);
