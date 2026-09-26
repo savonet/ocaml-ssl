@@ -173,6 +173,14 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
 
   CAMLreturn(result);
 }
+/* OpenSSL takes NUL-terminated strings, where an embedded NUL would silently
+ * truncate a name or a path. */
+static void check_c_string(value string, const char *function_name) {
+  if (!caml_string_is_c_safe(string))
+    caml_invalid_argument_value(
+        caml_alloc_sprintf("%s: NUL byte in string", function_name));
+}
+
 /*****************************
  * Context-related functions *
  *****************************/
@@ -485,9 +493,13 @@ CAMLprim value ocaml_ssl_ctx_use_certificate(value context, value cert,
                                              value privkey) {
   CAMLparam3(context, cert, privkey);
   SSL_CTX *ctx = Ctx_val(context);
-  char *cert_name = caml_stat_strdup(String_val(cert));
-  char *privkey_name = caml_stat_strdup(String_val(privkey));
+  char *cert_name, *privkey_name;
   char buf[256];
+
+  check_c_string(cert, "Ssl.use_certificate");
+  check_c_string(privkey, "Ssl.use_certificate");
+  cert_name = caml_stat_strdup(String_val(cert));
+  privkey_name = caml_stat_strdup(String_val(privkey));
 
   caml_release_runtime_system();
   if (SSL_CTX_use_certificate_chain_file(ctx, cert_name) <= 0) {
@@ -742,9 +754,12 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context,
                                                           value vfilename) {
   CAMLparam2(context, vfilename);
   SSL_CTX *ctx = Ctx_val(context);
-  char *filename = caml_stat_strdup(String_val(vfilename));
+  char *filename;
   STACK_OF(X509_NAME) * cert_names;
   char buf[256];
+
+  check_c_string(vfilename, "Ssl.set_client_CA_list_from_file");
+  filename = caml_stat_strdup(String_val(vfilename));
 
   caml_release_runtime_system();
   cert_names = SSL_load_client_CA_file(filename);
@@ -1006,6 +1021,7 @@ CAMLprim value ocaml_ssl_ctx_set_cipher_list(value context,
   SSL_CTX *ctx = Ctx_val(context);
   char *ciphers;
 
+  check_c_string(ciphers_string, "Ssl.set_cipher_list");
   if (*String_val(ciphers_string) == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
 
@@ -1130,7 +1146,8 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context,
   BIO *bio;
   int ret = 0;
 
-  if (!caml_string_is_c_safe(dh_file_path) || *String_val(dh_file_path) == 0)
+  check_c_string(dh_file_path, "Ssl.init_dh_from_file");
+  if (*String_val(dh_file_path) == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
 
   path = caml_stat_strdup(String_val(dh_file_path));
@@ -1160,8 +1177,7 @@ CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context,
   int nid;
   int ret;
 
-  if (!caml_string_is_c_safe(curve_name))
-    caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
+  check_c_string(curve_name, "Ssl.init_ec_from_named_curve");
 
   nid = OBJ_sn2nid(String_val(curve_name));
   if (nid == NID_undef)
@@ -1201,6 +1217,7 @@ CAMLprim value ocaml_ssl_read_certificate(value vfilename) {
   FILE *fh = NULL;
   char buf[256];
 
+  check_c_string(vfilename, "Ssl.read_certificate");
   if ((fh = fopen(filename, "r")) == NULL)
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
                         caml_copy_string("couldn't open certificate file"));
@@ -1228,6 +1245,7 @@ CAMLprim value ocaml_ssl_write_certificate(value vfilename, value certificate) {
   FILE *fh = NULL;
   char buf[256];
 
+  check_c_string(vfilename, "Ssl.write_certificate");
   if ((fh = fopen(filename, "w")) == NULL)
     caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
                         caml_copy_string("couldn't open certificate file"));
@@ -1356,6 +1374,8 @@ CAMLprim value ocaml_ssl_ctx_load_verify_locations(value context, value ca_file,
   char *CApath = NULL;
   int ret;
 
+  check_c_string(ca_file, "Ssl.load_verify_locations");
+  check_c_string(ca_path, "Ssl.load_verify_locations");
   if (*String_val(ca_file) != 0)
     CAfile = caml_stat_strdup(String_val(ca_file));
   if (*String_val(ca_path) != 0)
@@ -1438,8 +1458,7 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
   char *hostname;
   int ret;
 
-  if (!caml_string_is_c_safe(vhostname))
-    caml_invalid_argument("Ssl.set_client_SNI_hostname: NUL byte in hostname");
+  check_c_string(vhostname, "Ssl.set_client_SNI_hostname");
 
   hostname = caml_stat_strdup(String_val(vhostname));
   caml_release_runtime_system();
@@ -1580,8 +1599,7 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host) {
   char *hostname;
   int ret;
 
-  if (!caml_string_is_c_safe(host))
-    caml_invalid_argument("Ssl.set_host: NUL byte in hostname");
+  check_c_string(host, "Ssl.set_host");
 
   hostname = caml_stat_strdup(String_val(host));
   caml_release_runtime_system();
@@ -1601,8 +1619,7 @@ CAMLprim value ocaml_ssl_set1_ip(value socket, value ip) {
   char *ipval;
   int ret;
 
-  if (!caml_string_is_c_safe(ip))
-    caml_invalid_argument("Ssl.set_ip: NUL byte in IP address");
+  check_c_string(ip, "Ssl.set_ip");
 
   ipval = caml_stat_strdup(String_val(ip));
   caml_release_runtime_system();

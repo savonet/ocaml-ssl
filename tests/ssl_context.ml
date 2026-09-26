@@ -116,6 +116,35 @@ let test_callbacks_released () =
   done;
   check int "released callbacks" 3 !released_callbacks
 
+let test_reject_nul_bytes () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  let certificate = Ssl.read_certificate "client.pem" in
+  let with_nul = "client.pem\000ignored" in
+  let rejects name f =
+    match f () with
+      | () -> fail (name ^ " accepted a NUL byte")
+      | exception Invalid_argument _ -> ()
+  in
+  rejects "use_certificate cert" (fun () ->
+      Ssl.use_certificate context with_nul "client.key");
+  rejects "use_certificate key" (fun () ->
+      Ssl.use_certificate context "client.pem" "client.key\000ignored");
+  rejects "set_client_CA_list_from_file" (fun () ->
+      Ssl.set_client_CA_list_from_file context with_nul);
+  rejects "set_cipher_list" (fun () ->
+      Ssl.set_cipher_list context "DEFAULT\000ignored");
+  rejects "load_verify_locations file" (fun () ->
+      Ssl.load_verify_locations context with_nul "");
+  rejects "load_verify_locations path" (fun () ->
+      Ssl.load_verify_locations context "" ".\000ignored");
+  rejects "read_certificate" (fun () -> ignore (Ssl.read_certificate with_nul));
+  rejects "write_certificate" (fun () ->
+      Ssl.write_certificate "written.pem\000ignored" certificate);
+  rejects "init_dh_from_file" (fun () ->
+      Ssl.init_dh_from_file context "dh4096.pem\000ignored");
+  rejects "init_ec_from_named_curve" (fun () ->
+      Ssl.init_ec_from_named_curve context "secp384r1\000ignored")
+
 let test_use_certificate_from_string () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate_from_string context certstring clientkeystring;
@@ -183,6 +212,7 @@ let () =
           test_case "Add cert to store" `Quick test_add_cert_to_store;
           test_case "Use certificate" `Quick test_use_certificate;
           test_case "Password callback" `Quick test_password_callback;
+          test_case "Reject NUL bytes" `Quick test_reject_nul_bytes;
           test_case "Callbacks released" `Quick test_callbacks_released;
           test_case "Use certificate from string" `Quick
             test_use_certificate_from_string;
