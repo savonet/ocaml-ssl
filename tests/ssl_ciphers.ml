@@ -4,7 +4,7 @@ open Util
 
 let test_disable_protocols () =
   let context = Ssl.create_context TLSv1_3 Server_context in
-  Ssl.disable_protocols context [ (SSLv23 [@ocaml.alert "-deprecated"]) ];
+  Ssl.disable_protocols context [(SSLv23 [@ocaml.alert "-deprecated"])];
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
 
 let test_set_cipher_list () =
@@ -41,22 +41,20 @@ let test_socket_cipher_funcs () =
   let socket_version = Ssl.version ssl in
   Ssl.shutdown_connection ssl;
   check string "cipher name" "TLS_AES_256_GCM_SHA384" name;
-  check
-    bool
-    "cipher description"
-    true
+  check bool "cipher description" true
     (Str.string_partial_match (Str.regexp ".*Enc=AESGCM(256).*") description 0);
   check string "cipher version" "TLSv1.3" version;
   check protocol_testable "socket version" TLSv1_3 socket_version
 
 let () =
-  Alcotest.run
-    "Ssl cipher functions"
-    [ ( "Ciphers"
-      , [ test_case "Disable protocols" `Quick test_disable_protocols
-        ; test_case "Set cipher list" `Quick test_set_cipher_list
-        ; test_case "Init DH params" `Quick test_cipher_init_dh
-        ; test_case "Init EC params" `Quick test_init_ec_from_named_curve
-        ; test_case "Cipher funcs" `Quick test_socket_cipher_funcs
-        ] )
+  Alcotest.run "Ssl cipher functions"
+    [
+      ( "Ciphers",
+        [
+          test_case "Disable protocols" `Quick test_disable_protocols;
+          test_case "Set cipher list" `Quick test_set_cipher_list;
+          test_case "Init DH params" `Quick test_cipher_init_dh;
+          test_case "Init EC params" `Quick test_init_ec_from_named_curve;
+          test_case "Cipher funcs" `Quick test_socket_cipher_funcs;
+        ] );
     ]

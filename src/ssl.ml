@@ -16,24 +16,17 @@
    along with this library; if not, write to the Free Software Foundation, Inc.,
    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA *)
 
-type version =
-  { major : int  (** major version *)
-  ; minor : int  (** minor version *)
-  ; patch : int  (** patch number (fix + patch in version < 3.0) *)
-  }
+type version = {
+  major : int;  (** major version *)
+  minor : int;  (** minor version *)
+  patch : int;  (** patch number (fix + patch in version < 3.0) *)
+}
 
 external get_version : unit -> version = "ocaml_ssl_get_version"
 
 let native_library_version : version = get_version ()
 
-type protocol =
-  | SSLv23
-  | SSLv3
-  | TLSv1
-  | TLSv1_1
-  | TLSv1_2
-  | TLSv1_3
-
+type protocol = SSLv23 | SSLv3 | TLSv1 | TLSv1_1 | TLSv1_2 | TLSv1_3
 type context
 type certificate
 type socket
@@ -90,21 +83,18 @@ type verify_error =
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 (** Kept for backwards compatibility *)
+external get_error_string : unit -> string = "ocaml_ssl_get_error_string"
 
 module Error = struct
-  type t = private
-    { library_number : int
-    ; reason_code : int
-    ; lib : string option
-    ; reason : string option
-    }
+  type t = private {
+    library_number : int;
+    reason_code : int;
+    lib : string option;
+    reason : string option;
+  }
 
-  type err_function =
-    | Get_error
-    | Peek_error
-    | Peek_last_error
+  type err_function = Get_error | Peek_error | Peek_last_error
 
   external error_struct : err_function -> t = "ocaml_ssl_error_struct"
 
@@ -119,12 +109,10 @@ module Error = struct
     let reasonstring =
       match err.reason with Some reason -> reason | None -> "reason(0)"
     in
-    Printf.sprintf
-      "error:%02lX:%06lX:%s::%s"
+    Printf.sprintf "error:%02lX:%06lX:%s::%s"
       (Int32.of_int err.library_number)
       (Int32.of_int err.reason_code)
-      libstring
-      reasonstring
+      libstring reasonstring
 end
 
 exception Method_error
@@ -146,53 +134,50 @@ exception Flush_error of bool (* true means retry *)
 
 let () =
   Printexc.register_printer (function
-      | Method_error -> Some "SSL: Method error"
-      | Context_error -> Some "SSL: Context error"
-      | Certificate_error s -> Some ("SSL: Certificate error: " ^ s)
-      | Cipher_error -> Some "SSL: Cipher error"
-      | Diffie_hellman_error -> Some "SSL: Diffie-Hellman error"
-      | Ec_curve_error -> Some "SSL: EC curve error"
-      | Private_key_error s -> Some ("SSL: Private key error: " ^ s)
-      | Unmatching_keys -> Some "SSL: Unmatching keys"
-      | Invalid_socket -> Some "SSL: Invalid socket"
-      | Handler_error -> Some "SSL: Handler error"
-      | Connection_error _ ->
+    | Method_error -> Some "SSL: Method error"
+    | Context_error -> Some "SSL: Context error"
+    | Certificate_error s -> Some ("SSL: Certificate error: " ^ s)
+    | Cipher_error -> Some "SSL: Cipher error"
+    | Diffie_hellman_error -> Some "SSL: Diffie-Hellman error"
+    | Ec_curve_error -> Some "SSL: EC curve error"
+    | Private_key_error s -> Some ("SSL: Private key error: " ^ s)
+    | Unmatching_keys -> Some "SSL: Unmatching keys"
+    | Invalid_socket -> Some "SSL: Invalid socket"
+    | Handler_error -> Some "SSL: Handler error"
+    | Connection_error _ ->
         Some ("SSL connection() error: " ^ Error.peek_last_error_string ())
-      | Accept_error _ ->
+    | Accept_error _ ->
         Some ("SSL accept() error: " ^ Error.peek_last_error_string ())
-      | Read_error _ ->
+    | Read_error _ ->
         Some ("SSL read() error: " ^ Error.peek_last_error_string ())
-      | Write_error _ ->
+    | Write_error _ ->
         Some ("SSL write() error: " ^ Error.peek_last_error_string ())
-      | Verify_error _ ->
+    | Verify_error _ ->
         Some ("SSL verify() error: " ^ Error.peek_last_error_string ())
-      | Flush_error b ->
+    | Flush_error b ->
         Some
           (Printf.sprintf "SSL flush(%b) error: " b
           ^ Error.peek_last_error_string ())
-      | _ -> None)
+    | _ -> None)
 
 let () =
   Callback.register_exception "ssl_exn_method_error" Method_error;
   Callback.register_exception "ssl_exn_context_error" Context_error;
   Callback.register_exception "ssl_exn_certificate_error" (Certificate_error "");
   Callback.register_exception "ssl_exn_cipher_error" Cipher_error;
-  Callback.register_exception
-    "ssl_exn_diffie_hellman_error"
+  Callback.register_exception "ssl_exn_diffie_hellman_error"
     Diffie_hellman_error;
   Callback.register_exception "ssl_exn_ec_curve_error" Ec_curve_error;
   Callback.register_exception "ssl_exn_private_key_error" (Private_key_error "");
   Callback.register_exception "ssl_exn_unmatching_keys" Unmatching_keys;
   Callback.register_exception "ssl_exn_invalid_socket" Invalid_socket;
   Callback.register_exception "ssl_exn_handler_error" Handler_error;
-  Callback.register_exception
-    "ssl_exn_connection_error"
+  Callback.register_exception "ssl_exn_connection_error"
     (Connection_error Error_none);
   Callback.register_exception "ssl_exn_accept_error" (Accept_error Error_none);
   Callback.register_exception "ssl_exn_read_error" (Read_error Error_none);
   Callback.register_exception "ssl_exn_write_error" (Write_error Error_none);
-  Callback.register_exception
-    "ssl_exn_verify_error"
+  Callback.register_exception "ssl_exn_verify_error"
     (Verify_error Error_v_application_verification);
   Callback.register_exception "ssl_exn_flush_error" (Flush_error true)
 
@@ -206,129 +191,68 @@ let init ?thread_safe () =
   let thread_safe = match thread_safe with Some b -> b | None -> !ts in
   init thread_safe
 
-type context_type =
-  | Client_context
-  | Server_context
-  | Both_context
+type context_type = Client_context | Server_context | Both_context
 
-external create_context :
-   protocol
-  -> context_type
-  -> context
+external create_context : protocol -> context_type -> context
   = "ocaml_ssl_create_context"
 
-external set_min_protocol_version :
-   context
-  -> protocol
-  -> unit
+external set_min_protocol_version : context -> protocol -> unit
   = "ocaml_ssl_ctx_set_min_proto_version"
 
-external set_max_protocol_version :
-   context
-  -> protocol
-  -> unit
+external set_max_protocol_version : context -> protocol -> unit
   = "ocaml_ssl_ctx_set_max_proto_version"
 
-external get_min_protocol_version :
-   context
-  -> protocol
+external get_min_protocol_version : context -> protocol
   = "ocaml_ssl_ctx_get_min_proto_version"
 
-external get_max_protocol_version :
-   context
-  -> protocol
+external get_max_protocol_version : context -> protocol
   = "ocaml_ssl_ctx_get_max_proto_version"
 
-external add_extra_chain_cert :
-   context
-  -> string
-  -> unit
+external add_extra_chain_cert : context -> string -> unit
   = "ocaml_ssl_ctx_add_extra_chain_cert"
 
-external add_cert_to_store :
-   context
-  -> string
-  -> unit
+external add_cert_to_store : context -> string -> unit
   = "ocaml_ssl_ctx_add_cert_to_store"
 
-external use_certificate :
-   context
-  -> string
-  -> string
-  -> unit
+external use_certificate : context -> string -> string -> unit
   = "ocaml_ssl_ctx_use_certificate"
 
-external use_certificate_from_string :
-   context
-  -> string
-  -> string
-  -> unit
+external use_certificate_from_string : context -> string -> string -> unit
   = "ocaml_ssl_ctx_use_certificate_from_string"
 
-external set_password_callback :
-   context
-  -> (bool -> string)
-  -> unit
+external set_password_callback : context -> (bool -> string) -> unit
   = "ocaml_ssl_ctx_set_default_passwd_cb"
 
-external embed_socket :
-   Unix.file_descr
-  -> context
-  -> socket
+external embed_socket : Unix.file_descr -> context -> socket
   = "ocaml_ssl_embed_socket"
 
-external disable_protocols :
-   context
-  -> protocol list
-  -> unit
+external disable_protocols : context -> protocol list -> unit
   = "ocaml_ssl_disable_protocols"
 
-external set_cipher_list :
-   context
-  -> string
-  -> unit
+external set_cipher_list : context -> string -> unit
   = "ocaml_ssl_ctx_set_cipher_list"
 
-external honor_cipher_order :
-   context
-  -> unit
+external honor_cipher_order : context -> unit
   = "ocaml_ssl_ctx_honor_cipher_order"
 
-external init_dh_from_file :
-   context
-  -> string
-  -> unit
+external init_dh_from_file : context -> string -> unit
   = "ocaml_ssl_ctx_init_dh_from_file"
 
-external init_ec_from_named_curve :
-   context
-  -> string
-  -> unit
+external init_ec_from_named_curve : context -> string -> unit
   = "ocaml_ssl_ctx_init_ec_from_named_curve"
 
-external load_verify_locations :
-   context
-  -> string
-  -> string
-  -> unit
+external load_verify_locations : context -> string -> string -> unit
   = "ocaml_ssl_ctx_load_verify_locations"
 
-external set_default_verify_paths :
-   context
-  -> bool
+external set_default_verify_paths : context -> bool
   = "ocaml_ssl_ctx_set_default_verify_paths"
 
 external get_verify_result : socket -> int = "ocaml_ssl_get_verify_result"
 
-external get_verify_error_string :
-   int
-  -> string
+external get_verify_error_string : int -> string
   = "ocaml_ssl_get_verify_error_string"
 
-external digest :
-   [ `SHA1 | `SHA256 | `SHA384 ]
-  -> certificate
-  -> string
+external digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
   = "ocaml_ssl_digest"
 
 type verify_mode =
@@ -338,47 +262,29 @@ type verify_mode =
 
 type verify_callback
 
-external get_client_verify_callback_ptr :
-   unit
-  -> verify_callback
+external get_client_verify_callback_ptr : unit -> verify_callback
   = "ocaml_ssl_get_client_verify_callback_ptr"
 
 let client_verify_callback = get_client_verify_callback_ptr ()
 
-external set_client_verify_callback_verbose :
-   bool
-  -> unit
+external set_client_verify_callback_verbose : bool -> unit
   = "ocaml_ssl_set_client_verify_callback_verbose"
 
 external set_verify :
-   context
-  -> verify_mode list
-  -> verify_callback option
-  -> unit
+  context -> verify_mode list -> verify_callback option -> unit
   = "ocaml_ssl_ctx_set_verify"
 
-external set_verify_depth :
-   context
-  -> int
-  -> unit
+external set_verify_depth : context -> int -> unit
   = "ocaml_ssl_ctx_set_verify_depth"
 
-external set_client_CA_list_from_file :
-   context
-  -> string
-  -> unit
+external set_client_CA_list_from_file : context -> string -> unit
   = "ocaml_ssl_ctx_set_client_CA_list_from_file"
 
-external set_context_alpn_protos :
-   context
-  -> string list
-  -> unit
+external set_context_alpn_protos : context -> string list -> unit
   = "ocaml_ssl_ctx_set_alpn_protos"
 
 external set_context_alpn_select_callback :
-   context
-  -> (string list -> string option)
-  -> unit
+  context -> (string list -> string option) -> unit
   = "ocaml_ssl_ctx_set_alpn_select_callback"
 
 external version : socket -> protocol = "ocaml_ssl_version"
@@ -387,9 +293,7 @@ type cipher
 
 external get_cipher : socket -> cipher = "ocaml_ssl_get_current_cipher"
 
-external get_cipher_description :
-   cipher
-  -> string
+external get_cipher_description : cipher -> string
   = "ocaml_ssl_get_cipher_description"
 
 (* TODO: get_cipher_bits *)
@@ -399,41 +303,26 @@ external get_cipher_version : cipher -> string = "ocaml_ssl_get_cipher_version"
 external get_certificate : socket -> certificate = "ocaml_ssl_get_certificate"
 external read_certificate : string -> certificate = "ocaml_ssl_read_certificate"
 
-external write_certificate :
-   string
-  -> certificate
-  -> unit
+external write_certificate : string -> certificate -> unit
   = "ocaml_ssl_write_certificate"
 
 external get_issuer : certificate -> string = "ocaml_ssl_get_issuer"
 external get_subject : certificate -> string = "ocaml_ssl_get_subject"
 external get_start_date : certificate -> Unix.tm = "ocaml_ssl_get_start_date"
 
-external get_expiration_date :
-   certificate
-  -> Unix.tm
+external get_expiration_date : certificate -> Unix.tm
   = "ocaml_ssl_get_expiration_date"
 
-external file_descr_of_socket :
-   socket
-  -> Unix.file_descr
+external file_descr_of_socket : socket -> Unix.file_descr
   = "ocaml_ssl_get_file_descr"
 
-external set_client_SNI_hostname :
-   socket
-  -> string
-  -> unit
+external set_client_SNI_hostname : socket -> string -> unit
   = "ocaml_ssl_set_client_SNI_hostname"
 
-external set_alpn_protos :
-   socket
-  -> string list
-  -> unit
+external set_alpn_protos : socket -> string list -> unit
   = "ocaml_ssl_set_alpn_protos"
 
-external get_negotiated_alpn_protocol :
-   socket
-  -> string option
+external get_negotiated_alpn_protocol : socket -> string option
   = "ocaml_ssl_get_negotiated_alpn_protocol"
 
 external verify : socket -> unit = "ocaml_ssl_verify"
@@ -445,10 +334,7 @@ type x509_check_flag =
   | Multi_label_wildcards
   | Single_label_subdomains
 
-external set_hostflags :
-   socket
-  -> x509_check_flag list
-  -> unit
+external set_hostflags : socket -> x509_check_flag list -> unit
   = "ocaml_ssl_set_hostflags"
 
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
@@ -475,30 +361,15 @@ module Runtime_unlock_base = struct
   external accept : socket -> unit = "ocaml_ssl_accept"
   external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
-  external write_substring :
-     socket
-    -> string
-    -> int
-    -> int
-    -> int
+  external write_substring : socket -> string -> int -> int -> int
     = "ocaml_ssl_write"
 
-  external write_bigarray :
-     socket
-    -> bigarray
-    -> int
-    -> int
-    -> int
+  external write_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_write_bigarray"
 
   external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
 
-  external read_into_bigarray :
-     socket
-    -> bigarray
-    -> int
-    -> int
-    -> int
+  external read_into_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_read_into_bigarray"
 
   external flush : socket -> unit = "ocaml_ssl_flush"
@@ -508,7 +379,7 @@ end
 (* Same as above, but doesn't release the lock. *)
 module Runtime_lock_base = struct
   external get_error : socket -> int -> ssl_error = "ocaml_ssl_get_error_code"
-    [@@noalloc]
+  [@@noalloc]
 
   external connect : socket -> int = "ocaml_ssl_connect_blocking" [@@noalloc]
 
@@ -525,10 +396,9 @@ module Runtime_lock_base = struct
 
        <0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
        with the return value ret to find out the reason. *)
-    if ret <> 1
-    then
+    if ret <> 1 then (
       let err = get_error socket ret in
-      raise (Connection_error err)
+      raise (Connection_error err))
 
   external accept : socket -> int = "ocaml_ssl_accept_blocking" [@@noalloc]
 
@@ -545,25 +415,19 @@ module Runtime_lock_base = struct
 
        <0 The TLS/SSL handshake was not successful [...]. Call SSL_get_error()
        with the return value ret to find out the reason. *)
-    if ret <> 1
-    then
+    if ret <> 1 then (
       let err = get_error socket ret in
-      raise (Accept_error err)
+      raise (Accept_error err))
 
-  external write :
-     socket
-    -> Bytes.t
-    -> int
-    -> int
-    -> int
+  external write : socket -> Bytes.t -> int -> int -> int
     = "ocaml_ssl_write_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let write socket buffer start length =
     if start < 0 then invalid_arg "Ssl.write: start negative";
     if length < 0 then invalid_arg "Ssl.write: length negative";
-    if start + length > Bytes.length buffer
-    then invalid_arg "Ssl.write: Buffer too short";
+    if start + length > Bytes.length buffer then
+      invalid_arg "Ssl.write: Buffer too short";
     let ret = write socket buffer start length in
     (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_write.html:
 
@@ -574,62 +438,44 @@ module Runtime_lock_base = struct
 
        <= 0 The write operation was not successful [...]. Call SSL_get_error()
        with the return value ret to find out the reason. *)
-    (if ret <= 0
-     then
-       let err = get_error socket ret in
-       raise (Write_error err));
+    if ret <= 0 then (
+      let err = get_error socket ret in
+      raise (Write_error err));
     ret
 
-  external write_substring :
-     socket
-    -> string
-    -> int
-    -> int
-    -> int
+  external write_substring : socket -> string -> int -> int -> int
     = "ocaml_ssl_write_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let write_substring socket buffer start length =
     if start < 0 then invalid_arg "Ssl.write_substring: start negative";
     if length < 0 then invalid_arg "Ssl.write_substring: length negative";
-    if start + length > String.length buffer
-    then invalid_arg "Ssl.write_substring: Buffer too short";
+    if start + length > String.length buffer then
+      invalid_arg "Ssl.write_substring: Buffer too short";
     let ret = write_substring socket buffer start length in
-    (if ret <= 0
-     then
-       let err = get_error socket ret in
-       raise (Write_error err));
+    if ret <= 0 then (
+      let err = get_error socket ret in
+      raise (Write_error err));
     ret
 
-  external write_bigarray :
-     socket
-    -> bigarray
-    -> int
-    -> int
-    -> int
+  external write_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_write_bigarray_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let write_bigarray socket buffer start length =
     if start < 0 then invalid_arg "Ssl.write_bigarray: start negative";
     if length < 0 then invalid_arg "Ssl.write_bigarray: length negative";
-    if start + length > Bigarray.Array1.dim buffer
-    then invalid_arg "Ssl.write_bigarray: Buffer too short";
+    if start + length > Bigarray.Array1.dim buffer then
+      invalid_arg "Ssl.write_bigarray: Buffer too short";
     let ret = write_bigarray socket buffer start length in
-    (if ret <= 0
-     then
-       let err = get_error socket ret in
-       raise (Write_error err));
+    if ret <= 0 then (
+      let err = get_error socket ret in
+      raise (Write_error err));
     ret
 
-  external read :
-     socket
-    -> Bytes.t
-    -> int
-    -> int
-    -> int
+  external read : socket -> Bytes.t -> int -> int -> int
     = "ocaml_ssl_read_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let read socket buffer start length =
     if start < 0 then invalid_arg "Ssl.read: start negative";
@@ -645,31 +491,24 @@ module Runtime_lock_base = struct
 
        <= 0 The read operation was not successful [...]. Call SSL_get_error(3)
        with the return value ret to find out the reason. *)
-    (if ret <= 0
-     then
-       let err = get_error socket ret in
-       raise (Read_error err));
+    if ret <= 0 then (
+      let err = get_error socket ret in
+      raise (Read_error err));
     ret
 
-  external read_into_bigarray :
-     socket
-    -> bigarray
-    -> int
-    -> int
-    -> int
+  external read_into_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_read_into_bigarray_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let read_into_bigarray socket buffer start length =
     if start < 0 then invalid_arg "Ssl.read_into_big_array: start negative";
     if length < 0 then invalid_arg "Ssl.read_into_big_array: length negative";
-    if start + length > Bigarray.Array1.dim buffer
-    then invalid_arg "Buffer too short";
+    if start + length > Bigarray.Array1.dim buffer then
+      invalid_arg "Buffer too short";
     let ret = read_into_bigarray socket buffer start length in
-    (if ret <= 0
-     then
-       let err = get_error socket ret in
-       raise (Read_error err));
+    if ret <= 0 then (
+      let err = get_error socket ret in
+      raise (Read_error err));
     ret
 
   external flush : socket -> int = "ocaml_ssl_flush_blocking" [@@noalloc]
@@ -687,14 +526,13 @@ module Runtime_lock_base = struct
     if ret <> 1 then raise (Flush_error (ret = -2))
 
   external ssl_shutdown : socket -> int = "ocaml_ssl_shutdown_blocking"
-    [@@noalloc]
+  [@@noalloc]
 
   let ssl_shutdown socket =
     let ret = ssl_shutdown socket in
-    (if ret < 0
-     then
-       let err = get_error socket ret in
-       raise (Connection_error err));
+    if ret < 0 then (
+      let err = get_error socket ret in
+      raise (Connection_error err));
     ret = 1
 end
 
@@ -711,8 +549,7 @@ module Make (Ssl_base : Ssl_base) = struct
       let ssl = embed_socket sock context in
       connect ssl;
       ssl
-    with
-    | exn ->
+    with exn ->
       Unix.close sock;
       raise exn
 
@@ -750,8 +587,8 @@ module Make (Ssl_base : Ssl_base) = struct
     Bytes.set tmp 1 (char_of_int ((i lsr 16) land 0xff));
     Bytes.set tmp 2 (char_of_int ((i lsr 8) land 0xff));
     Bytes.set tmp 3 (char_of_int (i land 0xff));
-    if write ssl tmp 0 4 <> 4
-    then failwith "output_int error: all the byte were not sent"
+    if write ssl tmp 0 4 <> 4 then
+      failwith "output_int error: all the byte were not sent"
 
   let input_string ssl =
     let bufsize = 1024 in

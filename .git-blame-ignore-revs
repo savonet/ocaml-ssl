@@ -1,3 +1,5 @@
 # Ran ocamlformat for the first time on the codebase
 15189ac5559523505076886bf0943b093d702666
 
+# Switched to ocamlformat 0.28.1 with the liquidsoap style
+7e1fd5b629259b82a638a119d606e405fbc3ab24

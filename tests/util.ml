@@ -6,12 +6,12 @@ end
 
 open Ssl
 
-type server_args =
-  { address : Unix.sockaddr
-  ; condition : Condition.t
-  ; mutex : Mutex.t
-  ; parser : (string -> string) option
-  }
+type server_args = {
+  address : Unix.sockaddr;
+  condition : Condition.t;
+  mutex : Mutex.t;
+  parser : (string -> string) option;
+}
 
 let server_rw_loop ssl parser_func =
   let rw_loop = ref true in
@@ -19,16 +19,14 @@ let server_rw_loop ssl parser_func =
     try
       let read_buf = Bytes.create 256 in
       let read_bytes = read ssl read_buf 0 256 in
-      if read_bytes > 0
-      then (
+      if read_bytes > 0 then (
         let input = Bytes.to_string read_buf in
         let response = parser_func input in
         Ssl.write_substring ssl response 0 (String.length response) |> ignore;
         Ssl.close_notify ssl |> ignore;
         rw_loop := false)
-    with
-    | Read_error read_error ->
-      (match read_error with Error_ssl -> rw_loop := false | _ -> ())
+    with Read_error read_error -> (
+      match read_error with Error_ssl -> rw_loop := false | _ -> ())
   done
 
 let server_init args =
@@ -45,30 +43,29 @@ let server_init args =
     (* Signal ready and listen for connection *)
     Unix.listen socket 1;
     Some (socket, context)
-  with
-  | exn ->
+  with exn ->
     Printexc.to_string exn |> print_endline;
     None
 
 let server_listen args =
   match server_init args with
-  | None ->
-    Mutex.unlock args.mutex;
-    Condition.signal args.condition;
-    Thread.exit () [@warning "-3"]
-  | Some (socket, context) ->
-    Mutex.unlock args.mutex;
-    Condition.signal args.condition;
-    let listen = Unix.accept socket in
-    let ssl = embed_socket (fst listen) context in
-    accept ssl;
-    (* Exit right away unless we need to rw *)
-    (match args.parser with
-    | Some parser_func -> server_rw_loop ssl parser_func
     | None ->
-      ();
-      shutdown ssl;
-      Thread.exit () [@warning "-3"])
+        Mutex.unlock args.mutex;
+        Condition.signal args.condition;
+        Thread.exit () [@warning "-3"]
+    | Some (socket, context) -> (
+        Mutex.unlock args.mutex;
+        Condition.signal args.condition;
+        let listen = Unix.accept socket in
+        let ssl = embed_socket (fst listen) context in
+        accept ssl;
+        (* Exit right away unless we need to rw *)
+          match args.parser with
+          | Some parser_func -> server_rw_loop ssl parser_func
+          | None ->
+              ();
+              shutdown ssl;
+              Thread.exit () [@warning "-3"])
 
 let server_thread addr parser =
   let mutex = Mutex.create () in

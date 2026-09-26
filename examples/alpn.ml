@@ -6,8 +6,8 @@ let test_client proto_list =
   let ssl = Ssl.open_connection_with_context ctx sockaddr in
   let () =
     match Ssl.get_negotiated_alpn_protocol ssl with
-    | None -> print_endline "No protocol selected"
-    | Some proto -> print_endline ("Selected protocol: " ^ proto)
+      | None -> print_endline "No protocol selected"
+      | Some proto -> print_endline ("Selected protocol: " ^ proto)
   in
   Ssl.shutdown ssl
 
@@ -46,8 +46,8 @@ let test_server proto_list =
   log (Printf.sprintf "opening connection for [%s]" ip);
   let () =
     match Ssl.get_negotiated_alpn_protocol ssl_s with
-    | None -> log "no protocol selected"
-    | Some proto -> log (Printf.sprintf "selected protocol: %s" proto)
+      | None -> log "no protocol selected"
+      | Some proto -> log (Printf.sprintf "selected protocol: %s" proto)
   in
   Ssl.shutdown ssl_s
 
@@ -57,8 +57,7 @@ let () =
     let r = ref [] in
     let j = ref (String.length s) in
     for i = String.length s - 1 downto 0 do
-      if s.[i] = sep
-      then (
+      if s.[i] = sep then (
         r := String.sub s (i + 1) (!j - i - 1) :: !r;
         j := i)
     done;
@@ -67,17 +66,18 @@ let () =
   let typ = ref "" in
   let protocols = ref [] in
   Arg.parse
-    [ "-t", Arg.String (fun t -> typ := t), "Type (server or client)"
-    ; ( "-p"
-      , Arg.String (fun p -> protocols := split_on_char ',' p)
-      , "Comma-separated protocols" )
+    [
+      ("-t", Arg.String (fun t -> typ := t), "Type (server or client)");
+      ( "-p",
+        Arg.String (fun p -> protocols := split_on_char ',' p),
+        "Comma-separated protocols" );
     ]
     (fun _ -> ())
     usage;
   match !typ with
-  | "server" -> test_server !protocols
-  | "client" -> test_client !protocols
-  | _ -> failwith "Invalid type, use server or client."
+    | "server" -> test_server !protocols
+    | "client" -> test_client !protocols
+    | _ -> failwith "Invalid type, use server or client."
 
 (* Usage: ocamlfind ocamlc alpn.ml -g -o alpn -package ssl -linkpkg -ccopt
    -L/path/to/openssl/lib -cclib -lssl -cclib -lcrypto ./alpn -t server -p
