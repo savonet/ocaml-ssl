@@ -41,6 +41,7 @@
   client.key
   client-encrypted.key
   dh4096.pem
+  dhx.pem
   server.key
   server.pem
   ca.pem
