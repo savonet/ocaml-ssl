@@ -841,41 +841,54 @@ CAMLprim value ocaml_ssl_ctx_set_client_CA_list_from_file(value context,
   CAMLreturn(Val_unit);
 }
 
-static int get_alpn_buffer_length(value vprotos) {
-  value protos_tl = vprotos;
-  int total_len = 0;
-  while (protos_tl != Val_emptylist) {
-    total_len += caml_string_length(Field(protos_tl, 0)) + 1;
-    protos_tl = Field(protos_tl, 1);
-  }
-  return total_len;
-}
+/* Encodes the protocols in the ALPN wire format, each prefixed by its length.
+ *
+ * The result must be freed with caml_stat_free. */
+static unsigned char *alpn_protocol_buffer(value vprotos,
+                                           unsigned int *buffer_length) {
+  unsigned int total_length = 0;
+  unsigned char *protocol_buffer, *position;
+  value protos_tl;
 
-static void build_alpn_protocol_buffer(value vprotos, unsigned char *protos) {
-  int proto_idx = 0;
-  while (vprotos != Val_emptylist) {
-    value head = Field(vprotos, 0);
-    int len = caml_string_length(head);
-    protos[proto_idx++] = len;
-
-    int i;
-    for (i = 0; i < len; i++)
-      protos[proto_idx++] = Byte_u(head, i);
-    vprotos = Field(vprotos, 1);
+  for (protos_tl = vprotos; protos_tl != Val_emptylist;
+       protos_tl = Field(protos_tl, 1)) {
+    mlsize_t protocol_length = caml_string_length(Field(protos_tl, 0));
+    if (protocol_length == 0 || protocol_length > 255)
+      caml_invalid_argument("ALPN protocol names must be 1 to 255 bytes long");
+    total_length += protocol_length + 1;
   }
+
+  protocol_buffer = caml_stat_alloc(total_length);
+  position = protocol_buffer;
+  for (protos_tl = vprotos; protos_tl != Val_emptylist;
+       protos_tl = Field(protos_tl, 1)) {
+    value protocol = Field(protos_tl, 0);
+    mlsize_t protocol_length = caml_string_length(protocol);
+    *position++ = protocol_length;
+    memcpy(position, String_val(protocol), protocol_length);
+    position += protocol_length;
+  }
+
+  *buffer_length = total_length;
+  return protocol_buffer;
 }
 
 CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos) {
   CAMLparam2(context, vprotos);
   SSL_CTX *ctx = Ctx_val(context);
-
-  int total_len = get_alpn_buffer_length(vprotos);
-  unsigned char protos[total_len];
-  build_alpn_protocol_buffer(vprotos, protos);
+  unsigned int protocol_buffer_length;
+  unsigned char *protocol_buffer =
+      alpn_protocol_buffer(vprotos, &protocol_buffer_length);
+  int ret;
 
   caml_release_runtime_system();
-  SSL_CTX_set_alpn_protos(ctx, protos, sizeof(protos));
+  ret = SSL_CTX_set_alpn_protos(ctx, protocol_buffer, protocol_buffer_length);
   caml_acquire_runtime_system();
+  caml_stat_free(protocol_buffer);
+
+  /* Unlike most OpenSSL functions, this one returns 0 on success. */
+  if (ret != 0)
+    caml_failwith("Ssl.set_context_alpn_protos");
 
   CAMLreturn(Val_unit);
 }
@@ -883,21 +896,21 @@ CAMLprim value ocaml_ssl_ctx_set_alpn_protos(value context, value vprotos) {
 static value build_alpn_protocol_list(const unsigned char *protocol_buffer,
                                       unsigned int len) {
   CAMLparam0();
-  CAMLlocal3(protocol_list, current, tail);
+  CAMLlocal4(protocol_list, current, tail, protocol);
 
-  int idx = 0;
+  unsigned int idx = 0;
   protocol_list = Val_emptylist;
 
   while (idx < len) {
-    int proto_len = (int)protocol_buffer[idx++];
-    char proto[proto_len + 1];
-    int i;
-    for (i = 0; i < proto_len; i++)
-      proto[i] = (char)protocol_buffer[idx++];
-    proto[proto_len] = '\0';
+    unsigned int protocol_length = protocol_buffer[idx++];
+    if (protocol_length > len - idx)
+      break;
+    protocol = caml_alloc_initialized_string(
+        protocol_length, (const char *)protocol_buffer + idx);
+    idx += protocol_length;
 
     tail = caml_alloc(2, 0);
-    Store_field(tail, 0, caml_copy_string(proto));
+    Store_field(tail, 0, protocol);
     Store_field(tail, 1, Val_emptylist);
 
     if (protocol_list == Val_emptylist)
@@ -912,29 +925,42 @@ static value build_alpn_protocol_list(const unsigned char *protocol_buffer,
 }
 
 /* The `alpn_select_cb` function below acquires the runtime lock before calling
- * this one. Some more info in https://github.com/ocaml/ocaml/issues/11485 */
-CAMLprim value caml_alpn_select_cb(SSL *ssl, const unsigned char **out,
-                                   unsigned char *outlen,
-                                   const unsigned char *in, unsigned int inlen,
-                                   void *arg) {
+ * this one. Some more info in https://github.com/ocaml/ocaml/issues/11485
+ *
+ * OpenSSL reads `out` after the runtime lock is released again, so it must
+ * point into `in` rather than into a string the GC may move. */
+static int caml_alpn_select_cb(const unsigned char **out,
+                               unsigned char *outlen, const unsigned char *in,
+                               unsigned int inlen, value *callback) {
   CAMLparam0();
-  CAMLlocal3(protocol_list, selected_protocol, selected_protocol_opt);
-
-  int len;
+  CAMLlocal2(protocol_list, selected_protocol);
+  value result;
+  unsigned int idx = 0;
 
   protocol_list = build_alpn_protocol_list(in, inlen);
-  selected_protocol_opt = caml_callback(*((value *)arg), protocol_list);
+  result = caml_callback_exn(*callback, protocol_list);
 
-  if (selected_protocol_opt == Val_none) {
-    CAMLreturn(SSL_TLSEXT_ERR_NOACK);
+  if (Is_exception_result(result))
+    CAMLreturnT(int, SSL_TLSEXT_ERR_ALERT_FATAL);
+
+  if (result == Val_none)
+    CAMLreturnT(int, SSL_TLSEXT_ERR_NOACK);
+
+  selected_protocol = Field(result, 0);
+  while (idx < inlen) {
+    unsigned int protocol_length = in[idx++];
+    if (protocol_length > inlen - idx)
+      break;
+    if (protocol_length == caml_string_length(selected_protocol) &&
+        memcmp(in + idx, String_val(selected_protocol), protocol_length) == 0) {
+      *out = in + idx;
+      *outlen = protocol_length;
+      CAMLreturnT(int, SSL_TLSEXT_ERR_OK);
+    }
+    idx += protocol_length;
   }
 
-  selected_protocol = Field(selected_protocol_opt, 0);
-  len = caml_string_length(selected_protocol);
-  *out = (const unsigned char *)String_val(selected_protocol);
-  *outlen = len;
-
-  CAMLreturn(SSL_TLSEXT_ERR_OK);
+  CAMLreturnT(int, SSL_TLSEXT_ERR_ALERT_FATAL);
 }
 
 static int alpn_select_cb(SSL *ssl, const unsigned char **out,
@@ -942,7 +968,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
                           unsigned int inlen, void *arg) {
   int res;
   caml_acquire_runtime_system();
-  res = caml_alpn_select_cb(ssl, out, outlen, in, inlen, arg);
+  res = caml_alpn_select_cb(out, outlen, in, inlen, (value *)arg);
   caml_release_runtime_system();
 
   return res;
@@ -1439,14 +1465,19 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
 CAMLprim value ocaml_ssl_set_alpn_protos(value socket, value vprotos) {
   CAMLparam2(socket, vprotos);
   SSL *ssl = SSL_val(socket);
-
-  int total_len = get_alpn_buffer_length(vprotos);
-  unsigned char protos[total_len];
-  build_alpn_protocol_buffer(vprotos, protos);
+  unsigned int protocol_buffer_length;
+  unsigned char *protocol_buffer =
+      alpn_protocol_buffer(vprotos, &protocol_buffer_length);
+  int ret;
 
   caml_release_runtime_system();
-  SSL_set_alpn_protos(ssl, protos, sizeof(protos));
+  ret = SSL_set_alpn_protos(ssl, protocol_buffer, protocol_buffer_length);
   caml_acquire_runtime_system();
+  caml_stat_free(protocol_buffer);
+
+  /* Unlike most OpenSSL functions, this one returns 0 on success. */
+  if (ret != 0)
+    caml_failwith("Ssl.set_alpn_protos");
 
   CAMLreturn(Val_unit);
 }
