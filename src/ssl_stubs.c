@@ -363,30 +363,13 @@ value ocaml_ssl_ctx_get_max_proto_version(value context) {
 
 /* Returns an error message on failure, NULL on success. */
 static const char *set_protocol(SSL_CTX *ssl_context, int protocol) {
-  int min_proto, max_proto;
-  switch (protocol) {
-  case 0:
-    min_proto = SSL3_VERSION;
-    max_proto = TLS1_3_VERSION;
-    break;
-  case 1:
-    min_proto = max_proto = SSL3_VERSION;
-    break;
-  case 2:
-    min_proto = max_proto = TLS1_VERSION;
-    break;
-  case 3:
-    min_proto = max_proto = TLS1_1_VERSION;
-    break;
-  case 4:
-    min_proto = max_proto = TLS1_2_VERSION;
-    break;
-  case 5:
-    min_proto = max_proto = TLS1_3_VERSION;
-    break;
-  default:
+  /* Protocol 0 accepts any version, the others exactly one. */
+  int min_proto = protocol == 0 ? SSL3_VERSION
+                                : tls_version_of_ocaml_ssl_version(protocol);
+  int max_proto = protocol == 0 ? TLS1_3_VERSION : min_proto;
+
+  if (min_proto < 0)
     return "Unknown method (this should not have happened, please report).";
-  }
 
   if (!SSL_CTX_set_min_proto_version(ssl_context, min_proto) ||
       !SSL_CTX_set_max_proto_version(ssl_context, max_proto))
