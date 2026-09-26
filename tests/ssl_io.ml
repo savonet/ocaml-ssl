@@ -61,6 +61,50 @@ let test_reject_invalid_names () =
   Ssl.set_host ssl "localhost";
   Unix.close sock
 
+let test_bounds () =
+  let context = Ssl.create_context TLSv1_3 Client_context in
+  let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  let ssl = Ssl.embed_socket sock context in
+  let bytes = Bytes.create 8 in
+  let bigarray = Bigarray.(Array1.create char c_layout 8) in
+  let functions =
+    [
+      ("read", fun start length -> Ssl.read ssl bytes start length);
+      ("write", fun start length -> Ssl.write ssl bytes start length);
+      ( "write_substring",
+        fun start length ->
+          Ssl.write_substring ssl (Bytes.to_string bytes) start length );
+      ( "read_into_bigarray",
+        fun start length -> Ssl.read_into_bigarray ssl bigarray start length );
+      ( "write_bigarray",
+        fun start length -> Ssl.write_bigarray ssl bigarray start length );
+      ( "Runtime_lock.read",
+        fun start length -> Ssl.Runtime_lock.read ssl bytes start length );
+      ( "Runtime_lock.write",
+        fun start length -> Ssl.Runtime_lock.write ssl bytes start length );
+      ( "Runtime_lock.read_into_bigarray",
+        fun start length ->
+          Ssl.Runtime_lock.read_into_bigarray ssl bigarray start length );
+      ( "Runtime_lock.write_bigarray",
+        fun start length ->
+          Ssl.Runtime_lock.write_bigarray ssl bigarray start length );
+    ]
+  in
+  let out_of_bounds =
+    [(max_int, 1); (1, max_int); (-1, 1); (0, -1); (4, 5)]
+    @ if Sys.int_size > 32 then [(1 lsl 32, 1)] else []
+  in
+  List.iter
+    (fun (name, f) ->
+      List.iter
+        (fun (start, length) ->
+          match f start length with
+            | _ -> failf "%s %d %d was accepted" name start length
+            | exception Invalid_argument _ -> ())
+        out_of_bounds)
+    functions;
+  Unix.close sock
+
 let test_read_write () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1344) in
   Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
@@ -120,6 +164,7 @@ let () =
           test_case "Set host" `Quick test_set_host;
           test_case "Reject invalid names" `Quick test_reject_invalid_names;
           test_case "Read write" `Quick test_read_write;
+          test_case "Bounds" `Quick test_bounds;
           test_case "Input string" `Quick test_input_string;
           test_case "Short read preserves tail" `Quick
             test_read_short_does_not_clobber_tail;
