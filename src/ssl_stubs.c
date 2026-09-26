@@ -1418,12 +1418,20 @@ CAMLprim value ocaml_ssl_set_client_SNI_hostname(value socket,
                                                  value vhostname) {
   CAMLparam2(socket, vhostname);
   SSL *ssl = SSL_val(socket);
-  char *hostname = caml_stat_strdup(String_val(vhostname));
+  char *hostname;
+  int ret;
 
+  if (!caml_string_is_c_safe(vhostname))
+    caml_invalid_argument("Ssl.set_client_SNI_hostname: NUL byte in hostname");
+
+  hostname = caml_stat_strdup(String_val(vhostname));
   caml_release_runtime_system();
-  SSL_set_tlsext_host_name(ssl, hostname);
+  ret = SSL_set_tlsext_host_name(ssl, hostname);
   caml_acquire_runtime_system();
   caml_stat_free(hostname);
+
+  if (ret != 1)
+    caml_invalid_argument("Ssl.set_client_SNI_hostname");
 
   CAMLreturn(Val_unit);
 }
@@ -1547,12 +1555,20 @@ CAMLprim value ocaml_ssl_set_hostflags(value socket, value flag_lst) {
 CAMLprim value ocaml_ssl_set1_host(value socket, value host) {
   CAMLparam2(socket, host);
   SSL *ssl = SSL_val(socket);
-  char *hostname = caml_stat_strdup(String_val(host));
+  char *hostname;
+  int ret;
 
+  if (!caml_string_is_c_safe(host))
+    caml_invalid_argument("Ssl.set_host: NUL byte in hostname");
+
+  hostname = caml_stat_strdup(String_val(host));
   caml_release_runtime_system();
-  X509_VERIFY_PARAM_set1_host(SSL_get0_param(ssl), hostname, 0);
+  ret = X509_VERIFY_PARAM_set1_host(SSL_get0_param(ssl), hostname, 0);
   caml_acquire_runtime_system();
   caml_stat_free(hostname);
+
+  if (ret != 1)
+    caml_invalid_argument("Ssl.set_host");
 
   CAMLreturn(Val_unit);
 }
@@ -1560,12 +1576,20 @@ CAMLprim value ocaml_ssl_set1_host(value socket, value host) {
 CAMLprim value ocaml_ssl_set1_ip(value socket, value ip) {
   CAMLparam2(socket, ip);
   SSL *ssl = SSL_val(socket);
-  char *ipval = caml_stat_strdup(String_val(ip));
+  char *ipval;
+  int ret;
 
+  if (!caml_string_is_c_safe(ip))
+    caml_invalid_argument("Ssl.set_ip: NUL byte in IP address");
+
+  ipval = caml_stat_strdup(String_val(ip));
   caml_release_runtime_system();
-  X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), ipval);
+  ret = X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), ipval);
   caml_acquire_runtime_system();
   caml_stat_free(ipval);
+
+  if (ret != 1)
+    caml_invalid_argument("Ssl.set_ip: invalid IP address");
 
   CAMLreturn(Val_unit);
 }

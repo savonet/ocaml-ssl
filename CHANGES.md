@@ -5,6 +5,9 @@ Unreleased
 -  Copy OCaml strings before releasing the runtime lock: another thread could
    move them, making OpenSSL read a stale path, e.g. `Ssl.use_certificate`
    failing with `No such file or directory` on an existing key file.
+-  `Ssl.set_ip`, `Ssl.set_host` and `Ssl.set_client_SNI_hostname` raise
+   `Invalid_argument` instead of silently ignoring a value OpenSSL rejects. An
+   unparsable IP address used to disable the check, accepting any certificate.
 
 0.7.0 (2023-07-12)
 =====
