@@ -19,15 +19,8 @@
  (names ssl_test ssl_certs)
  (modules ssl_test ssl_certs)
  (libraries ssl alcotest util)
- (deps
-  digicert_certificate.pem
-  client.pem
-  client.key
-  dh4096.pem
-  server.key
-  server.pem
-  ca.pem
-  ca.key)
+ (deps digicert_certificate.pem client.pem client.key dh4096.pem server.key
+   server.pem ca.pem ca.key)
  (enabled_if
   (<> %{os_type} "Win32")))
 
@@ -35,12 +28,5 @@
  (names ssl_comm ssl_context ssl_ciphers ssl_sock ssl_io)
  (modules ssl_comm ssl_context ssl_ciphers ssl_sock ssl_io)
  (libraries ssl alcotest util)
- (deps
-  digicert_certificate.pem
-  client.pem
-  client.key
-  dh4096.pem
-  server.key
-  server.pem
-  ca.pem
-  ca.key))
+ (deps digicert_certificate.pem client.pem client.key dh4096.pem server.key
+   server.pem ca.pem ca.key))

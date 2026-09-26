@@ -23,12 +23,12 @@
 
 (** {1 OpenSSL version} *)
 
-type version =
-  { major : int  (** major version *)
-  ; minor : int  (** minor version *)
-  ; patch : int  (** patch number *)
-  }
 (** in version prior to 3.0, details are dropped: 1.1.1n = 1.1.1f *)
+type version = {
+  major : int;  (** major version *)
+  minor : int;  (** minor version *)
+  patch : int;  (** patch number *)
+}
 
 val native_library_version : version
 
@@ -43,7 +43,8 @@ type ssl_error =
       (** A non-recoverable, fatal error in the SSL library occurred, usually a
           protocol error. The OpenSSL error queue contains more information on
           the error. If this error occurs then no further I/O operations should
-          be performed on the connection and SSL_shutdown() must not be called. *)
+          be performed on the connection and SSL_shutdown() must not be called.
+      *)
   | Error_want_read
       (** The operation did not complete; the same TLS/SSL I/O function should
           be called again later. *)
@@ -92,44 +93,44 @@ type ssl_error =
 type bigarray =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-exception Method_error
 (** The SSL method could not be initialized. *)
+exception Method_error
 
 exception Context_error
 exception Cipher_error
 exception Diffie_hellman_error
 exception Ec_curve_error
 
-exception Certificate_error of string
 (** The SSL server certificate could not be initialized. *)
+exception Certificate_error of string
 
-exception Private_key_error of string
 (** The SSL server private key could not be initialized. *)
+exception Private_key_error of string
 
-exception Unmatching_keys
 (** The SSL private key does not match the certificate public key. *)
+exception Unmatching_keys
 
-exception Invalid_socket
 (** The given socket is invalid. *)
+exception Invalid_socket
 
-exception Handler_error
 (** The SSL handler could not be initialized. *)
+exception Handler_error
 
-exception Connection_error of ssl_error
 (** The connection could not be made with the SSL service. *)
+exception Connection_error of ssl_error
 
-exception Accept_error of ssl_error
 (** Failed to accept an SSL connection. *)
+exception Accept_error of ssl_error
 
-exception Read_error of ssl_error
 (** An error occurred while reading data. *)
+exception Read_error of ssl_error
 
-exception Write_error of ssl_error
 (** An error occurred while writing data. *)
+exception Write_error of ssl_error
 
-exception Flush_error of bool
 (** An error occurred while flushing a socket. [Flush_error true] means that the
     operation should be retried. *)
+exception Flush_error of bool
 
 (** Why did the certificate verification fail? *)
 type verify_error =
@@ -170,7 +171,8 @@ type verify_error =
   | Error_v_error_in_CRL_next_update_field
       (** The CRL nextUpdate field contains an invalid time. *)
   | Error_v_out_of_mem
-      (** An error occurred trying to allocate memory. This should never happen. *)
+      (** An error occurred trying to allocate memory. This should never happen.
+      *)
   | Error_v_depth_zero_self_signed_cert
       (** The passed certificate is self signed and the same certificate cannot
           be found in the list of trusted certificates. *)
@@ -201,7 +203,8 @@ type verify_error =
       (** The root CA is marked to reject the specified purpose. *)
   | Error_v_subject_issuer_mismatch
       (** The current candidate issuer certificate was rejected because its
-          subject name did not match the issuer name of the current certificate. *)
+          subject name did not match the issuer name of the current certificate.
+      *)
   | Error_v_akid_skid_mismatch
       (** The current candidate issuer certificate was rejected because its
           subject key identifier was present and did not match the authority key
@@ -216,33 +219,23 @@ type verify_error =
   | Error_v_application_verification
       (** An application specific error. Unused. *)
 
-exception Verify_error of verify_error
 (** An error occurred while verifying the certificate. *)
+exception Verify_error of verify_error
 
 (** {1 Communication} *)
 
-val init : ?thread_safe:bool -> unit -> unit
 (** Initialize SSL functions. Should be called before calling any other
     function. The parameter [thread_safe] should be set to true if you use
     threads in you application (the same effect can achieved by calling
     [Ssl_threads.init] first. *)
+val init : ?thread_safe:bool -> unit -> unit
 
-val get_error_string : unit -> string
-  [@@ocaml.alert deprecated "Use [Ssl.Error.get_error] instead"]
 (** Retrieve a human-readable message that corresponds to the earliest error
     code from the thread's error queue and removes the entry. *)
+val get_error_string : unit -> string
+[@@ocaml.alert deprecated "Use [Ssl.Error.get_error] instead"]
 
 module Error : sig
-  type t = private
-    { library_number : int
-          (** Identifies the OpenSSL sub-library that generated this error.
-              Library values are defined in
-              https://github.com/openssl/openssl/blob/openssl-3.0.0/include/openssl/err.h.in#L72 *)
-    ; reason_code : int
-          (** The reason code is the information about what went wrong. *)
-    ; lib : string option  (** The library name that generated the error. *)
-    ; reason : string option  (** The reason string for the error message. *)
-    }
   (** The error code returned by ERR_get_error() consists of a library number,
       function code and reason code.
 
@@ -250,18 +243,29 @@ module Error : sig
       reason codes are unique within each sub-library. Note that different
       libraries may use the same value to signal different functions and
       reasons. *)
+  type t = private {
+    library_number : int;
+        (** Identifies the OpenSSL sub-library that generated this error.
+            Library values are defined in
+            https://github.com/openssl/openssl/blob/openssl-3.0.0/include/openssl/err.h.in#L72
+        *)
+    reason_code : int;
+        (** The reason code is the information about what went wrong. *)
+    lib : string option;  (** The library name that generated the error. *)
+    reason : string option;  (** The reason string for the error message. *)
+  }
 
-  val get_error : unit -> t
   (** Retrieve the earliest error from the error queue then it removes the
       entry. Returns the code and library and reason strings *)
+  val get_error : unit -> t
 
-  val peek_error : unit -> t
   (** Retrieve the earliest error from the error queue without modifying it.
       Returns the code and library and reason strings *)
+  val peek_error : unit -> t
 
-  val peek_last_error : unit -> t
   (** Retrieves the latest error code from the thread's error queue without
       modifying it. Returns the code and library and reason strings. *)
+  val peek_last_error : unit -> t
 end
 
 (** Protocol used by SSL. *)
@@ -287,8 +291,8 @@ type protocol =
   | TLSv1_2  (** only TLS v1.2 protocol *)
   | TLSv1_3  (** only TLS v1.3 protocol *)
 
-type socket
 (** An SSL abstract socket. *)
+type socket
 
 (** {2 Threads} *)
 
@@ -300,10 +304,10 @@ val thread_safe : bool ref
 
 (** {2 Contexts} *)
 
-type context
 (** A context. A context should be created by a server or client once per
     program life-time and holds mainly default values for the SSL structures
     which are later created for the connections. *)
+type context
 
 (** Type of the context to create. *)
 type context_type =
@@ -311,51 +315,53 @@ type context_type =
   | Server_context  (** Server connections. *)
   | Both_context  (** Client and server connections. *)
 
-val create_context : protocol -> context_type -> context
 (** Create a context. *)
+val create_context : protocol -> context_type -> context
 
-val set_min_protocol_version : context -> protocol -> unit
 (** [set_min_protocol_version ctx proto] sets the minimum supported protocol
     version for [ctx] to [proto]. *)
+val set_min_protocol_version : context -> protocol -> unit
 
-val set_max_protocol_version : context -> protocol -> unit
 (** [set_max_protocol_version ctx proto] sets the maximum supported protocol
     version for [ctx] to [proto]. *)
+val set_max_protocol_version : context -> protocol -> unit
 
-val get_min_protocol_version : context -> protocol
 (** [get_min_protocol_version ctx] sets the minimum supported protocol version
     for [ctx] to [proto]. *)
+val get_min_protocol_version : context -> protocol
 
-val get_max_protocol_version : context -> protocol
 (** [get_max_protocol_version ctx proto] sets the maximum supported protocol
     version for [ctx] to [proto]. *)
+val get_max_protocol_version : context -> protocol
 
-val add_extra_chain_cert : context -> string -> unit
 (** Add an additional certificate to the extra chain certificates associated
     with the [ctx]. Extra chain certificates will be sent to the peer for
     verification and are sent in order following the end entity certificate. The
     value should be contents of the certificate as string in PEM format. *)
+val add_extra_chain_cert : context -> string -> unit
 
-val add_cert_to_store : context -> string -> unit
 (** Add a certificate to the [ctx] trust storage. The value should be contents
     of the certificate as string in PEM format. *)
+val add_cert_to_store : context -> string -> unit
 
-val use_certificate : context -> string -> string -> unit
 (** [use_certificate ctx cert privkey] makes the context [ctx] use [cert] as *
     certificate's file name (in PEM format) and [privkey] as private key file *
     name. *)
+val use_certificate : context -> string -> string -> unit
 
-val use_certificate_from_string : context -> string -> string -> unit
 (** Use a certificate whose contents is given as argument (you should use
-    instead [use_certificate] if you want to read the certificate from a file). *)
+    instead [use_certificate] if you want to read the certificate from a file).
+*)
+val use_certificate_from_string : context -> string -> string -> unit
 
-val set_password_callback : context -> (bool -> string) -> unit
 (** Set the callback function called to get passwords for encrypted PEM files. *
     The callback function takes a boolean argument which indicates if it's used
     * for reading/decryption ([false]) or writing/encryption ([true]). *)
+val set_password_callback : context -> (bool -> string) -> unit
 
+(** Set the list of CAs sent to the client when requesting a client certificate.
+*)
 val set_client_CA_list_from_file : context -> string -> unit
-(** Set the list of CAs sent to the client when requesting a client certificate. *)
 
 (** Verification modes (see SSL_CTX_set_verify(3)). *)
 type verify_mode =
@@ -363,108 +369,105 @@ type verify_mode =
   | Verify_fail_if_no_peer_cert  (** Implies [Verify_peer]. *)
   | Verify_client_once  (** Implies [Verify_peer]. *)
 
-type verify_callback
 (** A callback function for verification. Warning: this might change in the
     future. *)
+type verify_callback
 
-val client_verify_callback : verify_callback
 (** Client's verification callback. Warning: this might change in the future. *)
+val client_verify_callback : verify_callback
 
-val set_client_verify_callback_verbose : bool -> unit
 (** Set verbosity of {! client_verify_callback } *)
+val set_client_verify_callback_verbose : bool -> unit
 
-val set_verify : context -> verify_mode list -> verify_callback option -> unit
 (** Set the verify mode and callback, see SSL_CTX_set_verify(3). * Warning: this
     might change in the future. *)
+val set_verify : context -> verify_mode list -> verify_callback option -> unit
 
-val set_verify_depth : context -> int -> unit
 (** Set the maximum depth for the certificate chain verification that shall be
     allowed. *)
+val set_verify_depth : context -> int -> unit
 
-val set_context_alpn_protos : context -> string list -> unit
 (** Set the list of supported ALPN protocols for negotiation to the context. *)
+val set_context_alpn_protos : context -> string list -> unit
 
-val set_context_alpn_select_callback :
-   context
-  -> (string list -> string option)
-  -> unit
 (** Set the callback to allow server to select the preferred protocol from
     client's available protocols. *)
+val set_context_alpn_select_callback :
+  context -> (string list -> string option) -> unit
 
 (** {2 Ciphers} *)
 
-type cipher
 (** A cipher. It holds the algorithm information for a particular cipher which *
     are a core part of the SSL/TLS protocol.*)
+type cipher
 
-val disable_protocols : context -> protocol list -> unit
 (** Disable all protocols from the list. * Note that [SSLv23] disables both
     SSLv2 and SSLv3 (as opposed to all the * protocols). * *)
+val disable_protocols : context -> protocol list -> unit
 
-val set_cipher_list : context -> string -> unit
 (** Set the list of available ciphers for a context. See man ciphers(1) for the
     format of the string. *)
+val set_cipher_list : context -> string -> unit
 
-val honor_cipher_order : context -> unit
 (** When choosing a cipher, use the server's preferences instead of the client *
     preferences. When not set, the SSL server will always follow the clients *
     preferences. When set, the SSLv3/TLSv1 server will choose following its *
     own preferences. Because of the different protocol, for SSLv2 the server *
     will send its list of preferences to the client and the client chooses.*)
+val honor_cipher_order : context -> unit
 
-val init_dh_from_file : context -> string -> unit
 (** Init DH parameters from file *)
+val init_dh_from_file : context -> string -> unit
 
-val init_ec_from_named_curve : context -> string -> unit
 (** Init EC curve from curve name *)
+val init_ec_from_named_curve : context -> string -> unit
 
-val get_cipher : socket -> cipher
 (** Get the cipher used by a socket. *)
+val get_cipher : socket -> cipher
 
-val get_cipher_description : cipher -> string
 (** Get a description of a cipher. *)
+val get_cipher_description : cipher -> string
 
-val get_cipher_name : cipher -> string
 (** Get the name of a cipher. *)
+val get_cipher_name : cipher -> string
 
-val get_cipher_version : cipher -> string
 (** Get the version of a cipher. *)
+val get_cipher_version : cipher -> string
 
-val version : socket -> protocol
 (** Get the version used for the connection. As per the
     {{:https://www.openssl.org/docs/man1.1.1/man3/SSL_get_version.html} OpenSSL
-      documentation}, should only be called after the initial handshake has been
+     documentation}, should only be called after the initial handshake has been
     completed. Prior to that the results returned from these functions may be
     unreliable.
 
     @raise Failure if the version is unknown *)
+val version : socket -> protocol
 
 (** {2 Certificates} *)
 
-type certificate
 (** A certificate. *)
+type certificate
 
-val read_certificate : string -> certificate
 (** [read_certificate fname] reads the certificate in the file [fname]. *)
+val read_certificate : string -> certificate
 
 val write_certificate : string -> certificate -> unit
 
-val get_certificate : socket -> certificate
 (** Get the certificate used by a socket. *)
+val get_certificate : socket -> certificate
 
-val get_issuer : certificate -> string
 (** Get the issuer of a certificate. *)
+val get_issuer : certificate -> string
 
-val get_subject : certificate -> string
 (** Get the subject of a certificate. *)
+val get_subject : certificate -> string
 
-val get_start_date : certificate -> Unix.tm
 (** Get the start date of a certificate. *)
+val get_start_date : certificate -> Unix.tm
 
-val get_expiration_date : certificate -> Unix.tm
 (** Get the expiration date of a certificate. *)
+val get_expiration_date : certificate -> Unix.tm
 
-val load_verify_locations : context -> string -> string -> unit
 (** [load_verify_locations ctxt cafile capath] specifies the locations for the
     context [ctx], at which CA certificates for verification purposes are
     located. [cafile] should be the name of a CA certificates file in PEM format
@@ -475,40 +478,42 @@ val load_verify_locations : context -> string -> string -> unit
     @raise Invalid_argument
       if both strings are empty or if one of the files given in arguments could
       not be found. *)
+val load_verify_locations : context -> string -> string -> unit
 
-val set_default_verify_paths : context -> bool
 (** Specifies that the default locations from which CA certificates are loaded
     should be used. Returns [true] on success. *)
+val set_default_verify_paths : context -> bool
 
-val get_verify_result : socket -> int
 (** Get the verification result. *)
+val get_verify_result : socket -> int
 
-val get_verify_error_string : int -> string
 (** Get a human readable verification error message for the verification error
     Its input should be the result of calling [get_verify_result]. *)
+val get_verify_error_string : int -> string
 
-val digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
 (** Get the digest of the certificate as a binary string, using the SHA1, SHA256
     or SHA384 hashing algorithm. *)
+val digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
 
 (** {2 Creating, connecting, closing and configuring sockets} *)
 
-val embed_socket : Unix.file_descr -> context -> socket
 (** Embed a Unix socket into an SSL socket. *)
+val embed_socket : Unix.file_descr -> context -> socket
 
-val set_client_SNI_hostname : socket -> string -> unit
 (** Set the hostname the client is attempting to connect to using the Server *
     Name Indication (SNI) TLS extension. *)
+val set_client_SNI_hostname : socket -> string -> unit
 
+(** Set the list of supported ALPN protocols for negotiation to the connection.
+*)
 val set_alpn_protos : socket -> string list -> unit
-(** Set the list of supported ALPN protocols for negotiation to the connection. *)
 
-val get_negotiated_alpn_protocol : socket -> string option
 (** Get the negotiated protocol from the connection. *)
+val get_negotiated_alpn_protocol : socket -> string option
 
-val verify : socket -> unit
 (** Check the result of the verification of the X509 certificate presented by
     the peer, if any. Raises a [verify_error] on failure. *)
+val verify : socket -> unit
 
 (** Flags to specify how a certificate is matched against a given host name *)
 type x509_check_flag =
@@ -524,14 +529,14 @@ val set_hostflags : socket -> x509_check_flag list -> unit
 (* Set the expected host name to be verified. *)
 val set_host : socket -> string -> unit
 
-val set_ip : socket -> string -> unit
 (** Set the expected ip address to be verified. Ip address is dotted decimal
     quad for IPv4 and colon-separated hexadecimal for IPv6. The condensed "::"
     notation is supported for IPv6 addresses. *)
+val set_ip : socket -> string -> unit
 
-val file_descr_of_socket : socket -> Unix.file_descr
 (** Get the file descriptor associated with a socket. It is primarily useful for
     [select]ing on it; you should not write or read on it. *)
+val file_descr_of_socket : socket -> Unix.file_descr
 
 (** {2 I/O on SSL sockets} *)
 
@@ -541,69 +546,70 @@ val file_descr_of_socket : socket -> Unix.file_descr
     provided below lifts this limitation by never releasing the OCaml runtime
     lock. *)
 
-val connect : socket -> unit
 (** Connect an SSL socket. *)
+val connect : socket -> unit
 
-val accept : socket -> unit
 (** Accept an SSL connection. *)
+val accept : socket -> unit
 
-val open_connection : protocol -> Unix.sockaddr -> socket
 (** Open an SSL connection. *)
+val open_connection : protocol -> Unix.sockaddr -> socket
 
-val open_connection_with_context : context -> Unix.sockaddr -> socket
 (** Open an SSL connection with the specified context. *)
+val open_connection_with_context : context -> Unix.sockaddr -> socket
 
-val close_notify : socket -> bool
 (** Send close notify to the peer. This is SSL_shutdown(3). * returns [true] if
     shutdown is finished, [false] in case [close_notify] * needs to be called a
     second time. *)
+val close_notify : socket -> bool
 
-val shutdown_connection : socket -> unit
 (** Close an SSL connection opened with [open_connection]. *)
+val shutdown_connection : socket -> unit
 
-val shutdown : socket -> unit
 (** Close a SSL connection. * Send close notify to the peer and wait for close
     notify from peer. *)
+val shutdown : socket -> unit
 
-val flush : socket -> unit
 (** Flush an SSL connection. *)
+val flush : socket -> unit
 
-val read : socket -> Bytes.t -> int -> int -> int
 (** [read sock buf off len] receives data from a connected SSL socket. *)
+val read : socket -> Bytes.t -> int -> int -> int
 
-val read_into_bigarray : socket -> bigarray -> int -> int -> int
 (** [read_into_bigarray sock ba off len] receives data from a connected SSL
     socket. This function releases the runtime while the read takes place. *)
+val read_into_bigarray : socket -> bigarray -> int -> int -> int
 
-val write : socket -> Bytes.t -> int -> int -> int
 (** [write sock buf off len] sends data over a connected SSL socket. *)
+val write : socket -> Bytes.t -> int -> int -> int
 
+(** [write_substring sock str off len] sends data over a connected SSL socket.
+*)
 val write_substring : socket -> string -> int -> int -> int
-(** [write_substring sock str off len] sends data over a connected SSL socket. *)
 
-val write_bigarray : socket -> bigarray -> int -> int -> int
 (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
     This function releases the runtime while the read takes place. *)
+val write_bigarray : socket -> bigarray -> int -> int -> int
 
 (** {3 High-level communication functions} *)
 
-val input_string : socket -> string
 (** Input a string on an SSL socket. *)
+val input_string : socket -> string
 
-val output_string : socket -> string -> unit
 (** Write a string on an SSL socket. *)
+val output_string : socket -> string -> unit
 
-val input_char : socket -> char
 (** Input a character on an SSL socket. *)
+val input_char : socket -> char
 
-val output_char : socket -> char -> unit
 (** Write a char on an SSL socket. *)
+val output_char : socket -> char -> unit
 
-val input_int : socket -> int
 (** Input an integer on an SSL socket. *)
+val input_int : socket -> int
 
-val output_int : socket -> int -> unit
 (** Write an integer on an SSL socket. *)
+val output_int : socket -> int -> unit
 
 (** [Runtime_lock] is an equivalent, signature compatible, equivalent to the
     [Ssl] module, with one difference: the OCaml runtime lock isn't released
@@ -614,75 +620,77 @@ val output_int : socket -> int -> unit
     i.e. handling of `EWOULDBLOCK`, `EGAIN`, etc. Additionally, the functions in
     this module don't perform a copy of application data buffers. *)
 module Runtime_lock : sig
-  val connect : socket -> unit
   (** Connect an SSL socket. *)
+  val connect : socket -> unit
 
-  val accept : socket -> unit
   (** Accept an SSL connection. *)
+  val accept : socket -> unit
 
-  val open_connection : protocol -> Unix.sockaddr -> socket
   (** Open an SSL connection. *)
+  val open_connection : protocol -> Unix.sockaddr -> socket
 
-  val open_connection_with_context : context -> Unix.sockaddr -> socket
   (** Open an SSL connection with the specified context. *)
+  val open_connection_with_context : context -> Unix.sockaddr -> socket
 
-  val close_notify : socket -> bool
   (** Send close notify to the peer. This is SSL_shutdown(3). * returns [true]
       if shutdown is finished, [false] in case [close_notify] * needs to be
       called a second time. *)
+  val close_notify : socket -> bool
 
-  val shutdown_connection : socket -> unit
   (** Close an SSL connection opened with [open_connection]. *)
+  val shutdown_connection : socket -> unit
 
-  val shutdown : socket -> unit
   (** Close a SSL connection. * Send close notify to the peer and wait for close
       notify from peer. *)
+  val shutdown : socket -> unit
 
-  val flush : socket -> unit
   (** Flush an SSL connection. *)
+  val flush : socket -> unit
 
-  val read : socket -> Bytes.t -> int -> int -> int
   (** [read sock buf off len] receives data from a connected SSL socket. *)
+  val read : socket -> Bytes.t -> int -> int -> int
 
-  val read_into_bigarray : socket -> bigarray -> int -> int -> int
   (** [read_into_bigarray sock ba off len] receives data from a connected SSL
       socket. This function releases the runtime while the read takes place. *)
+  val read_into_bigarray : socket -> bigarray -> int -> int -> int
 
-  val write : socket -> Bytes.t -> int -> int -> int
   (** [write sock buf off len] sends data over a connected SSL socket. *)
+  val write : socket -> Bytes.t -> int -> int -> int
 
+  (** [write_substring sock str off len] sends data over a connected SSL socket.
+  *)
   val write_substring : socket -> string -> int -> int -> int
-  (** [write_substring sock str off len] sends data over a connected SSL socket. *)
 
-  val write_bigarray : socket -> bigarray -> int -> int -> int
   (** [write_bigarray sock ba off len] sends data over a connected SSL socket.
       This function releases the runtime while the read takes place. *)
+  val write_bigarray : socket -> bigarray -> int -> int -> int
 
   (** {3 High-level communication functions} *)
 
-  val input_string : socket -> string
   (** Input a string on an SSL socket. *)
+  val input_string : socket -> string
 
-  val output_string : socket -> string -> unit
   (** Write a string on an SSL socket. *)
+  val output_string : socket -> string -> unit
 
-  val input_char : socket -> char
   (** Input a character on an SSL socket. *)
+  val input_char : socket -> char
 
-  val output_char : socket -> char -> unit
   (** Write a char on an SSL socket. *)
+  val output_char : socket -> char -> unit
 
-  val input_int : socket -> int
   (** Input an integer on an SSL socket. *)
+  val input_int : socket -> int
 
-  val output_int : socket -> int -> unit
   (** Write an integer on an SSL socket. *)
+  val output_int : socket -> int -> unit
 end
 
+(** This function is deprecated. Use [Runtime_lock.read_into_bigarray] instead.
+*)
 val read_into_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  [@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
-(** This function is deprecated. Use [Runtime_lock.read_into_bigarray] instead. *)
+[@@ocaml.alert deprecated "Use [Runtime_lock.read_into_bigarray] instead"]
 
-val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
-  [@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]
 (** This function is deprecated. Use [Runtime_lock.write_bigarray] instead. *)
+val write_bigarray_blocking : socket -> bigarray -> int -> int -> int
+[@@ocaml.alert deprecated "Use [Runtime_lock.write_bigarray] instead"]

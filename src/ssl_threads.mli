@@ -20,5 +20,5 @@
 
     @author Samuel Mimram *)
 
-val init : unit -> unit
 (** Make the library thread-safe. The should be called {i before} [Ssl.init]. *)
+val init : unit -> unit

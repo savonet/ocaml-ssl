@@ -12,6 +12,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: '5.2'
+    - name: Install ocamlformat
+      run: opam install ocamlformat.$(awk -F= '/^version/ {print $2}' .ocamlformat)
+    - name: Check formatting
+      run: opam exec -- dune build @fmt
+
   build:
     runs-on: ${{ matrix.setup.os }}
     strategy:

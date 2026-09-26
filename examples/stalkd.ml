@@ -75,8 +75,7 @@ let () =
         let msg = Bytes.sub m 0 (Bytes.length m - 1) in
         let msg = Bytes.to_string msg in
         log (Printf.sprintf "received '%s'" msg);
-        if msg = "exit"
-        then (
+        if msg = "exit" then (
           log "A client has quit";
           connected_clients :=
             List.filter (fun (_, s) -> s != ssl) !connected_clients;

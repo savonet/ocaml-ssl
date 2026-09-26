@@ -10,18 +10,13 @@ let test_verify () =
     try
       Ssl.verify ssl;
       ""
-    with
-    | e -> Printexc.to_string e
+    with e -> Printexc.to_string e
   in
   Ssl.shutdown_connection ssl;
-  check
-    bool
-    "no verify errors"
-    true
+  check bool "no verify errors" true
     (Str.search_forward
        (Str.regexp_string "error:00:000000:lib(0)")
-       verify_result
-       0
+       verify_result 0
     > 0)
 
 let test_set_host () =
@@ -39,18 +34,13 @@ let test_set_host () =
     try
       Ssl.verify ssl;
       ""
-    with
-    | e -> Printexc.to_string e
+    with e -> Printexc.to_string e
   in
   Ssl.shutdown_connection ssl;
-  check
-    bool
-    "no verify errors"
-    true
+  check bool "no verify errors" true
     (Str.search_forward
        (Str.regexp_string "error:00:000000:lib(0)")
-       verify_result
-       0
+       verify_result 0
     > 0)
 
 let test_read_write () =
@@ -68,11 +58,12 @@ let test_read_write () =
   check string "received message" "received" (Bytes.to_string read_buf)
 
 let () =
-  run
-    "Ssl io functions"
-    [ ( "IO"
-      , [ test_case "Verify" `Quick test_verify
-        ; test_case "Set host" `Quick test_set_host
-        ; test_case "Read write" `Quick test_read_write
-        ] )
+  run "Ssl io functions"
+    [
+      ( "IO",
+        [
+          test_case "Verify" `Quick test_verify;
+          test_case "Set host" `Quick test_set_host;
+          test_case "Read write" `Quick test_read_write;
+        ] );
     ]

@@ -5,8 +5,8 @@ let test_init () = init () |> ignore
 
 let test_error_queue () =
   let context = Ssl.create_context TLSv1_3 Client_context in
-  try use_certificate context "expired.pem" "" with
-  | _ ->
+  try use_certificate context "expired.pem" ""
+  with _ ->
     ();
     let err = Error.peek_error () in
     check int "Error code" 32 err.library_number;
@@ -26,10 +26,11 @@ let test_error_queue () =
     check string "Reason string" "system lib" (Option.get err.reason)
 
 let () =
-  Alcotest.run
-    "Ssl communication"
-    [ ( "Communication"
-      , [ test_case "Test init" `Quick test_init
-        ; test_case "Test error queue" `Quick test_error_queue
-        ] )
+  Alcotest.run "Ssl communication"
+    [
+      ( "Communication",
+        [
+          test_case "Test init" `Quick test_init;
+          test_case "Test error queue" `Quick test_error_queue;
+        ] );
     ]
