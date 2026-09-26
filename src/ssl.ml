@@ -591,15 +591,16 @@ module Make (Ssl_base : Ssl_base) = struct
       failwith "output_int error: all the byte were not sent"
 
   let input_string ssl =
-    let bufsize = 1024 in
-    let buf = Bytes.create bufsize in
-    let ret = ref "" in
-    let r = ref 1 in
-    while !r <> 0 do
-      r := read ssl buf 0 bufsize;
-      ret := !ret ^ Bytes.sub_string buf 0 !r
-    done;
-    !ret
+    let buf = Bytes.create 1024 in
+    let contents = Buffer.create 1024 in
+    let rec loop () =
+      match read ssl buf 0 (Bytes.length buf) with
+        | length ->
+            Buffer.add_subbytes contents buf 0 length;
+            loop ()
+        | exception Read_error Error_zero_return -> Buffer.contents contents
+    in
+    loop ()
 
   let input_char ssl =
     let tmp = Bytes.create 1 in

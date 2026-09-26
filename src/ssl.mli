@@ -604,7 +604,7 @@ val write_bigarray : socket -> bigarray -> int -> int -> int
 
 (** {3 High-level communication functions} *)
 
-(** Input a string on an SSL socket. *)
+(** Read from an SSL socket until the peer closes the connection. *)
 val input_string : socket -> string
 
 (** Write a string on an SSL socket. *)
@@ -678,7 +678,7 @@ module Runtime_lock : sig
 
   (** {3 High-level communication functions} *)
 
-  (** Input a string on an SSL socket. *)
+  (** Read from an SSL socket until the peer closes the connection. *)
   val input_string : socket -> string
 
   (** Write a string on an SSL socket. *)

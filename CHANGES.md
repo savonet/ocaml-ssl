@@ -22,6 +22,8 @@ Unreleased
    callback, like `Ssl.use_certificate`, instead of prompting on the terminal.
 -  Password and ALPN selection callbacks are released with their context, and
    setting one again replaces it, instead of leaking a GC root on every call.
+-  `Ssl.input_string` returns what it read once the peer closes the connection,
+   instead of always raising `Read_error` (#152).
 
 0.7.0 (2023-07-12)
 =====
