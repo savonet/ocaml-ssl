@@ -1,4 +1,4 @@
-(lang dune 2.7)
+(lang dune 3.23)
 
 (name ssl)
 (version 0.7.0)
