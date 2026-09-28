@@ -2,6 +2,9 @@ Unreleased
 =====
 
 -  Fix naked pointer in cipher function (#144)
+-  Copy OCaml strings before releasing the runtime lock: another thread could
+   move them, making OpenSSL read a stale path, e.g. `Ssl.use_certificate`
+   failing with `No such file or directory` on an existing key file.
 
 0.7.0 (2023-07-12)
 =====
