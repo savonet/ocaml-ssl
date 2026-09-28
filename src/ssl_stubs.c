@@ -57,7 +57,6 @@
 
 static int client_verify_callback(int, X509_STORE_CTX *);
 static value vclient_verify_callback = Val_int(0);
-static DH *load_dh_param(const char *dhfile);
 
 CAMLprim value ocaml_ssl_get_version() {
   CAMLparam0();
@@ -1106,30 +1105,50 @@ CAMLprim value ocaml_ssl_get_cipher_version(value vcipher) {
   CAMLreturn(caml_copy_string(version));
 }
 
+/* Takes ownership of the parameters. */
+static int set_dh_parameters(SSL_CTX *ctx, EVP_PKEY *parameters) {
+#if OPENSSL_VERSION_MAJOR >= 3
+  if (SSL_CTX_set0_tmp_dh_pkey(ctx, parameters) == 1)
+    return 1;
+  EVP_PKEY_free(parameters);
+  return 0;
+#else
+  DH *dh = EVP_PKEY_get1_DH(parameters);
+  int ret = dh != NULL && SSL_CTX_set_tmp_dh(ctx, dh) == 1;
+  DH_free(dh);
+  EVP_PKEY_free(parameters);
+  return ret;
+#endif
+}
+
 CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context,
                                                value dh_file_path) {
   CAMLparam2(context, dh_file_path);
-  DH *dh = NULL;
   SSL_CTX *ctx = Ctx_val(context);
-  const char *dh_cfile_path = String_val(dh_file_path);
+  EVP_PKEY *parameters = NULL;
+  char *path;
+  BIO *bio;
+  int ret = 0;
 
-  if (*dh_cfile_path == 0)
+  if (!caml_string_is_c_safe(dh_file_path) || *String_val(dh_file_path) == 0)
     caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
 
-  dh = load_dh_param(dh_cfile_path);
+  path = caml_stat_strdup(String_val(dh_file_path));
   caml_release_runtime_system();
-  if (dh != NULL) {
-    if (SSL_CTX_set_tmp_dh(ctx, dh) != 1) {
-      caml_acquire_runtime_system();
-      caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
-    }
-    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
-    caml_acquire_runtime_system();
-    DH_free(dh);
-  } else {
-    caml_acquire_runtime_system();
-    caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
+  bio = BIO_new_file(path, "r");
+  if (bio != NULL) {
+    parameters = PEM_read_bio_Parameters(bio, NULL);
+    BIO_free(bio);
   }
+  if (parameters != NULL && EVP_PKEY_base_id(parameters) == EVP_PKEY_DH)
+    ret = set_dh_parameters(ctx, parameters);
+  else
+    EVP_PKEY_free(parameters);
+  caml_acquire_runtime_system();
+  caml_stat_free(path);
+
+  if (!ret)
+    caml_raise_constant(*caml_named_value("ssl_exn_diffie_hellman_error"));
 
   CAMLreturn(Val_unit);
 }
@@ -1137,33 +1156,24 @@ CAMLprim value ocaml_ssl_ctx_init_dh_from_file(value context,
 CAMLprim value ocaml_ssl_ctx_init_ec_from_named_curve(value context,
                                                       value curve_name) {
   CAMLparam2(context, curve_name);
-  EC_KEY *ecdh = NULL;
-  int nid = 0;
   SSL_CTX *ctx = Ctx_val(context);
-  const char *ec_curve_name = String_val(curve_name);
+  int nid;
+  int ret;
 
-  if (*ec_curve_name == 0)
+  if (!caml_string_is_c_safe(curve_name))
     caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
 
-  nid = OBJ_sn2nid(ec_curve_name);
-  if (nid == 0) {
+  nid = OBJ_sn2nid(String_val(curve_name));
+  if (nid == NID_undef)
     caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
-  }
 
   caml_release_runtime_system();
-  ecdh = EC_KEY_new_by_curve_name(nid);
-  if (ecdh != NULL) {
-    if (SSL_CTX_set_tmp_ecdh(ctx, ecdh) != 1) {
-      caml_acquire_runtime_system();
-      caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
-    }
-    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
-    caml_acquire_runtime_system();
-    EC_KEY_free(ecdh);
-  } else {
-    caml_acquire_runtime_system();
+  ret = SSL_CTX_set1_groups(ctx, &nid, 1);
+  caml_acquire_runtime_system();
+
+  if (ret != 1)
     caml_raise_constant(*caml_named_value("ssl_exn_ec_curve_error"));
-  }
+
   CAMLreturn(Val_unit);
 }
 
@@ -2041,17 +2051,4 @@ return_time:
     free(issuer);
 
   return ok;
-}
-
-static DH *load_dh_param(const char *dhfile) {
-  DH *ret = NULL;
-  BIO *bio;
-
-  if ((bio = BIO_new_file(dhfile, "r")) == NULL)
-    goto err;
-  ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-err:
-  if (bio != NULL)
-    BIO_free(bio);
-  return (ret);
 }
