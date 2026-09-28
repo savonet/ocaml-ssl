@@ -23,8 +23,7 @@
  (synopsis "Bindings for OpenSSL")
  (depends
   (ocaml
-   (>= "4.03.0"))
-  (ocaml (and :with_test (>= "4.08.0")))
+   (>= "4.14"))
   dune-configurator
   conf-libssl
   (alcotest :with-test)))

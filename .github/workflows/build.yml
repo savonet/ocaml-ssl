@@ -52,7 +52,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {ocamlVersion: 4_12, os: ubuntu-latest}
           - {ocamlVersion: 4_14, os: ubuntu-latest}
           - {ocamlVersion: 5_1, os: ubuntu-latest}
           - {ocamlVersion: 5_2, os: ubuntu-latest}

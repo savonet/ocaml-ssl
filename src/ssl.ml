@@ -188,7 +188,7 @@ external init : bool -> unit = "ocaml_ssl_init"
 let ts = thread_safe
 
 let init ?thread_safe () =
-  let thread_safe = match thread_safe with Some b -> b | None -> !ts in
+  let thread_safe = Option.value thread_safe ~default:!ts in
   init thread_safe
 
 type context_type = Client_context | Server_context | Both_context

@@ -58,9 +58,7 @@
 #endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
 static value vclient_verify_callback = Val_int(0);
-#endif
 static DH *load_dh_param(const char *dhfile);
 
 CAMLprim value ocaml_ssl_get_version() {
@@ -109,18 +107,6 @@ static void finalize_ssl_socket(value block) {
 static struct custom_operations socket_ops = {
     "ocaml_ssl_socket",  finalize_ssl_socket,      custom_compare_default,
     custom_hash_default, custom_serialize_default, custom_deserialize_default};
-
-/* Option types */
-
-#define Val_none Val_int(0)
-
-static value Val_some(value v) {
-  CAMLparam1(v);
-  CAMLlocal1(some);
-  some = caml_alloc(1, 0);
-  Store_field(some, 0, v);
-  CAMLreturn(some);
-}
 
 /******************
  * Initialization *
@@ -279,12 +265,12 @@ CAMLprim value ocaml_ssl_error_struct(value err_func) {
   const char *lib = ERR_lib_error_string(code);
   const char *reason = ERR_reason_error_string(code);
   if (lib != NULL) {
-    libval = Val_some(caml_copy_string(lib));
+    libval = caml_alloc_some(caml_copy_string(lib));
   } else {
     libval = Val_none;
   }
   if (reason != NULL) {
-    reasonval = Val_some(caml_copy_string(reason));
+    reasonval = caml_alloc_some(caml_copy_string(reason));
   } else {
     reasonval = Val_none;
   }
@@ -729,20 +715,12 @@ CAMLprim value ocaml_ssl_digest(value vevp, value vcert) {
   }
   vdigest = caml_alloc_string(digest_size);
 
-  /* TODO(anmonteiro): switch this to `Bytes_val` when we bump support to
-   * OCaml 4.06 (https://github.com/ocaml/ocaml/pull/1274)
-   *
-   * In the meantime, reproduce `Bytes_val`, which is effectively `String_val`
-   * + a cast:
-   * https://github.com/ocaml/ocaml/pull/1274/commits/6bc4f2656e435175188018830e7fe049caacebe9
-   */
-  memcpy((unsigned char *)String_val(vdigest), buf, digest_size);
+  memcpy(Bytes_val(vdigest), buf, digest_size);
   CAMLreturn(vdigest);
 }
 
 CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit) {
   CAMLparam1(unit);
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
   if (Is_long(vclient_verify_callback)) {
     vclient_verify_callback = caml_alloc_shr(1, Abstract_tag);
     *((int (**)(int, X509_STORE_CTX *))Data_abstract_val(
@@ -750,9 +728,6 @@ CAMLprim value ocaml_ssl_get_client_verify_callback_ptr(value unit) {
     caml_register_generational_global_root(&vclient_verify_callback);
   }
   CAMLreturn(vclient_verify_callback);
-#else
-  CAMLreturn((value)client_verify_callback);
-#endif
 }
 
 static int client_verify_callback_verbose = 1;
@@ -798,15 +773,11 @@ CAMLprim value ocaml_ssl_ctx_set_verify(value context, value vmode,
   }
 
   if (Is_block(vcallback)) {
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
     vcallback = Field(vcallback, 0);
     if (!Is_block(vcallback) || Tag_val(vcallback) != Abstract_tag ||
         Wosize_val(vcallback) != 1)
       caml_invalid_argument("callback");
     callback = *((int (**)(int, X509_STORE_CTX *))Data_abstract_val(vcallback));
-#else
-    callback = (int (*)(int, X509_STORE_CTX *))Field(vcallback, 0);
-#endif
   }
 
   caml_release_runtime_system();
@@ -1071,6 +1042,8 @@ CAMLprim value ocaml_ssl_version(value socket) {
   CAMLreturn(Val_int(ocaml_version));
 }
 
+#define Cipher_val(v) (*((SSL_CIPHER **)Data_abstract_val(v)))
+
 CAMLprim value ocaml_ssl_get_current_cipher(value socket) {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
@@ -1079,24 +1052,16 @@ CAMLprim value ocaml_ssl_get_current_cipher(value socket) {
   caml_acquire_runtime_system();
   if (!cipher)
     caml_raise_constant(*caml_named_value("ssl_exn_cipher_error"));
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
   value vcipher = caml_alloc_shr(1, Abstract_tag);
-  *((SSL_CIPHER **) Data_abstract_val(vcipher)) = cipher;
+  Cipher_val(vcipher) = cipher;
   CAMLreturn(vcipher);
-#else
-  CAMLreturn((value)cipher);
-#endif
 }
 
 CAMLprim value ocaml_ssl_get_cipher_description(value vcipher) {
   CAMLparam1(vcipher);
   char buf[1024];
 
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
-  SSL_CIPHER *cipher = *((SSL_CIPHER **) Data_abstract_val(vcipher));
-#else
-  SSL_CIPHER *cipher = (SSL_CIPHER *)vcipher;
-#endif
+  SSL_CIPHER *cipher = Cipher_val(vcipher);
 
   caml_release_runtime_system();
   SSL_CIPHER_description(cipher, buf, 1024);
@@ -1109,11 +1074,7 @@ CAMLprim value ocaml_ssl_get_cipher_name(value vcipher) {
   CAMLparam1(vcipher);
   const char *name;
 
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
-  SSL_CIPHER *cipher = *((SSL_CIPHER **) Data_abstract_val(vcipher));
-#else
-  SSL_CIPHER *cipher = (SSL_CIPHER *)vcipher;
-#endif
+  SSL_CIPHER *cipher = Cipher_val(vcipher);
 
   caml_release_runtime_system();
   name = SSL_CIPHER_get_name(cipher);
@@ -1126,11 +1087,7 @@ CAMLprim value ocaml_ssl_get_cipher_version(value vcipher) {
   CAMLparam1(vcipher);
   const char *version;
 
-#if defined(NO_NAKED_POINTERS) || defined(NAKED_POINTERS_CHECKER)
-  SSL_CIPHER *cipher = *((SSL_CIPHER **) Data_abstract_val(vcipher));
-#else
-  SSL_CIPHER *cipher = (SSL_CIPHER *)vcipher;
-#endif
+  SSL_CIPHER *cipher = Cipher_val(vcipher);
 
   caml_release_runtime_system();
   version = SSL_CIPHER_get_version(cipher);
@@ -1473,21 +1430,10 @@ CAMLprim value ocaml_ssl_get_negotiated_alpn_protocol(value socket) {
   if (len == 0)
     CAMLreturn(Val_none);
 
-  /* Note: we use the implementation `caml_alloc_initialized_string` (which
-   * unfortunately requires OCaml >= 4.06) instead of `copy_string` here
-   * because the selected protocol in `data` is not NULL-terminated.
-   *
-   * From
-   * https://www.openssl.org/docs/man1.1.1/man3/SSL_get0_alpn_selected.html:
-   *   SSL_get0_alpn_selected() returns a pointer to the selected protocol in
-   *   data with length len. It is not NUL-terminated. data is set to NULL and
-   *   len is set to 0 if no protocol has been selected. data must not be
-   *   freed.
-   */
-  proto = caml_alloc_string(len);
-  memcpy((char *)String_val(proto), (const char *)data, len);
+  /* The selected protocol is not NUL-terminated. */
+  proto = caml_alloc_initialized_string(len, (const char *)data);
 
-  CAMLreturn(Val_some(proto));
+  CAMLreturn(caml_alloc_some(proto));
 }
 
 CAMLprim value ocaml_ssl_connect(value socket) {
@@ -1612,7 +1558,7 @@ CAMLprim value ocaml_ssl_write(value socket, value buffer, value start,
   if (Int_val(start) + Int_val(length) > caml_string_length(buffer))
     caml_invalid_argument("Ssl.write: Buffer too short.");
 
-  memmove(buf, (char *)String_val(buffer) + Int_val(start), buflen);
+  memmove(buf, (char *)Bytes_val(buffer) + Int_val(start), buflen);
   caml_release_runtime_system();
   ERR_clear_error();
   ret = SSL_write(ssl, buf, buflen);
@@ -1631,7 +1577,7 @@ CAMLprim value ocaml_ssl_write_blocking(value socket, value buffer, value start,
   CAMLparam2(socket, buffer);
   int ret;
   int buflen = Int_val(length);
-  char *buf = (char *)String_val(buffer) + Int_val(start);
+  char *buf = (char *)Bytes_val(buffer) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
   if (Int_val(start) < 0)
@@ -1714,7 +1660,7 @@ CAMLprim value ocaml_ssl_read(value socket, value buffer, value start,
   ret = SSL_read(ssl, buf, buflen);
   err = SSL_get_error(ssl, ret);
   caml_acquire_runtime_system();
-  memmove(((char *)String_val(buffer)) + Int_val(start), buf, buflen);
+  memmove(((char *)Bytes_val(buffer)) + Int_val(start), buf, buflen);
   free(buf);
 
   if (err != SSL_ERROR_NONE)
@@ -1728,7 +1674,7 @@ CAMLprim value ocaml_ssl_read_blocking(value socket, value buffer, value start,
   CAMLparam2(socket, buffer);
   int ret;
   int buflen = Int_val(length);
-  char *buf = ((char *)String_val(buffer)) + Int_val(start);
+  char *buf = ((char *)Bytes_val(buffer)) + Int_val(start);
   SSL *ssl = SSL_val(socket);
 
   if (Int_val(start) < 0)
