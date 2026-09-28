@@ -24,6 +24,9 @@ Unreleased
    setting one again replaces it, instead of leaking a GC root on every call.
 -  `Ssl.input_string` returns what it read once the peer closes the connection,
    instead of always raising `Read_error` (#152).
+-  When pkg-config cannot find OpenSSL, the build warns and the fallback flags
+   always link `-lssl -lcrypto`; on macOS they used to only add a search path,
+   failing at link time (#55).
 
 0.7.0 (2023-07-12)
 =====
