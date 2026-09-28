@@ -1,8 +1,7 @@
 open Alcotest
 
 let test_verify () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1342) in
-  Util.server_thread addr None |> ignore;
+  let addr = Util.server_thread None in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = Ssl.open_connection_with_context context addr in
@@ -20,8 +19,7 @@ let test_verify () =
     > 0)
 
 let test_set_host () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1343) in
-  Util.server_thread addr None |> ignore;
+  let addr = Util.server_thread None in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let domain = Unix.domain_of_sockaddr addr in
@@ -105,8 +103,7 @@ let test_bounds () =
   Unix.close sock
 
 let test_read_write () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1344) in
-  Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
+  let addr = Util.server_thread (Some (fun _ -> "received")) in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = Ssl.open_connection_with_context context addr in
@@ -119,8 +116,7 @@ let test_read_write () =
   check string "received message" "received" (Bytes.to_string read_buf)
 
 let test_input_string () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1345) in
-  Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
+  let addr = Util.server_thread (Some (fun _ -> "received")) in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = Ssl.open_connection_with_context context addr in
@@ -132,11 +128,8 @@ let test_input_string () =
 let test_read_short_does_not_clobber_tail () =
   let iterations = 64 in
   let io_size = 4096 in
-  let base_port = 20000 + (Unix.getpid () mod 10000) in
-  for i = 0 to iterations - 1 do
-    let port = base_port + i in
-    let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", port) in
-    Util.server_thread addr (Some (fun _ -> "z")) |> ignore;
+  for _ = 1 to iterations do
+    let addr = Util.server_thread (Some (fun _ -> "z")) in
 
     let context = Ssl.create_context TLSv1_3 Client_context in
     let ssl = Ssl.open_connection_with_context context addr in

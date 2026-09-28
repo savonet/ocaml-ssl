@@ -2,8 +2,7 @@ open Alcotest
 open Util
 
 let test_sockets_sni () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1340) in
-  Util.server_thread addr None |> ignore;
+  let addr = Util.server_thread None in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let domain = Unix.domain_of_sockaddr addr in
@@ -17,8 +16,7 @@ let test_sockets_sni () =
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
 
 let test_sockets_alpn () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1341) in
-  Util.server_thread addr None |> ignore;
+  let addr = Util.server_thread None in
   let context = Ssl.create_context TLSv1_3 Client_context in
   let domain = Unix.domain_of_sockaddr addr in
   let sock = Unix.socket domain Unix.SOCK_STREAM 0 in
