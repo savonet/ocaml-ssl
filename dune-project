@@ -27,8 +27,4 @@
   (ocaml (and :with_test (>= "4.08.0")))
   dune-configurator
   conf-libssl
-  (alcotest :with-test)
-  (bisect_ppx
-   (and
-    :dev
-    (>= "2.5.0")))))
+  (alcotest :with-test)))

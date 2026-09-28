@@ -14,7 +14,6 @@ depends: [
   "dune-configurator"
   "conf-libssl"
   "alcotest" {with-test}
-  "bisect_ppx" {dev & >= "2.5.0"}
   "odoc" {with-doc}
 ]
 build: [
