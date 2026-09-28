@@ -2,7 +2,6 @@
   description = "OCaml-SSL Nix Flake";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.nixpkgs.inputs.flake-utils.follows = "flake-utils";
   inputs.nixpkgs.url = "github:anmonteiro/nix-overlays";
 
   outputs = { self, nixpkgs, flake-utils }:

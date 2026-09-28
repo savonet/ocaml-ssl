@@ -3,3 +3,4 @@
 .merlin
 _build
 _coverage
+compile_commands.json
