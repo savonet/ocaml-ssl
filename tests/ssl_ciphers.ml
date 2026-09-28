@@ -42,7 +42,7 @@ let test_init_ec_errors () =
     (fun curve ->
       check_raises curve Ssl.Ec_curve_error (fun () ->
           Ssl.init_ec_from_named_curve context curve))
-    [""; "no-such-curve"; "secp384r1\000"]
+    [""; "no-such-curve"]
 
 let test_socket_cipher_funcs () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in

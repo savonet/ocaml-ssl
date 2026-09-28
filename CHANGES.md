@@ -31,6 +31,9 @@ Unreleased
    overflowing. A huge offset used to be truncated to 32 bits, silently reading
    at another position, and on `Runtime_lock` functions raised an exception
    that could not be caught.
+-  Functions taking a file name, host name, cipher list or curve name raise
+   `Invalid_argument` on a string containing a NUL byte, instead of silently
+   using the part before it.
 
 0.7.0 (2023-07-12)
 =====
