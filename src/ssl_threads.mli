@@ -20,5 +20,5 @@
 
     @author Samuel Mimram *)
 
-(** Make the library thread-safe. The should be called {i before} [Ssl.init]. *)
+(** Does nothing, kept for compatibility: OpenSSL is thread-safe on its own. *)
 val init : unit -> unit

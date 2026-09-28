@@ -53,8 +53,6 @@
 
 #ifdef WIN32
 #include <windows.h>
-#else
-#include <pthread.h>
 #endif
 
 static int client_verify_callback(int, X509_STORE_CTX *);
@@ -112,122 +110,12 @@ static struct custom_operations socket_ops = {
  * Initialization *
  ******************/
 
-#ifdef WIN32
-struct CRYPTO_dynlock_value {
-  HANDLE mutex;
-};
-
-static HANDLE *mutex_buf = NULL;
-
-static void locking_function(int mode, int n, const char *file, int line) {
-  if (mode & CRYPTO_LOCK)
-    WaitForSingleObject(mutex_buf[n], INFINITE);
-  else
-    ReleaseMutex(mutex_buf[n]);
-}
-
-static struct CRYPTO_dynlock_value *dyn_create_function(const char *file,
-                                                        int line) {
-  struct CRYPTO_dynlock_value *value;
-
-  value = malloc(sizeof(struct CRYPTO_dynlock_value));
-  if (!value)
-    return NULL;
-  if (!(value->mutex = CreateMutex(NULL, FALSE, NULL))) {
-    free(value);
-    return NULL;
-  }
-
-  return value;
-}
-
-static void dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l,
-                              const char *file, int line) {
-  if (mode & CRYPTO_LOCK)
-    WaitForSingleObject(l->mutex, INFINITE);
-  else
-    ReleaseMutex(l->mutex);
-}
-
-static void dyn_destroy_function(struct CRYPTO_dynlock_value *l,
-                                 const char *file, int line) {
-  CloseHandle(l->mutex);
-  free(l);
-}
-#else
-struct CRYPTO_dynlock_value {
-  pthread_mutex_t mutex;
-};
-
-static pthread_mutex_t *mutex_buf = NULL;
-
-static void locking_function(int mode, int n, const char *file, int line) {
-  if (mode & CRYPTO_LOCK)
-    pthread_mutex_lock(&mutex_buf[n]);
-  else
-    pthread_mutex_unlock(&mutex_buf[n]);
-}
-
-static unsigned long id_function(void) {
-  return ((unsigned long)pthread_self());
-}
-
-static struct CRYPTO_dynlock_value *dyn_create_function(const char *file,
-                                                        int line) {
-  struct CRYPTO_dynlock_value *value;
-
-  value = malloc(sizeof(struct CRYPTO_dynlock_value));
-  if (!value)
-    return NULL;
-  pthread_mutex_init(&value->mutex, NULL);
-
-  return value;
-}
-
-static void dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l,
-                              const char *file, int line) {
-  if (mode & CRYPTO_LOCK)
-    pthread_mutex_lock(&l->mutex);
-  else
-    pthread_mutex_unlock(&l->mutex);
-}
-
-static void dyn_destroy_function(struct CRYPTO_dynlock_value *l,
-                                 const char *file, int line) {
-  pthread_mutex_destroy(&l->mutex);
-  free(l);
-}
-#endif
-
 CAMLprim value ocaml_ssl_init(value use_threads) {
   CAMLparam1(use_threads);
-  int i;
 
-  SSL_library_init();
-  SSL_load_error_strings();
-
-  if (Int_val(use_threads)) {
-#ifdef WIN32
-    mutex_buf = malloc(CRYPTO_num_locks() * sizeof(HANDLE));
-#else
-    mutex_buf = malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
-#endif
-    assert(mutex_buf);
-    for (i = 0; i < CRYPTO_num_locks(); i++)
-#ifdef WIN32
-      mutex_buf[i] = CreateMutex(NULL, FALSE, NULL);
-#else
-      pthread_mutex_init(&mutex_buf[i], NULL);
-#endif
-    CRYPTO_set_locking_callback(locking_function);
-#ifndef WIN32
-    /* Windows does not require id_function, see threads(3) */
-    CRYPTO_set_id_callback(id_function);
-#endif
-    CRYPTO_set_dynlock_create_callback(dyn_create_function);
-    CRYPTO_set_dynlock_lock_callback(dyn_lock_function);
-    CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function);
-  }
+  OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS |
+                       OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
+                   NULL);
 
   CAMLreturn(Val_unit);
 }
