@@ -1036,7 +1036,6 @@ CAMLprim value ocaml_ssl_version(value socket) {
   CAMLparam1(socket);
   SSL *ssl = SSL_val(socket);
   int version;
-  int ret;
 
   caml_release_runtime_system();
   version = SSL_version(ssl);
@@ -1318,10 +1317,15 @@ CAMLprim value ocaml_ssl_get_start_date(value certificate) {
   CAMLparam1(certificate);
   X509 *cert = Cert_val(certificate);
   struct tm t;
+  int ret;
 
   caml_release_runtime_system();
-  ASN1_TIME_to_tm(X509_get0_notBefore(cert), &t);
+  ret = ASN1_TIME_to_tm(X509_get0_notBefore(cert), &t);
   caml_acquire_runtime_system();
+
+  if (!ret)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
+                        caml_copy_string("invalid certificate date"));
 
   CAMLreturn(alloc_tm(&t));
 }
@@ -1330,10 +1334,15 @@ CAMLprim value ocaml_ssl_get_expiration_date(value certificate) {
   CAMLparam1(certificate);
   X509 *cert = Cert_val(certificate);
   struct tm t;
+  int ret;
 
   caml_release_runtime_system();
-  ASN1_TIME_to_tm(X509_get0_notAfter(cert), &t);
+  ret = ASN1_TIME_to_tm(X509_get0_notAfter(cert), &t);
   caml_acquire_runtime_system();
+
+  if (!ret)
+    caml_raise_with_arg(*caml_named_value("ssl_exn_certificate_error"),
+                        caml_copy_string("invalid certificate date"));
 
   CAMLreturn(alloc_tm(&t));
 }
@@ -2045,10 +2054,8 @@ static int client_verify_callback(int ok, X509_STORE_CTX *ctx) {
 return_time:
 
   /* Clean up things. */
-  if (subject)
-    free(subject);
-  if (issuer)
-    free(issuer);
+  OPENSSL_free(subject);
+  OPENSSL_free(issuer);
 
   return ok;
 }
