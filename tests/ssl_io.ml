@@ -43,6 +43,24 @@ let test_set_host () =
        verify_result 0
     > 0)
 
+let test_reject_invalid_names () =
+  let context = Ssl.create_context TLSv1_3 Client_context in
+  let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  let ssl = Ssl.embed_socket sock context in
+  let rejects name f =
+    match f () with
+      | () -> fail (name ^ " was accepted")
+      | exception Invalid_argument _ -> ()
+  in
+  rejects "set_ip with a hostname" (fun () -> Ssl.set_ip ssl "localhost");
+  rejects "set_host with a NUL byte" (fun () ->
+      Ssl.set_host ssl "evil.com\000.good.com");
+  rejects "SNI hostname with a NUL byte" (fun () ->
+      Ssl.set_client_SNI_hostname ssl "evil.com\000.good.com");
+  Ssl.set_ip ssl "127.0.0.1";
+  Ssl.set_host ssl "localhost";
+  Unix.close sock
+
 let test_read_write () =
   let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1344) in
   Util.server_thread addr (Some (fun _ -> "received")) |> ignore;
@@ -89,6 +107,7 @@ let () =
         [
           test_case "Verify" `Quick test_verify;
           test_case "Set host" `Quick test_set_host;
+          test_case "Reject invalid names" `Quick test_reject_invalid_names;
           test_case "Read write" `Quick test_read_write;
           test_case "Short read preserves tail" `Quick
             test_read_short_does_not_clobber_tail;

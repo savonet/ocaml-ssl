@@ -501,7 +501,9 @@ val digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
 val embed_socket : Unix.file_descr -> context -> socket
 
 (** Set the hostname the client is attempting to connect to using the Server *
-    Name Indication (SNI) TLS extension. *)
+    Name Indication (SNI) TLS extension.
+
+    @raise Invalid_argument if the hostname is rejected. *)
 val set_client_SNI_hostname : socket -> string -> unit
 
 (** Set the list of supported ALPN protocols for negotiation to the connection.
@@ -526,12 +528,16 @@ type x509_check_flag =
 (* Specify how a certificate should be matched against the host name *)
 val set_hostflags : socket -> x509_check_flag list -> unit
 
-(* Set the expected host name to be verified. *)
+(** Set the expected host name to be verified.
+
+    @raise Invalid_argument if the hostname is rejected. *)
 val set_host : socket -> string -> unit
 
 (** Set the expected ip address to be verified. Ip address is dotted decimal
     quad for IPv4 and colon-separated hexadecimal for IPv6. The condensed "::"
-    notation is supported for IPv6 addresses. *)
+    notation is supported for IPv6 addresses.
+
+    @raise Invalid_argument if the address cannot be parsed. *)
 val set_ip : socket -> string -> unit
 
 (** Get the file descriptor associated with a socket. It is primarily useful for
