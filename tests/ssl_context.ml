@@ -94,6 +94,28 @@ let test_password_callback () =
           String.make 100_000 'a'))
     loaders
 
+let released_callbacks = ref 0
+
+let tracked_callback result =
+  let marker = ref () in
+  Gc.finalise (fun _ -> incr released_callbacks) marker;
+  fun _ ->
+    ignore (Sys.opaque_identity marker);
+    result
+
+let[@inline never] set_callbacks_on_dropped_context () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  Ssl.set_password_callback context (tracked_callback "password");
+  Ssl.set_password_callback context (tracked_callback "password");
+  Ssl.set_context_alpn_select_callback context (tracked_callback None)
+
+let test_callbacks_released () =
+  set_callbacks_on_dropped_context ();
+  for _ = 1 to 3 do
+    Gc.full_major ()
+  done;
+  check int "released callbacks" 3 !released_callbacks
+
 let test_use_certificate_from_string () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate_from_string context certstring clientkeystring;
@@ -161,6 +183,7 @@ let () =
           test_case "Add cert to store" `Quick test_add_cert_to_store;
           test_case "Use certificate" `Quick test_use_certificate;
           test_case "Password callback" `Quick test_password_callback;
+          test_case "Callbacks released" `Quick test_callbacks_released;
           test_case "Use certificate from string" `Quick
             test_use_certificate_from_string;
           test_case "Set password callback" `Quick test_set_password_callback;
