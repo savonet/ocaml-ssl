@@ -48,6 +48,33 @@ let test_use_certificate () =
       try Ssl.use_certificate context "client.pem" "server.key"
       with Private_key_error _ -> raise (Private_key_error ""))
 
+let rec clear_error_queue () =
+  let error = Ssl.Error.get_error () in
+  if error.library_number <> 0 || error.reason_code <> 0 then
+    clear_error_queue ()
+
+let test_password_callback () =
+  let use_encrypted_key password =
+    let context = Ssl.create_context TLSv1_3 Server_context in
+    Ssl.set_password_callback context password;
+    let result =
+      match Ssl.use_certificate context "client.pem" "client-encrypted.key" with
+        | () -> "loaded"
+        | exception Private_key_error _ -> "private key error"
+        | exception exn -> Printexc.to_string exn
+    in
+    clear_error_queue ();
+    result
+  in
+  check string "right password" "loaded"
+    (use_encrypted_key (fun _ -> "password"));
+  check string "wrong password" "private key error"
+    (use_encrypted_key (fun _ -> "wrong"));
+  check string "callback raises" "private key error"
+    (use_encrypted_key (fun _ -> raise Exit));
+  check string "password too long" "private key error"
+    (use_encrypted_key (fun _ -> String.make 100_000 'a'))
+
 let test_use_certificate_from_string () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate_from_string context certstring clientkeystring;
@@ -114,6 +141,7 @@ let () =
           test_case "Add extra chain cert" `Quick test_add_extra_chain_cert;
           test_case "Add cert to store" `Quick test_add_cert_to_store;
           test_case "Use certificate" `Quick test_use_certificate;
+          test_case "Password callback" `Quick test_password_callback;
           test_case "Use certificate from string" `Quick
             test_use_certificate_from_string;
           test_case "Set password callback" `Quick test_set_password_callback;
