@@ -8,6 +8,10 @@ Unreleased
 -  `Ssl.set_ip`, `Ssl.set_host` and `Ssl.set_client_SNI_hostname` raise
    `Invalid_argument` instead of silently ignoring a value OpenSSL rejects. An
    unparsable IP address used to disable the check, accepting any certificate.
+-  ALPN: an exception raised by the selection callback, or a protocol the client
+   did not offer, fails the handshake instead of unwinding through OpenSSL. The
+   selected protocol no longer points into the OCaml heap after the runtime
+   lock is released. Protocol names must be 1 to 255 bytes long.
 
 0.7.0 (2023-07-12)
 =====
