@@ -1,4 +1,4 @@
-Unreleased
+0.8.0 (2026-10-06)
 =====
 
 -  Fix naked pointer in cipher function (#144)
