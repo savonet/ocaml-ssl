@@ -1,4 +1,4 @@
-(* Copyright (C) 2003-2005 Savonet team
+(* Copyright (C) 2003-2026 Savonet team
 
    This file is part of Ocaml-ssl.
 

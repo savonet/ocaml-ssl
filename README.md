@@ -1,85 +1,127 @@
-OCaml-SSL - OCaml bindings for the libssl
-=========================================
+OCaml-SSL - OCaml bindings for OpenSSL
+======================================
 
-* Author: Samuel Mimram <samuel.mimram@ens-lyon.org>
-* Email: savonet-users@lists.sourceforge.net
-* Homepage: http://savonet.sourceforge.net/
+[![LGPL license](https://img.shields.io/badge/License-LGPL-green.svg)](COPYING)
+[![GitHub release](https://img.shields.io/github/release/savonet/ocaml-ssl.svg)](https://github.com/savonet/ocaml-ssl/releases/)
+[![Install with Opam !](https://img.shields.io/badge/Install%20with-Opam-1abc9c.svg)](https://opam.ocaml.org/packages/ssl/)
+[![Build](https://github.com/savonet/ocaml-ssl/actions/workflows/build.yml/badge.svg)](https://github.com/savonet/ocaml-ssl/actions/workflows/build.yml)
 
-Copyright (c) 2003-2015 the Savonet Team.
+`ssl` gives OCaml programs TLS client and server sockets on top of `Unix` file
+descriptors, using the system's OpenSSL.
 
-[![LGPL license](https://img.shields.io/badge/License-LGPL-green.svg)](https://github.com/savonet/liquidsoap/blob/master/COPYING)
-[![GitHub release](https://img.shields.io/github/release/savonet/ocaml-ssl.svg)](https://GitHub.com/savonet/ocaml-ssl/releases/)
-[![Install with Opam !](https://img.shields.io/badge/Install%20with-Opam-1abc9c.svg)](http://opam.ocaml.org/packages/ssl/)
-[![Build Status](https://travis-ci.org/savonet/ocaml-ssl.svg?branch=master)](https://travis-ci.org/savonet/ocaml-ssl)
+* [API documentation](https://savonet.github.io/ocaml-ssl/ssl/Ssl/index.html)
+* [Changelog](CHANGES.md)
+* [Bug reports](https://github.com/savonet/ocaml-ssl/issues)
 
 Installation
 ------------
-
-`ocaml-ssl` can be installed via [OPAM](https://opam.ocaml.org):
 
 ```
 opam install ssl
 ```
 
-Is this library thread-safe?
-----------------------------
+This requires OCaml 4.14 or later and OpenSSL 1.1.0 or later. opam installs
+the OpenSSL development files through the `conf-libssl` package.
 
-Yes. OpenSSL 1.1.0 and later is thread-safe on its own; `Ssl_threads.init` and
-the `thread_safe` argument of `Ssl.init` do nothing and are kept for
-compatibility.
+Then add `ssl` to the `libraries` field of your `dune` file.
 
+Usage
+-----
 
-Creating a self-signed ssl certificate
---------------------------------------
+### Client
 
-To get started quickly you can create a self-signed ssl certificate using
-openssl.
+A client that verifies the server certificate against the system's CA
+certificates and checks that it matches the host name:
 
-1. First, create a 1024-bit private key to use when creating your CA.:
-   `openssl genrsa -des3 -out privkey.pem 1024`
-2. Create a master certificate based on this key, to use when signing other
-   certificates:
-   `openssl req -new -x509 -days 1001 -key privkey.pem -out cert.pem`
+```ocaml
+let () =
+  let host = "example.org" in
+  let ctx = Ssl.create_context Ssl.TLSv1_3 Ssl.Client_context in
+  Ssl.set_min_protocol_version ctx Ssl.TLSv1_2;
+  Ssl.set_verify ctx [Ssl.Verify_peer] None;
+  if not (Ssl.set_default_verify_paths ctx) then failwith "no CA certificates";
+  let addr = (Unix.gethostbyname host).Unix.h_addr_list.(0) in
+  let fd = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  Unix.connect fd (Unix.ADDR_INET (addr, 443));
+  let ssl = Ssl.embed_socket fd ctx in
+  Ssl.set_client_SNI_hostname ssl host;
+  Ssl.set_host ssl host;
+  Ssl.connect ssl;
+  Ssl.output_string ssl
+    (Printf.sprintf "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n"
+       host);
+  print_string (Ssl.input_string ssl);
+  Ssl.shutdown_connection ssl
+```
 
-SSL acknowledgment
-------------------
+`Ssl.create_context` pins the context to a single protocol version;
+`Ssl.set_min_protocol_version` and `Ssl.set_max_protocol_version` widen it to a
+range.
 
-This product includes software developed by the OpenSSL Project for use in the
-[OpenSSL Toolkit](http://www.openssl.org/).
+Certificates are not verified unless `Ssl.set_verify` asks for it, and the host
+name is not checked unless `Ssl.set_host` (or `Ssl.set_ip`) is called.
+
+### Server
+
+A server loads its certificate and private key into the context, then calls
+`Ssl.accept` on each socket accepted from its listening socket:
+
+```ocaml
+let ctx = Ssl.create_context Ssl.TLSv1_3 Ssl.Server_context in
+Ssl.use_certificate ctx "cert.pem" "privkey.pem";
+(* ... *)
+let fd, _ = Unix.accept listening_socket in
+let ssl = Ssl.embed_socket fd ctx in
+Ssl.accept ssl
+```
+
+A self-signed certificate is enough to try this out:
+
+```
+openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+  -keyout privkey.pem -out cert.pem -subj "/CN=localhost"
+```
+
+See [`examples`](examples) for complete programs, including ALPN negotiation.
+
+### Threads
+
+The library is thread-safe: OpenSSL 1.1.0 and later is thread-safe on its own.
+`Ssl_threads.init` and the `thread_safe` argument of `Ssl.init` do nothing and
+are kept for compatibility.
+
+The functions in `Ssl` release the OCaml runtime lock while they block.
+`Ssl.Runtime_lock` offers the same functions without releasing it, which is
+faster for non-blocking sockets.
+
+### Lwt and Eio
+
+[`lwt_ssl`](https://github.com/ocsigen/lwt_ssl) and
+[`eio-ssl`](https://github.com/anmonteiro/eio-ssl) build on this library.
+
+Development
+-----------
+
+```
+opam install --deps-only --with-test .
+dune build
+dune runtest
+```
+
+A Nix flake is also provided: `nix develop`. See
+[`tests/HACKING.md`](tests/HACKING.md) for how the test certificates are
+generated.
 
 License
 -------
 
-This library is released under the LGPL version 2.1 with
-the additional exemption that compiling, linking, and/or using OpenSSL is
-allowed.
+Copyright (c) 2003-2026 the Savonet Team.
 
-As a special exception to the GNU Library General Public License, you
-may also link, statically or dynamically, a "work that uses the Library"
-with a publicly distributed version of the Library to produce an
-executable file containing portions of the Library, and distribute
-that executable file under terms of your choice, without any of the
-additional requirements listed in clause 6 of the GNU Library General
-Public License.  By "a publicly distributed version of the Library",
-we mean either the unmodified Library, or a
-modified version of the Library that is distributed under the
-conditions defined in clause 3 of the GNU Library General Public
-License.  This exception does not however invalidate any other reasons
-why the executable file might be covered by the GNU Library General
-Public License.
+This library is released under the LGPL version 2.1, with the OCaml linking
+exception and the additional exemption that compiling, linking, and/or using
+OpenSSL is allowed. See [`COPYING`](COPYING) for the full text.
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+The examples are under the GPL version 2.0.
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-The examples are under the GPL licence version 2.0.
+This product includes software developed by the OpenSSL Project for use in the
+[OpenSSL Toolkit](https://www.openssl.org/).

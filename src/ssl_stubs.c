@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005 Samuel Mimram
+ * Copyright (C) 2003-2026 Samuel Mimram
  *
  * This file is part of Ocaml-ssl.
  *
