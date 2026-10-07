@@ -21,16 +21,32 @@ let test_cipher_init_dh () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate context "client.pem" "client.key";
   Ssl.init_dh_from_file context "dh4096.pem";
+  Ssl.init_dh_from_file context "dhx.pem";
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
+
+let test_init_dh_errors () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  List.iter
+    (fun path ->
+      check_raises path Ssl.Diffie_hellman_error (fun () ->
+          Ssl.init_dh_from_file context path))
+    [""; "missing.pem"; "client.pem"]
 
 let test_init_ec_from_named_curve () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.init_ec_from_named_curve context "secp384r1";
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
 
+let test_init_ec_errors () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  List.iter
+    (fun curve ->
+      check_raises curve Ssl.Ec_curve_error (fun () ->
+          Ssl.init_ec_from_named_curve context curve))
+    [""; "no-such-curve"]
+
 let test_socket_cipher_funcs () =
-  let addr = Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", 1337) in
-  Util.server_thread addr None |> ignore;
+  let addr = Util.server_thread None in
 
   let context = Ssl.create_context TLSv1_3 Client_context in
   let ssl = open_connection_with_context context addr in
@@ -55,6 +71,8 @@ let () =
           test_case "Set cipher list" `Quick test_set_cipher_list;
           test_case "Init DH params" `Quick test_cipher_init_dh;
           test_case "Init EC params" `Quick test_init_ec_from_named_curve;
+          test_case "Init DH errors" `Quick test_init_dh_errors;
+          test_case "Init EC errors" `Quick test_init_ec_errors;
           test_case "Cipher funcs" `Quick test_socket_cipher_funcs;
         ] );
     ]

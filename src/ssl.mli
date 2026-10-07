@@ -224,10 +224,9 @@ exception Verify_error of verify_error
 
 (** {1 Communication} *)
 
-(** Initialize SSL functions. Should be called before calling any other
-    function. The parameter [thread_safe] should be set to true if you use
-    threads in you application (the same effect can achieved by calling
-    [Ssl_threads.init] first. *)
+(** Initialize SSL functions. OpenSSL initializes itself on first use, so
+    calling this is optional. [thread_safe] is ignored: OpenSSL is thread-safe
+    on its own, and the parameter is kept for compatibility. *)
 val init : ?thread_safe:bool -> unit -> unit
 
 (** Retrieve a human-readable message that corresponds to the earliest error
@@ -296,9 +295,7 @@ type socket
 
 (** {2 Threads} *)
 
-(** You should not have to use those functions. They are only here for internal
-    use (they are needed to make the openssl library thread-safe, see the
-    [Ssl_threads] module). *)
+(** Ignored, kept for compatibility: OpenSSL is thread-safe on its own. *)
 
 val thread_safe : bool ref
 
@@ -387,11 +384,18 @@ val set_verify : context -> verify_mode list -> verify_callback option -> unit
     allowed. *)
 val set_verify_depth : context -> int -> unit
 
-(** Set the list of supported ALPN protocols for negotiation to the context. *)
+(** Set the list of supported ALPN protocols for negotiation to the context.
+
+    @raise Invalid_argument
+      if a protocol name is empty or longer than 255 bytes, or if the encoded
+      list is longer than 65535 bytes. *)
 val set_context_alpn_protos : context -> string list -> unit
 
 (** Set the callback to allow server to select the preferred protocol from
-    client's available protocols. *)
+    client's available protocols.
+
+    The handshake fails if the callback raises or returns a protocol the client
+    did not offer. *)
 val set_context_alpn_select_callback :
   context -> (string list -> string option) -> unit
 
@@ -501,11 +505,16 @@ val digest : [ `SHA1 | `SHA256 | `SHA384 ] -> certificate -> string
 val embed_socket : Unix.file_descr -> context -> socket
 
 (** Set the hostname the client is attempting to connect to using the Server *
-    Name Indication (SNI) TLS extension. *)
+    Name Indication (SNI) TLS extension.
+
+    @raise Invalid_argument if the hostname is rejected. *)
 val set_client_SNI_hostname : socket -> string -> unit
 
 (** Set the list of supported ALPN protocols for negotiation to the connection.
-*)
+
+    @raise Invalid_argument
+      if a protocol name is empty or longer than 255 bytes, or if the encoded
+      list is longer than 65535 bytes. *)
 val set_alpn_protos : socket -> string list -> unit
 
 (** Get the negotiated protocol from the connection. *)
@@ -526,12 +535,16 @@ type x509_check_flag =
 (* Specify how a certificate should be matched against the host name *)
 val set_hostflags : socket -> x509_check_flag list -> unit
 
-(* Set the expected host name to be verified. *)
+(** Set the expected host name to be verified.
+
+    @raise Invalid_argument if the hostname is rejected. *)
 val set_host : socket -> string -> unit
 
 (** Set the expected ip address to be verified. Ip address is dotted decimal
     quad for IPv4 and colon-separated hexadecimal for IPv6. The condensed "::"
-    notation is supported for IPv6 addresses. *)
+    notation is supported for IPv6 addresses.
+
+    @raise Invalid_argument if the address cannot be parsed. *)
 val set_ip : socket -> string -> unit
 
 (** Get the file descriptor associated with a socket. It is primarily useful for
@@ -593,7 +606,7 @@ val write_bigarray : socket -> bigarray -> int -> int -> int
 
 (** {3 High-level communication functions} *)
 
-(** Input a string on an SSL socket. *)
+(** Read from an SSL socket until the peer closes the connection. *)
 val input_string : socket -> string
 
 (** Write a string on an SSL socket. *)
@@ -667,7 +680,7 @@ module Runtime_lock : sig
 
   (** {3 High-level communication functions} *)
 
-  (** Input a string on an SSL socket. *)
+  (** Read from an SSL socket until the peer closes the connection. *)
   val input_string : socket -> string
 
   (** Write a string on an SSL socket. *)

@@ -24,8 +24,9 @@ opam install ssl
 Is this library thread-safe?
 ----------------------------
 
-Yes it is if and only if the first function you call in ocaml-ssl is
-`Ssl_threads.init` (and the second one should be `Ssl.init`).
+Yes. OpenSSL 1.1.0 and later is thread-safe on its own; `Ssl_threads.init` and
+the `thread_safe` argument of `Ssl.init` do nothing and are kept for
+compatibility.
 
 
 Creating a self-signed ssl certificate

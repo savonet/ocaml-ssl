@@ -188,7 +188,7 @@ external init : bool -> unit = "ocaml_ssl_init"
 let ts = thread_safe
 
 let init ?thread_safe () =
-  let thread_safe = match thread_safe with Some b -> b | None -> !ts in
+  let thread_safe = Option.value thread_safe ~default:!ts in
   init thread_safe
 
 type context_type = Client_context | Server_context | Both_context
@@ -340,6 +340,11 @@ external set_hostflags : socket -> x509_check_flag list -> unit
 external set_host : socket -> string -> unit = "ocaml_ssl_set1_host"
 external set_ip : socket -> string -> unit = "ocaml_ssl_set1_ip"
 
+(* The stubs trust their offsets: every read and write is checked here. *)
+let check_bounds name ~size start length =
+  if start < 0 || length < 0 || start > size - length then
+    invalid_arg (name ^ ": offset and length do not fit in the buffer")
+
 (* Here is the signature of the base communication functions that are
    implemented below in two versions *)
 module type Ssl_base = sig
@@ -361,16 +366,40 @@ module Runtime_unlock_base = struct
   external accept : socket -> unit = "ocaml_ssl_accept"
   external write : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_write"
 
+  let write socket buffer start length =
+    check_bounds "Ssl.write" ~size:(Bytes.length buffer) start length;
+    write socket buffer start length
+
   external write_substring : socket -> string -> int -> int -> int
     = "ocaml_ssl_write"
+
+  let write_substring socket buffer start length =
+    check_bounds "Ssl.write_substring" ~size:(String.length buffer) start length;
+    write_substring socket buffer start length
 
   external write_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_write_bigarray"
 
+  let write_bigarray socket buffer start length =
+    check_bounds "Ssl.write_bigarray"
+      ~size:(Bigarray.Array1.dim buffer)
+      start length;
+    write_bigarray socket buffer start length
+
   external read : socket -> Bytes.t -> int -> int -> int = "ocaml_ssl_read"
+
+  let read socket buffer start length =
+    check_bounds "Ssl.read" ~size:(Bytes.length buffer) start length;
+    read socket buffer start length
 
   external read_into_bigarray : socket -> bigarray -> int -> int -> int
     = "ocaml_ssl_read_into_bigarray"
+
+  let read_into_bigarray socket buffer start length =
+    check_bounds "Ssl.read_into_bigarray"
+      ~size:(Bigarray.Array1.dim buffer)
+      start length;
+    read_into_bigarray socket buffer start length
 
   external flush : socket -> unit = "ocaml_ssl_flush"
   external ssl_shutdown : socket -> bool = "ocaml_ssl_shutdown"
@@ -424,10 +453,8 @@ module Runtime_lock_base = struct
   [@@noalloc]
 
   let write socket buffer start length =
-    if start < 0 then invalid_arg "Ssl.write: start negative";
-    if length < 0 then invalid_arg "Ssl.write: length negative";
-    if start + length > Bytes.length buffer then
-      invalid_arg "Ssl.write: Buffer too short";
+    check_bounds "Ssl.Runtime_lock.write" ~size:(Bytes.length buffer) start
+      length;
     let ret = write socket buffer start length in
     (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_write.html:
 
@@ -448,10 +475,8 @@ module Runtime_lock_base = struct
   [@@noalloc]
 
   let write_substring socket buffer start length =
-    if start < 0 then invalid_arg "Ssl.write_substring: start negative";
-    if length < 0 then invalid_arg "Ssl.write_substring: length negative";
-    if start + length > String.length buffer then
-      invalid_arg "Ssl.write_substring: Buffer too short";
+    check_bounds "Ssl.Runtime_lock.write_substring" ~size:(String.length buffer)
+      start length;
     let ret = write_substring socket buffer start length in
     if ret <= 0 then (
       let err = get_error socket ret in
@@ -463,10 +488,9 @@ module Runtime_lock_base = struct
   [@@noalloc]
 
   let write_bigarray socket buffer start length =
-    if start < 0 then invalid_arg "Ssl.write_bigarray: start negative";
-    if length < 0 then invalid_arg "Ssl.write_bigarray: length negative";
-    if start + length > Bigarray.Array1.dim buffer then
-      invalid_arg "Ssl.write_bigarray: Buffer too short";
+    check_bounds "Ssl.Runtime_lock.write_bigarray"
+      ~size:(Bigarray.Array1.dim buffer)
+      start length;
     let ret = write_bigarray socket buffer start length in
     if ret <= 0 then (
       let err = get_error socket ret in
@@ -478,9 +502,8 @@ module Runtime_lock_base = struct
   [@@noalloc]
 
   let read socket buffer start length =
-    if start < 0 then invalid_arg "Ssl.read: start negative";
-    if length < 0 then invalid_arg "Ssl.read: length negative";
-    if start + length > Bytes.length buffer then invalid_arg "Buffer too short";
+    check_bounds "Ssl.Runtime_lock.read" ~size:(Bytes.length buffer) start
+      length;
     let ret = read socket buffer start length in
     (* From https://www.openssl.org/docs/man1.1.1/man3/SSL_read.html
 
@@ -501,10 +524,9 @@ module Runtime_lock_base = struct
   [@@noalloc]
 
   let read_into_bigarray socket buffer start length =
-    if start < 0 then invalid_arg "Ssl.read_into_big_array: start negative";
-    if length < 0 then invalid_arg "Ssl.read_into_big_array: length negative";
-    if start + length > Bigarray.Array1.dim buffer then
-      invalid_arg "Buffer too short";
+    check_bounds "Ssl.Runtime_lock.read_into_bigarray"
+      ~size:(Bigarray.Array1.dim buffer)
+      start length;
     let ret = read_into_bigarray socket buffer start length in
     if ret <= 0 then (
       let err = get_error socket ret in
@@ -591,15 +613,16 @@ module Make (Ssl_base : Ssl_base) = struct
       failwith "output_int error: all the byte were not sent"
 
   let input_string ssl =
-    let bufsize = 1024 in
-    let buf = Bytes.create bufsize in
-    let ret = ref "" in
-    let r = ref 1 in
-    while !r <> 0 do
-      r := read ssl buf 0 bufsize;
-      ret := !ret ^ Bytes.sub_string buf 0 !r
-    done;
-    !ret
+    let buf = Bytes.create 1024 in
+    let contents = Buffer.create 1024 in
+    let rec loop () =
+      match read ssl buf 0 (Bytes.length buf) with
+        | length ->
+            Buffer.add_subbytes contents buf 0 length;
+            loop ()
+        | exception Read_error Error_zero_return -> Buffer.contents contents
+    in
+    loop ()
 
   let input_char ssl =
     let tmp = Bytes.create 1 in

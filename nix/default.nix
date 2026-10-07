@@ -12,8 +12,6 @@ buildDunePackage {
   pname = "ssl";
   version = "n/a";
 
-  useDune2 = true;
-
   src = ../.;
 
   nativeBuildInputs = [ ocaml dune findlib pkg-config ];

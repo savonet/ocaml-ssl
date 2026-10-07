@@ -48,6 +48,103 @@ let test_use_certificate () =
       try Ssl.use_certificate context "client.pem" "server.key"
       with Private_key_error _ -> raise (Private_key_error ""))
 
+let rec clear_error_queue () =
+  let error = Ssl.Error.get_error () in
+  if error.library_number <> 0 || error.reason_code <> 0 then
+    clear_error_queue ()
+
+let test_password_callback () =
+  let encrypted_key =
+    In_channel.with_open_bin "client-encrypted.key" In_channel.input_all
+  in
+  let loaders =
+    [
+      ( "file",
+        fun context ->
+          Ssl.use_certificate context "client.pem" "client-encrypted.key" );
+      ( "string",
+        fun context ->
+          Ssl.use_certificate_from_string context certstring encrypted_key );
+    ]
+  in
+  List.iter
+    (fun (loader_name, load) ->
+      let use_encrypted_key password =
+        let context = Ssl.create_context TLSv1_3 Server_context in
+        Ssl.set_password_callback context password;
+        let result =
+          match load context with
+            | () -> "loaded"
+            | exception Private_key_error _ -> "private key error"
+            | exception exn -> Printexc.to_string exn
+        in
+        clear_error_queue ();
+        result
+      in
+      let check_loader name expected password =
+        check string
+          (loader_name ^ ": " ^ name)
+          expected
+          (use_encrypted_key password)
+      in
+      check_loader "right password" "loaded" (fun _ -> "password");
+      check_loader "wrong password" "private key error" (fun _ -> "wrong");
+      check_loader "callback raises" "private key error" (fun _ -> raise Exit);
+      check_loader "password too long" "private key error" (fun _ ->
+          String.make 100_000 'a'))
+    loaders
+
+let released_callbacks = ref 0
+
+let tracked_callback result =
+  let marker = ref () in
+  Gc.finalise (fun _ -> incr released_callbacks) marker;
+  fun _ ->
+    ignore (Sys.opaque_identity marker);
+    result
+
+let[@inline never] set_callbacks_on_dropped_context () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  Ssl.set_password_callback context (tracked_callback "password");
+  Ssl.set_password_callback context (tracked_callback "password");
+  Ssl.set_context_alpn_select_callback context (tracked_callback None)
+
+let test_callbacks_released () =
+  set_callbacks_on_dropped_context ();
+  for _ = 1 to 3 do
+    Gc.full_major ()
+  done;
+  check int "released callbacks" 3 !released_callbacks
+
+let test_reject_nul_bytes () =
+  let context = Ssl.create_context TLSv1_3 Server_context in
+  let certificate = Ssl.read_certificate "client.pem" in
+  let with_nul = "client.pem\000ignored" in
+  let rejects name f =
+    match f () with
+      | () -> fail (name ^ " accepted a NUL byte")
+      | exception Invalid_argument _ -> ()
+  in
+  rejects "use_certificate cert" (fun () ->
+      Ssl.use_certificate context with_nul "client.key");
+  rejects "use_certificate key" (fun () ->
+      Ssl.use_certificate context "client.pem" "client.key\000ignored");
+  rejects "set_client_CA_list_from_file" (fun () ->
+      Ssl.set_client_CA_list_from_file context with_nul);
+  rejects "set_cipher_list" (fun () ->
+      Ssl.set_cipher_list context "DEFAULT\000ignored");
+  rejects "load_verify_locations file" (fun () ->
+      Ssl.load_verify_locations context with_nul "");
+  rejects "load_verify_locations path" (fun () ->
+      Ssl.load_verify_locations context "" ".\000ignored");
+  rejects "read_certificate" (fun () -> ignore (Ssl.read_certificate with_nul));
+  rejects "write_certificate" (fun () ->
+      Ssl.write_certificate "written.pem\000ignored" certificate);
+  rejects "init_dh_from_file" (fun () ->
+      Ssl.init_dh_from_file context "dh4096.pem\000ignored");
+  rejects "init_ec_from_named_curve" (fun () ->
+      Ssl.init_ec_from_named_curve context "secp384r1\000ignored")
+
 let test_use_certificate_from_string () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.use_certificate_from_string context certstring clientkeystring;
@@ -114,6 +211,9 @@ let () =
           test_case "Add extra chain cert" `Quick test_add_extra_chain_cert;
           test_case "Add cert to store" `Quick test_add_cert_to_store;
           test_case "Use certificate" `Quick test_use_certificate;
+          test_case "Password callback" `Quick test_password_callback;
+          test_case "Reject NUL bytes" `Quick test_reject_nul_bytes;
+          test_case "Callbacks released" `Quick test_callbacks_released;
           test_case "Use certificate from string" `Quick
             test_use_certificate_from_string;
           test_case "Set password callback" `Quick test_set_password_callback;

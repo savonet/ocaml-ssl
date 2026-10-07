@@ -2,6 +2,38 @@ Unreleased
 =====
 
 -  Fix naked pointer in cipher function (#144)
+-  Copy OCaml strings before releasing the runtime lock: another thread could
+   move them, making OpenSSL read a stale path, e.g. `Ssl.use_certificate`
+   failing with `No such file or directory` on an existing key file.
+-  `Ssl.set_ip`, `Ssl.set_host` and `Ssl.set_client_SNI_hostname` raise
+   `Invalid_argument` instead of silently ignoring a value OpenSSL rejects. An
+   unparsable IP address used to disable the check, accepting any certificate.
+-  ALPN: an exception raised by the selection callback, or a protocol the client
+   did not offer, fails the handshake instead of unwinding through OpenSSL. The
+   selected protocol no longer points into the OCaml heap after the runtime
+   lock is released. Protocol names must be 1 to 255 bytes long.
+-  `Ssl.set_password_callback`: an exception from the callback, or a password
+   longer than OpenSSL's buffer, makes loading the key fail with
+   `Private_key_error` instead of unwinding through OpenSSL or aborting.
+-  Fix memory leaks in `add_extra_chain_cert`, `add_cert_to_store`,
+   `use_certificate_from_string`, `get_issuer`, `get_subject`, and in `read`
+   and `write` when given invalid arguments.
+-  `Ssl.use_certificate_from_string` decrypts the key with the context's password
+   callback, like `Ssl.use_certificate`, instead of prompting on the terminal.
+-  Password and ALPN selection callbacks are released with their context, and
+   setting one again replaces it, instead of leaking a GC root on every call.
+-  `Ssl.input_string` returns what it read once the peer closes the connection,
+   instead of always raising `Read_error` (#152).
+-  When pkg-config cannot find OpenSSL, the build warns and the fallback flags
+   always link `-lssl -lcrypto`; on macOS they used to only add a search path,
+   failing at link time (#55).
+-  Read and write functions check their offset and length in one place, without
+   overflowing. A huge offset used to be truncated to 32 bits, silently reading
+   at another position, and on `Runtime_lock` functions raised an exception
+   that could not be caught.
+-  Functions taking a file name, host name, cipher list or curve name raise
+   `Invalid_argument` on a string containing a NUL byte, instead of silently
+   using the part before it.
 
 0.7.0 (2023-07-12)
 =====
