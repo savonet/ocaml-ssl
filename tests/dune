@@ -29,7 +29,9 @@
   ca.pem
   ca.key)
  (enabled_if
-  (<> %{os_type} "Win32")))
+  (and
+   (<> %{os_type} "Win32")
+   (<> %{system} "macosx"))))
 
 (tests
  (names ssl_comm ssl_context ssl_ciphers ssl_sock ssl_io)
@@ -45,4 +47,6 @@
   server.key
   server.pem
   ca.pem
-  ca.key))
+  ca.key)
+ (enabled_if
+  (<> %{system} "macosx")))
