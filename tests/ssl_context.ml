@@ -18,6 +18,15 @@ let test_create_context () =
   Ssl.create_context TLSv1_3 Server_context |> ignore;
   check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error)
 
+(* SSLv23 accepts every version the library supports, whatever its oldest
+   one: OpenSSL 4 has no SSLv3 any more. *)
+let test_create_any_version_context () =
+  let[@alert "-deprecated"] any = SSLv23 in
+  let context = Ssl.create_context any Server_context in
+  check bool "no errors" true (Ssl.get_error_string () |> check_ssl_no_error);
+  check protocol_testable "max version" TLSv1_3
+    (Ssl.get_max_protocol_version context)
+
 let test_add_extra_chain_cert () =
   let context = Ssl.create_context TLSv1_3 Server_context in
   Ssl.add_extra_chain_cert context certstring;
@@ -208,6 +217,8 @@ let () =
       ( "Context",
         [
           test_case "Create context" `Quick test_create_context;
+          test_case "Create any-version context" `Quick
+            test_create_any_version_context;
           test_case "Add extra chain cert" `Quick test_add_extra_chain_cert;
           test_case "Add cert to store" `Quick test_add_cert_to_store;
           test_case "Use certificate" `Quick test_use_certificate;

@@ -363,9 +363,11 @@ value ocaml_ssl_ctx_get_max_proto_version(value context) {
 
 /* Returns an error message on failure, NULL on success. */
 static const char *set_protocol(SSL_CTX *ssl_context, int protocol) {
-  /* Protocol 0 accepts any version, the others exactly one. */
-  int min_proto = protocol == 0 ? SSL3_VERSION
-                                : tls_version_of_ocaml_ssl_version(protocol);
+  /* Protocol 0 accepts any version, the others exactly one. For protocol 0,
+     the minimum is 0, the lowest version the library supports: OpenSSL 4
+     has no SSLv3 and rejects SSL3_VERSION as a minimum. */
+  int min_proto =
+      protocol == 0 ? 0 : tls_version_of_ocaml_ssl_version(protocol);
   int max_proto = protocol == 0 ? TLS1_3_VERSION : min_proto;
 
   if (min_proto < 0)
