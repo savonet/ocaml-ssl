@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.8.1 (2026-11-01)
+=====
 
 -  `Ssl.create_context SSLv23` works with OpenSSL 4. It asked for SSLv3 as
    the minimum version, which OpenSSL 4 no longer has, and failed with
